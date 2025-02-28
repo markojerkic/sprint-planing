@@ -1,0 +1,10 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    # put queries in directory `queries`
+    queries: "queries"
+    schema: "migrations"
+    gen:
+      go:
+        package: "dbgen"
+        out: "internal/db/dbgen"

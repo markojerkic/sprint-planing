@@ -29,6 +29,8 @@ tmp/
 main
 *templ.go
 *templ.go
+*.sql.go
+dbgen/
 
 # OS X generated file
 .DS_Store

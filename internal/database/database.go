@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
 	"log"
 	"os"
@@ -11,7 +12,11 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pressly/goose/v3"
 )
+
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
 
 // Service represents a service that interacts with a database.
 type Service interface {
@@ -39,6 +44,7 @@ func New() Service {
 		return dbInstance
 	}
 
+	log.Printf("Connected to database: %s", dburl)
 	db, err := sql.Open("sqlite3", dburl)
 	if err != nil {
 		// This will not be a connection error, but a DSN parse error or
@@ -50,6 +56,21 @@ func New() Service {
 		db: db,
 	}
 	return dbInstance
+}
+
+func (s *service) runMigrations() {
+	goose.SetBaseFS(os.DirFS("migrations"))
+
+	// Optional: Set goose dialect to sqlite3
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		log.Fatalf("failed to set goose dialect: %v", err)
+	}
+
+	// Run the migrations
+	if err := goose.Up(s.db, "migrations"); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
+	}
+
 }
 
 // Health checks the health of the database connection by pinging the database.
