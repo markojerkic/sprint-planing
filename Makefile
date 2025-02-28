@@ -49,7 +49,7 @@ goose-install:
 
 goose-create: goose-install
 	@read -p "Enter the name of the migration: " migration; \
-	goose -dir migrations create $$migration sql
+	goose -dir internal/database/migrations create $$migration sql
 
 build: templ-install sqlc-install
 	@echo "Building..."

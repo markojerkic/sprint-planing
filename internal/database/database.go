@@ -55,11 +55,14 @@ func New() Service {
 	dbInstance = &service{
 		db: db,
 	}
+	dbInstance.runMigrations()
+
 	return dbInstance
 }
 
 func (s *service) runMigrations() {
-	goose.SetBaseFS(os.DirFS("migrations"))
+	// Set the goose environment
+	goose.SetBaseFS(embedMigrations)
 
 	// Optional: Set goose dialect to sqlite3
 	if err := goose.SetDialect("sqlite3"); err != nil {

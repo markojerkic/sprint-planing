@@ -32,5 +32,7 @@ main
 *.sql.go
 dbgen/
 
+*.db
+
 # OS X generated file
 .DS_Store

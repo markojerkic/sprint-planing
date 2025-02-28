@@ -3,8 +3,8 @@ sql:
   - engine: "sqlite"
     # put queries in directory `queries`
     queries: "queries"
-    schema: "migrations"
+    schema: "internal/database/migrations"
     gen:
       go:
         package: "dbgen"
-        out: "internal/db/dbgen"
+        out: "internal/database/dbgen"
