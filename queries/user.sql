@@ -4,8 +4,10 @@ INSERT INTO
 VALUES
   (DEFAULT) RETURNING *;
 
--- name: CreateSession :one
-INSERT INTO
-  session (user_id)
-VALUES
-  (?) RETURNING *;
+-- name: GetUser :one
+SELECT
+  *
+FROM
+  user
+WHERE
+  id = ?;

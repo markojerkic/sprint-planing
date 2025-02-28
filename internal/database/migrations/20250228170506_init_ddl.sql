@@ -1,26 +1,26 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE user (
-  id SERIAL PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE session (
-  id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES user (id),
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER REFERENCES user (id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE room (
-  id SERIAL PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   name VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_by INT REFERENCES user (id)
+  created_by INTEGER REFERENCES user (id)
 );
 
 CREATE TABLE room_user (
-  room_id INT REFERENCES room (id),
-  user_id INT REFERENCES user (id),
+  room_id INTEGER REFERENCES room (id),
+  user_id INTEGER REFERENCES user (id),
   PRIMARY KEY (room_id, user_id)
 );
 

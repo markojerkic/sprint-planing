@@ -17,7 +17,7 @@ import (
 
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -28,6 +28,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
+	s.InitSessions(e)
+
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
 
@@ -35,8 +37,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
 	e.GET("/", echo.WrapHandler(templ.Handler(room.CreateRoom())))
-
-	e.GET("/health", s.healthHandler)
 
 	e.GET("/websocket", s.websocketHandler)
 
@@ -49,10 +49,6 @@ func (s *Server) HelloWorldHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
-}
-
-func (s *Server) healthHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, s.db.Health())
 }
 
 func (s *Server) websocketHandler(c echo.Context) error {

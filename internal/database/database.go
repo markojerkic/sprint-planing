@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 )
@@ -30,7 +31,8 @@ type Service interface {
 }
 
 type service struct {
-	db *sql.DB
+	db         *sql.DB
+	Repository *dbgen.Queries
 }
 
 var (
@@ -38,10 +40,10 @@ var (
 	dbInstance *service
 )
 
-func New() Service {
+func New() *dbgen.Queries {
 	// Reuse Connection
 	if dbInstance != nil {
-		return dbInstance
+		return dbInstance.Repository
 	}
 
 	log.Printf("Connected to database: %s", dburl)
@@ -57,7 +59,9 @@ func New() Service {
 	}
 	dbInstance.runMigrations()
 
-	return dbInstance
+	dbInstance.Repository = dbgen.New(db)
+
+	return dbInstance.Repository
 }
 
 func (s *service) runMigrations() {
