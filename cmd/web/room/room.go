@@ -1,28 +1,39 @@
 package room
 
 import (
+	"fmt"
+
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
-	"github.com/markojerkic/spring-planing/internal/database"
+	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 )
 
 type RoomRouter struct {
-	db    database.Service
+	db    *dbgen.Queries
 	group *echo.Group
 }
 
-func NewRoomRouter(db database.Service, group *echo.Group) *RoomRouter {
+func NewRoomRouter(db *dbgen.Queries, group *echo.Group) *RoomRouter {
 	r := &RoomRouter{
 		db:    db,
 		group: group,
 	}
 	e := r.group
-	e.GET("/", echo.WrapHandler(templ.Handler(CreateRoom())))
-	e.POST("/", r.createRoom)
+	e.GET("", echo.WrapHandler(templ.Handler(CreateRoom())))
+	e.POST("", r.createRoom)
 
 	return r
 }
 
 func (r *RoomRouter) createRoom(ctx echo.Context) error {
-	return ctx.String(200, "Room created")
+	name := ctx.FormValue("name")
+	room, err := r.db.CreateRoom(ctx.Request().Context(), dbgen.CreateRoomParams{
+		Name: name,
+	})
+	if err != nil {
+		ctx.Logger().Error(err)
+		return ctx.String(500, "Error creating room")
+	}
+
+	return ctx.Redirect(302, fmt.Sprintf("/room/%d", room.ID))
 }

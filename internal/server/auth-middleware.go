@@ -81,7 +81,7 @@ func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		// Save the user ID to the session
-		sess.Values[sessionUserID] = userID
+		sess.Values[sessionUserID] = userID.ID
 		if err := sess.Save(c.Request(), c.Response()); err != nil {
 			c.Logger().Errorf("Error saving session: %v", err)
 			return c.String(http.StatusInternalServerError, "Internal Server Error")
