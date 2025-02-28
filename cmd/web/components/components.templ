@@ -13,7 +13,6 @@ templ Button(text string, props ButtonProps) {
 		disabled?={ props.Disabled }
 		form={ props.FormID }
 		aria-label={ props.AriaLabel }
-		onclick={ props.OnClick }
 	>
 		{ text }
 	</button>
@@ -99,7 +98,7 @@ templ Form(props FormProps) {
 // Page layout component
 templ PageLayout(title string) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang="en" hx-boost>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>

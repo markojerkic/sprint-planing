@@ -1,8 +1,6 @@
 package room
 
 import (
-	"fmt"
-
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/internal/database"
@@ -28,7 +26,7 @@ func NewRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {
 
 func (r *RoomRouter) createRoom(ctx echo.Context) error {
 	user := ctx.Get("user").(dbgen.User)
-	name := ctx.FormValue("name")
+	name := ctx.FormValue("roomName")
 
 	tx, err := r.db.DB.BeginTx(ctx.Request().Context(), nil)
 	if err != nil {
@@ -62,6 +60,6 @@ func (r *RoomRouter) createRoom(ctx echo.Context) error {
 		ctx.Logger().Errorf("Error committing transaction: %v", err)
 		return ctx.String(500, "Error committing transaction")
 	}
-
-	return ctx.Redirect(302, fmt.Sprintf("/room/%d", room.ID))
+	// return ctx.Redirect(302, fmt.Sprintf("/room/%d", room.ID))
+	return ctx.Redirect(302, "/")
 }

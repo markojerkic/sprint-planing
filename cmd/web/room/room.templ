@@ -9,7 +9,7 @@ templ CreateRoom() {
 				HasAccent: true,
 				Title:     "Create a Sprint Poker Room",
 			}) {
-				<form hx-post="/room">
+				<form action="/room" method="POST">
 					@components.FormInput(components.InputProps{
 						Type:        "text",
 						ID:          "roomName",

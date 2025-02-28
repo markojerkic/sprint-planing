@@ -1,0 +1,80 @@
+package homepage
+
+import (
+	"database/sql"
+	"fmt"
+	"github.com/markojerkic/spring-planing/cmd/web/components"
+	"github.com/markojerkic/spring-planing/internal/database/dbgen"
+	"time"
+)
+
+templ RoomList(rooms []dbgen.GetMyRoomsRow) {
+	@components.PageLayout("Homepage") {
+		<div class="container">
+			<h1 class="mb-4">My Rooms</h1>
+			if len(rooms) == 0 {
+				<p>You don't have any rooms yet. Create one now!</p>
+				@createRoomButton()
+			} else {
+				@createRoomButton()
+				for _, room := range rooms {
+					@roomCard(room)
+				}
+			}
+		</div>
+	}
+}
+
+templ createRoomButton() {
+	<a href="/room" class="btn">Create Room</a>
+}
+
+templ roomCard(room dbgen.GetMyRoomsRow) {
+	<div class={ fmt.Sprintf("card mb-3 %s", templ.SafeClass(ternary(room.IsOwner, "card-accent", ""))) }>
+		<div class="card-header">
+			<div class="room-header">
+				<h3 class="title mb-0">{ room.Name }</h3>
+				if room.CreatedAt.Valid && isRecent(room.CreatedAt) {
+					<span class="badge badge-primary">New</span>
+				}
+			</div>
+			<div class="room-meta">
+				<span class="room-date">Created { formatCreatedAt(room.CreatedAt) }</span>
+				if room.IsOwner {
+					<span class="badge badge-owner">Owner</span>
+				}
+			</div>
+		</div>
+		<div class="card-body">
+			<div class="room-actions">
+				<a href={ templ.SafeURL(fmt.Sprintf("/room/%d", room.ID)) } class="btn mr-2">Join Room</a>
+				if room.IsOwner {
+					<button class="btn btn-secondary">
+						Delete
+					</button>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+func ternary(condition bool, trueVal, falseVal string) string {
+	if condition {
+		return trueVal
+	}
+	return falseVal
+}
+
+func formatCreatedAt(createdAt sql.NullTime) string {
+	if createdAt.Valid {
+		return createdAt.Time.Format("Jan 2, 2006")
+	}
+	return ""
+}
+
+func isRecent(createdAt sql.NullTime) bool {
+	if createdAt.Valid {
+		return createdAt.Time.After(time.Now().Add(-24 * time.Hour))
+	}
+	return false
+}
