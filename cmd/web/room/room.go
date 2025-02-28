@@ -5,15 +5,16 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
+	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 )
 
 type RoomRouter struct {
-	db    *dbgen.Queries
+	db    *database.Database
 	group *echo.Group
 }
 
-func NewRoomRouter(db *dbgen.Queries, group *echo.Group) *RoomRouter {
+func NewRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {
 	r := &RoomRouter{
 		db:    db,
 		group: group,
@@ -26,13 +27,40 @@ func NewRoomRouter(db *dbgen.Queries, group *echo.Group) *RoomRouter {
 }
 
 func (r *RoomRouter) createRoom(ctx echo.Context) error {
+	user := ctx.Get("user").(dbgen.User)
 	name := ctx.FormValue("name")
-	room, err := r.db.CreateRoom(ctx.Request().Context(), dbgen.CreateRoomParams{
-		Name: name,
+
+	tx, err := r.db.DB.BeginTx(ctx.Request().Context(), nil)
+	if err != nil {
+		ctx.Logger().Errorf("Error creating transaction: %v", err)
+		return ctx.String(500, "Error creating transaction")
+	}
+	defer tx.Rollback()
+
+	q := r.db.Queries.WithTx(tx)
+	room, err := q.CreateRoom(ctx.Request().Context(), dbgen.CreateRoomParams{
+		Name:      name,
+		CreatedBy: user.ID,
 	})
 	if err != nil {
-		ctx.Logger().Error(err)
+		tx.Rollback()
+		ctx.Logger().Errorf("Error creating room: %v", err)
 		return ctx.String(500, "Error creating room")
+	}
+
+	err = q.AddUserToRoom(ctx.Request().Context(), dbgen.AddUserToRoomParams{
+		RoomID: room.ID,
+		UserID: user.ID,
+	})
+	if err != nil {
+		tx.Rollback()
+		ctx.Logger().Errorf("Error adding user to room: %v", err)
+		return ctx.String(500, "Error adding user to room")
+	}
+
+	if err := tx.Commit(); err != nil {
+		ctx.Logger().Errorf("Error committing transaction: %v", err)
+		return ctx.String(500, "Error committing transaction")
 	}
 
 	return ctx.Redirect(302, fmt.Sprintf("/room/%d", room.ID))

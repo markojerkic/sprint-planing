@@ -30,20 +30,20 @@ type Service interface {
 	Close() error
 }
 
-type service struct {
-	db         *sql.DB
-	Repository *dbgen.Queries
+type Database struct {
+	DB      *sql.DB
+	Queries *dbgen.Queries
 }
 
 var (
 	dburl      = os.Getenv("BLUEPRINT_DB_URL")
-	dbInstance *service
+	dbInstance *Database
 )
 
-func New() *dbgen.Queries {
+func New() *Database {
 	// Reuse Connection
 	if dbInstance != nil {
-		return dbInstance.Repository
+		return dbInstance
 	}
 
 	log.Printf("Connected to database: %s", dburl)
@@ -54,17 +54,17 @@ func New() *dbgen.Queries {
 		log.Fatal(err)
 	}
 
-	dbInstance = &service{
-		db: db,
+	dbInstance = &Database{
+		DB: db,
 	}
 	dbInstance.runMigrations()
 
-	dbInstance.Repository = dbgen.New(db)
+	dbInstance.Queries = dbgen.New(db)
 
-	return dbInstance.Repository
+	return dbInstance
 }
 
-func (s *service) runMigrations() {
+func (s *Database) runMigrations() {
 	// Set the goose environment
 	goose.SetBaseFS(embedMigrations)
 
@@ -74,7 +74,7 @@ func (s *service) runMigrations() {
 	}
 
 	// Run the migrations
-	if err := goose.Up(s.db, "migrations"); err != nil {
+	if err := goose.Up(s.DB, "migrations"); err != nil {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
@@ -82,14 +82,14 @@ func (s *service) runMigrations() {
 
 // Health checks the health of the database connection by pinging the database.
 // It returns a map with keys indicating various health statistics.
-func (s *service) Health() map[string]string {
+func (s *Database) Health() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	stats := make(map[string]string)
 
 	// Ping the database
-	err := s.db.PingContext(ctx)
+	err := s.DB.PingContext(ctx)
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
@@ -102,7 +102,7 @@ func (s *service) Health() map[string]string {
 	stats["message"] = "It's healthy"
 
 	// Get database stats (like open connections, in use, idle, etc.)
-	dbStats := s.db.Stats()
+	dbStats := s.DB.Stats()
 	stats["open_connections"] = strconv.Itoa(dbStats.OpenConnections)
 	stats["in_use"] = strconv.Itoa(dbStats.InUse)
 	stats["idle"] = strconv.Itoa(dbStats.Idle)
@@ -135,7 +135,7 @@ func (s *service) Health() map[string]string {
 // It logs a message indicating the disconnection from the specific database.
 // If the connection is successfully closed, it returns nil.
 // If an error occurs while closing the connection, it returns the error.
-func (s *service) Close() error {
+func (s *Database) Close() error {
 	log.Printf("Disconnected from database: %s", dburl)
-	return s.db.Close()
+	return s.DB.Close()
 }

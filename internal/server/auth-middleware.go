@@ -60,7 +60,7 @@ func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if userIDInterface != nil {
 			// Try to get the user from the database
 			if userID, ok := userIDInterface.(int64); ok {
-				user, err := s.db.GetUser(ctx, userID)
+				user, err := s.db.Queries.GetUser(ctx, userID)
 				if err == nil {
 					// User found, set in context and proceed
 					c.Set("user", user)
@@ -73,7 +73,7 @@ func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		log.Printf("No user found in session")
 
 		// No valid user found, create a new one
-		userID, err := s.db.CreateUser(ctx)
+		userID, err := s.db.Queries.CreateUser(ctx)
 		log.Printf("Created new user: %v", userID)
 		if err != nil {
 			c.Logger().Errorf("Error creating user: %v", err)
@@ -88,7 +88,7 @@ func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		// Get the newly created user and set in context
-		user, err := s.db.GetUser(ctx, userID.ID)
+		user, err := s.db.Queries.GetUser(ctx, userID.ID)
 		if err != nil {
 			c.Logger().Errorf("Error retrieving new user: %v", err)
 			return c.String(http.StatusInternalServerError, "Internal Server Error")

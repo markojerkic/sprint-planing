@@ -11,13 +11,12 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/markojerkic/spring-planing/internal/database"
-	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 )
 
 type Server struct {
 	port int
 
-	db *dbgen.Queries
+	db *database.Database
 }
 
 func NewServer() *http.Server {

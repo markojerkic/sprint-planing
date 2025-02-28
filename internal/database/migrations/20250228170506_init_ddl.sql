@@ -15,12 +15,12 @@ CREATE TABLE room (
   id INTEGER PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_by INTEGER REFERENCES user (id)
+  created_by INTEGER NOT NULL REFERENCES user (id)
 );
 
 CREATE TABLE room_user (
-  room_id INTEGER REFERENCES room (id),
-  user_id INTEGER REFERENCES user (id),
+  room_id INTEGER NOT NULL REFERENCES room (id),
+  user_id INTEGER NOT NULL REFERENCES user (id),
   PRIMARY KEY (room_id, user_id)
 );
 
