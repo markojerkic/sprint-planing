@@ -1,8 +1,8 @@
 -- name: CreateUser :one
 INSERT INTO
-  user (id)
+  user (created_at)
 VALUES
-  (DEFAULT) RETURNING *;
+  (CURRENT_TIMESTAMP) RETURNING *;
 
 -- name: GetUser :one
 SELECT

@@ -88,7 +88,7 @@ func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		// Get the newly created user and set in context
-		user, err := s.db.GetUser(ctx, userID)
+		user, err := s.db.GetUser(ctx, userID.ID)
 		if err != nil {
 			c.Logger().Errorf("Error retrieving new user: %v", err)
 			return c.String(http.StatusInternalServerError, "Internal Server Error")
