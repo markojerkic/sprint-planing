@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"my_project/internal/server"
+	"github.com/markojerkic/spring-planing/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {

@@ -1,4 +1,4 @@
-module my_project
+module github.com/markojerkic/spring-planing
 
 go 1.24.0
 

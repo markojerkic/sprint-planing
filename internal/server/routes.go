@@ -11,7 +11,8 @@ import (
 	"github.com/coder/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"my_project/cmd/web"
+	"github.com/markojerkic/spring-planing/cmd/web"
+	"github.com/markojerkic/spring-planing/cmd/web/room"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -33,7 +34,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e.GET("/web", echo.WrapHandler(templ.Handler(web.HelloForm())))
 	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
-	e.GET("/", s.HelloWorldHandler)
+	e.GET("/", echo.WrapHandler(templ.Handler(room.CreateRoom())))
 
 	e.GET("/health", s.healthHandler)
 

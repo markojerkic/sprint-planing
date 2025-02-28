@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -9,7 +10,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"my_project/internal/database"
+	"github.com/markojerkic/spring-planing/internal/database"
 )
 
 type Server struct {
@@ -35,5 +36,6 @@ func NewServer() *http.Server {
 		WriteTimeout: 30 * time.Second,
 	}
 
+	log.Printf("Server running on port %d", NewServer.port)
 	return server
 }
