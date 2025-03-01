@@ -48,7 +48,11 @@ func (r *RoomRouter) createTicket(c echo.Context, params CreateTicketParams) err
 	}
 	c.Logger().Infof("Created ticket: %v", ticket)
 
-	tickets, err := q.GetTicketsOfRoom(c.Request().Context(), params.RoomID)
+	tickets, err := q.GetTicketsOfRoom(c.Request().Context(), dbgen.GetTicketsOfRoomParams{
+		RoomID: params.RoomID,
+		UserID: c.Get("user").(dbgen.User).ID,
+	})
+
 	if err != nil {
 		tx.Rollback()
 		c.Logger().Errorf("Error getting tickets: %v", err)

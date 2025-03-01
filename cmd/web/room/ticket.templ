@@ -2,16 +2,22 @@ package room
 
 import "github.com/markojerkic/spring-planing/internal/database/dbgen"
 import "fmt"
+import "database/sql"
 
-templ ticketThumbnail(ticket dbgen.Ticket) {
+templ ticketThumbnail(ticket dbgen.GetTicketsOfRoomRow) {
 	<div class="ticket-detail">
 		<h3>{ ticket.Name }</h3>
 		<p>{ ticket.Description }</p>
-		@estimationForm(ticket)
+		if ticket.HasEstimate {
+			@myNumericEstimation(ticket.UserEstimate.Int64)
+			@averageEstimation(ticket.Weeks, ticket.Days, ticket.Hours)
+		} else {
+			@estimationForm(ticket)
+		}
 	</div>
 }
 
-templ estimationForm(ticket dbgen.Ticket) {
+templ estimationForm(ticket dbgen.GetTicketsOfRoomRow) {
 	<form
 		class="estimation"
 		hx-post="/room/ticket/estimate"
@@ -38,6 +44,23 @@ templ estimationForm(ticket dbgen.Ticket) {
 	</form>
 }
 
+templ myNumericEstimation(estimate int64) {
+	{{
+weeks := estimate / (5 * 8)
+days := (estimate % (5 * 8)) / 8
+hours := estimate % 8
+prettyEstimate := fmt.Sprintf("%dw %dd %dh", weeks, days, hours)
+	}}
+	<span class="my-estimation">Your estimate: { prettyEstimate }</span>
+}
+
 templ myEstimation(estimate string) {
 	<span class="my-estimation">Your estimate: { estimate }</span>
+}
+
+templ averageEstimation(weeks sql.NullInt64, days sql.NullInt64, hours sql.NullInt64) {
+	{{
+estimate := fmt.Sprintf("%dw %dd %dh", weeks.Int64, days.Int64, hours.Int64)
+	}}
+	<span class="my-estimation">Average estimate: { estimate }</span>
 }

@@ -31,7 +31,7 @@ templ CreateRoom() {
 	}
 }
 
-templ roomDetail(room dbgen.GetRoomDetailsRow, tickets []dbgen.Ticket) {
+templ roomDetail(room dbgen.GetRoomDetailsRow, tickets []dbgen.GetTicketsOfRoomRow) {
 	@components.PageLayout(fmt.Sprintf("Room: %s", room.Name)) {
 		@components.Card(components.CardProps{
 			Title: room.Name,
@@ -49,7 +49,7 @@ templ roomDetail(room dbgen.GetRoomDetailsRow, tickets []dbgen.Ticket) {
 	}
 }
 
-templ ticketList(tickets []dbgen.Ticket) {
+templ ticketList(tickets []dbgen.GetTicketsOfRoomRow) {
 	<style>
     .ticket-list {
         display: flex;
