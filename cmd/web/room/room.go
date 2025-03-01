@@ -21,6 +21,7 @@ func NewRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {
 	e.GET("", echo.WrapHandler(templ.Handler(CreateRoom())))
 	e.GET("/:id", r.roomDetailsHandler)
 	e.POST("", r.createRoom)
+	e.POST("/ticket", r.createTicketHandler)
 
 	return r
 }

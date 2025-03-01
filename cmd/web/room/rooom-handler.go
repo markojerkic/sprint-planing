@@ -13,12 +13,12 @@ func (r *RoomRouter) roomDetailsHandler(c echo.Context) error {
 		return c.String(400, "Invalid room roomID")
 	}
 
-	room, err := r.roomDetailData(c, roomID)
+	room, tickets, err := r.roomDetailData(c, roomID)
 
-	return roomDetail(room).Render(c.Request().Context(), c.Response().Writer)
+	return roomDetail(room, tickets).Render(c.Request().Context(), c.Response().Writer)
 }
 
-func (r *RoomRouter) roomDetailData(c echo.Context, roomID int64) (dbgen.GetRoomDetailsRow, error) {
+func (r *RoomRouter) roomDetailData(c echo.Context, roomID int64) (dbgen.GetRoomDetailsRow, []dbgen.Ticket, error) {
 	tx, err := r.db.DB.BeginTx(c.Request().Context(), nil)
 	q := r.db.Queries.WithTx(tx)
 	defer tx.Rollback()
@@ -33,16 +33,20 @@ func (r *RoomRouter) roomDetailData(c echo.Context, roomID int64) (dbgen.GetRoom
 	if err != nil {
 		tx.Rollback()
 		c.Logger().Errorf("Error getting room details: %v", err)
-		return dbgen.GetRoomDetailsRow{}, err
+		return dbgen.GetRoomDetailsRow{}, []dbgen.Ticket{}, err
 	}
 
 	tickets, err := q.GetRoomTickets(c.Request().Context(), room.ID)
 	if err != nil {
 		tx.Rollback()
 		c.Logger().Errorf("Error getting room tickets: %v", err)
-		return dbgen.GetRoomDetailsRow{}, err
+		return dbgen.GetRoomDetailsRow{}, []dbgen.Ticket{}, err
 	}
 
-	return room, nil
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("Error committing transaction: %v", err)
+		return dbgen.GetRoomDetailsRow{}, []dbgen.Ticket{}, err
+	}
 
+	return room, tickets, nil
 }

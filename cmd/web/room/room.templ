@@ -33,11 +33,53 @@ templ CreateRoom() {
 	}
 }
 
-templ roomDetail(room dbgen.GetRoomDetailsRow) {
+templ roomDetail(room dbgen.GetRoomDetailsRow, tickets []dbgen.Ticket) {
 	@components.PageLayout(fmt.Sprintf("Room: %s", room.Name)) {
-		<div class="container">
-			<h1>{ room.Name }</h1>
-			<p>Created by: { fmt.Sprintf("%d", room.CreatedBy) }</p>
-		</div>
+		@components.Card(components.CardProps{
+			Title: room.Name,
+		}) {
+			<div>
+				<h2>Room Details</h2>
+				<p>Created by: { fmt.Sprintf("%d", room.CreatedBy) }</p>
+				<p>Created on: { room.CreatedAt.Time.Format("2006-01-02 15:04:05") }</p>
+				@createTicket(room.ID)
+			</div>
+			@ticketList(tickets)
+		}
 	}
+}
+
+templ ticketList(tickets []dbgen.Ticket) {
+	<style>
+    .ticket-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .ticket-thumbnail {
+        padding: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+</style>
+	<div id="ticket-list">
+		<h2>Tickets</h2>
+		if len(tickets) == 0 {
+			<p>No tickets in this room</p>
+		} else {
+			<div class="ticket-list">
+				for _, ticket := range tickets {
+					@ticketThumbnail(ticket)
+				}
+			</div>
+		}
+	</div>
+}
+
+templ ticketThumbnail(ticket dbgen.Ticket) {
+	<div class="ticket-thumbnail">
+		<h3>{ ticket.Name }</h3>
+		<p>{ ticket.Description }</p>
+	</div>
 }
