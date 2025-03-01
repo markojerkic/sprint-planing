@@ -55,9 +55,6 @@ body {
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   padding: 2rem;
-  width: 100%;
-  position: relative;
-  overflow: hidden;
 }
 
 .card-accent {
@@ -191,10 +188,16 @@ body {
   margin-bottom: 2rem;
 }
 
+/* on small screens, 1 column */
 .room-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .room-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .room-header {

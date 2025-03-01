@@ -12,21 +12,19 @@ templ CreateRoom() {
 				Title:     "Create a Sprint Poker Room",
 			}) {
 				<form action="/room" method="POST">
-					@components.FormInput(components.InputProps{
-						Type:        "text",
-						ID:          "roomName",
-						Name:        "roomName",
-						Label:       "Room Name",
-						Placeholder: "Enter room name",
-						Required:    true,
-						MaxLength:   50,
-						HelpText:    "Choose a descriptive name for your planning session",
-					})
-					@components.Button("Create Room", components.ButtonProps{
-						Type:    "submit",
-						IsBlock: true,
-						IsLarge: true,
-					})
+					<div class="form-group">
+						<label for="roomName" class="form-label">Room name</label>
+						<input
+							type="text"
+							id="roomName"
+							name="roomName"
+							class="form-input"
+							placeholder="Enter name of the room"
+							required
+						/>
+						<div class="form-help-text">Choose a descriptive name for your planning session</div>
+					</div>
+					<button type="submit" class="btn btn-primary">Create room</button>
 				</form>
 			}
 		</div>

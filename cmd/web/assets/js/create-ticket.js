@@ -9,7 +9,16 @@ const popoverElement = document.getElementById("create-ticket-popover");
 popoverElement.addEventListener("keydown", function (event) {
   if (event.key === "Escape") {
     console.log("Escape key pressed");
-    document.getElementById("create-ticket-popover").hidePopover();
+    popoverElement.hidePopover();
+  }
+});
+
+popoverElement.addEventListener("toggle", function (event) {
+  if (event.newState === "closed") {
+    formElement.reset();
+  }
+  if (event.newState === "open") {
+    formElement.querySelector("input[name='ticketName']").focus();
   }
 });
 

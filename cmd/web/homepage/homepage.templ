@@ -51,41 +51,6 @@ templ RoomList(rooms []dbgen.GetMyRoomsRow) {
         if (popover) {
             popover.hidePopover();
         }
-
-        // Check if browser supports Popover API
-        if (!HTMLElement.prototype.hasOwnProperty('popover')) {
-            // Convert popover to dialog
-            if (popover) {
-                popover.removeAttribute('popover');
-                popover.classList.add('dialog-fallback');
-                popover.style.display = 'none';
-
-                // Update buttons to use dialog methods
-                const openButtons = document.querySelectorAll('[popovertarget="join-room-popover"]');
-                openButtons.forEach(btn => {
-                    btn.removeAttribute('popovertarget');
-                    btn.addEventListener('click', () => {
-                        popover.style.display = 'flex';
-                    });
-                });
-
-                const closeButtons = document.querySelectorAll('[popovertargetaction="hide"]');
-                closeButtons.forEach(btn => {
-                    btn.removeAttribute('popovertargetaction');
-                    btn.removeAttribute('popovertarget');
-                    btn.addEventListener('click', () => {
-                        popover.style.display = 'none';
-                    });
-                });
-
-                // Close when clicking outside
-                window.addEventListener('click', (e) => {
-                    if (e.target === popover) {
-                        popover.style.display = 'none';
-                    }
-                });
-            }
-        }
     });
 </script>
 	}
