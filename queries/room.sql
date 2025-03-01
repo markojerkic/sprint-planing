@@ -18,3 +18,9 @@ SELECT
     FROM room_user
 JOIN room ON room.id = room_user.room_id
 WHERE room_user.user_id = :id;
+
+-- name: GetRoomDetails :one
+SELECT
+    room.*
+FROM room
+WHERE room.id = ?;

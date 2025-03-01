@@ -1,6 +1,8 @@
 package room
 
 import "github.com/markojerkic/spring-planing/cmd/web/components"
+import "github.com/markojerkic/spring-planing/internal/database/dbgen"
+import "fmt"
 
 templ CreateRoom() {
 	@components.PageLayout("Create Room") {
@@ -27,6 +29,15 @@ templ CreateRoom() {
 					})
 				</form>
 			}
+		</div>
+	}
+}
+
+templ roomDetail(room dbgen.Room) {
+	@components.PageLayout(fmt.Sprintf("Room: %s", room.Name)) {
+		<div class="container">
+			<h1>{ room.Name }</h1>
+			<p>Created by: { fmt.Sprintf("%d", room.CreatedBy) }</p>
 		</div>
 	}
 }
