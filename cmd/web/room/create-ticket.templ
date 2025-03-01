@@ -3,52 +3,41 @@ package room
 import "fmt"
 
 templ createTicket(roomId int64) {
-	<script type="module" src="/assets/js/create-ticket.js"></script>
-	<button type="button" class="btn btn-primary" popovertarget="create-ticket-popover" popovertargetaction="show">
-		Create
-		Ticket
-	</button>
-	<div id="create-ticket-popover" popover="manual" class="popover-container">
-		<div class="popover-content">
-			<div class="popover-header">
-				<h2>Create new ticket</h2>
-				<button class="close-btn" popovertarget="create-ticket-popover" popovertargetaction="hide">
-					&times;
-				</button>
-			</div>
-			<div class="popover-body" id="join-room-form-container">
-				@createTicketForm(roomId)
-			</div>
-		</div>
-	</div>
+<script type="module" src="/assets/js/create-ticket.js"></script>
+<button type="button" class="btn btn-primary" popovertarget="create-ticket-popover" popovertargetaction="show">
+    Create
+    Ticket
+</button>
+<div id="create-ticket-popover" popover="manual" class="popover-container">
+    <div class="popover-content">
+        <div class="popover-header">
+            <h2>Create new ticket</h2>
+            <button class="close-btn" popovertarget="create-ticket-popover" popovertargetaction="hide">
+                &times;
+            </button>
+        </div>
+        <div class="popover-body" id="join-room-form-container">
+            @createTicketForm(roomId)
+        </div>
+    </div>
+</div>
 }
 
 templ createTicketForm(roomId int64) {
-	<form hx-post="/room/ticket" hx-target="#ticket-list" id="ticket-form">
-		<input type="hidden" name="roomId" value={ fmt.Sprintf("%d", roomId) }/>
-		<div class="form-group">
-			<label for="ticketName" class="form-label">Ticket name</label>
-			<input
-				type="text"
-				id="ticketName"
-				name="ticketName"
-				class="form-input"
-				placeholder="Enter name of the ticket"
-				required
-			/>
-			<div class="form-help-text">Enter the title of the ticket</div>
-		</div>
-		<div class="form-group">
-			<label for="ticketName" class="form-label">Description</label>
-			<textarea
-				id="ticketDescription"
-				name="ticketDescription"
-				class="form-input"
-				placeholder="Enter description"
-				required
-			></textarea>
-			<div class="form-help-text">Enter the details of the ticket</div>
-		</div>
-		<button type="submit" class="btn btn-primary">Create Ticket</button>
-	</form>
+<form hx-post="/room/ticket" hx-target="#ticket-list" id="ticket-form">
+    <input type="hidden" name="roomId" value={ fmt.Sprintf("%d", roomId) } />
+    <div class="form-group">
+        <label for="ticketName" class="form-label">Ticket name</label>
+        <input type="text" id="ticketName" name="ticketName" class="form-input" placeholder="Enter name of the ticket"
+            required />
+        <div class="form-help-text">Enter the title of the ticket</div>
+    </div>
+    <div class="form-group">
+        <label for="ticketName" class="form-label">Description</label>
+        <textarea id="ticketDescription" name="ticketDescription" class="form-input" placeholder="Enter description"
+            required></textarea>
+        <div class="form-help-text">Enter the details of the ticket</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Ticket</button>
+</form>
 }

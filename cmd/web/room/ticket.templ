@@ -1,0 +1,10 @@
+package room
+
+import "github.com/markojerkic/spring-planing/internal/database/dbgen"
+
+templ ticketThumbnail(ticket dbgen.Ticket) {
+	<div class="ticket-detail">
+		<h3>{ ticket.Name }</h3>
+		<p>{ ticket.Description }</p>
+	</div>
+}

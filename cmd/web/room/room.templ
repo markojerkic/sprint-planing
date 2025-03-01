@@ -52,15 +52,10 @@ templ roomDetail(room dbgen.GetRoomDetailsRow, tickets []dbgen.Ticket) {
 templ ticketList(tickets []dbgen.Ticket) {
 	<style>
     .ticket-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        display: flex;
+        flex-direction: column;
+        jusitfy-content: center;
         gap: 1rem;
-    }
-
-    .ticket-thumbnail {
-        padding: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 5px;
     }
 </style>
 	<div id="ticket-list">
@@ -74,12 +69,5 @@ templ ticketList(tickets []dbgen.Ticket) {
 				}
 			</div>
 		}
-	</div>
-}
-
-templ ticketThumbnail(ticket dbgen.Ticket) {
-	<div class="ticket-thumbnail">
-		<h3>{ ticket.Name }</h3>
-		<p>{ ticket.Description }</p>
 	</div>
 }

@@ -89,21 +89,30 @@ clean:
 	@echo "Cleaning..."
 	@rm -f main
 
+
+dev-run:
+	@echo "Building..."
+	@templ generate
+	@sqlc generate
+	@go run cmd/api/main.go
+
+install-watchexec:
+	@if ! command -v watchexec > /dev/null; then \
+		read -p "watchexec is not installed on your machine. Do you want to install it? [Y/n] " choice; \
+		if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
+			apt-get install watchexec; \
+			if [ ! -x "$$(command -v watchexec)" ]; then \
+				echo "watchexec installation failed"; \
+			fi; \
+		else \
+			echo "You chose not to install watchexec. Exiting..."; \
+			exit 1; \
+		fi; \
+	fi;
+
+
 # Live Reload
-watch:
-	@if command -v air > /dev/null; then \
-            air; \
-            echo "Watching...";\
-        else \
-            read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
-            if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
-                go install github.com/air-verse/air@latest; \
-                air; \
-                echo "Watching...";\
-            else \
-                echo "You chose not to install air. Exiting..."; \
-                exit 1; \
-            fi; \
-        fi
+watch: install-watchexec
+	@watchexec -r -e go,templ,html,css,js,sql -d 1s -- make dev-run
 
 .PHONY: all build run test clean watch templ-install sqlc-install
