@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "allowJs": true,
+        "noEmit": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "node"
+    },
+    "include": [
+        "**/*.js",
+        "**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

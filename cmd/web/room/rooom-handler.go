@@ -14,6 +14,9 @@ func (r *RoomRouter) roomDetailsHandler(c echo.Context) error {
 	}
 
 	room, tickets, err := r.roomDetailData(c, roomID)
+	if err != nil {
+		return c.String(500, "Error getting room details")
+	}
 
 	return roomDetail(room, tickets).Render(c.Request().Context(), c.Response().Writer)
 }
@@ -36,7 +39,7 @@ func (r *RoomRouter) roomDetailData(c echo.Context, roomID int64) (dbgen.GetRoom
 		return dbgen.GetRoomDetailsRow{}, []dbgen.Ticket{}, err
 	}
 
-	tickets, err := q.GetRoomTickets(c.Request().Context(), room.ID)
+	tickets, err := q.GetTicketsOfRoom(c.Request().Context(), roomID)
 	if err != nil {
 		tx.Rollback()
 		c.Logger().Errorf("Error getting room tickets: %v", err)

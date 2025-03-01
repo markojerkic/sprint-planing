@@ -24,8 +24,3 @@ SELECT room.*,
        room.created_by = :user_id as is_owner
 FROM room
 WHERE room.id = :id;
-
--- name: GetRoomTickets :many
-select ticket.*
-from ticket
-where ticket.room_id = :room_id;

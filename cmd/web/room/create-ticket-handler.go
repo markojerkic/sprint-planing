@@ -17,7 +17,7 @@ func (r *RoomRouter) createTicketHandler(c echo.Context) error {
 		return c.String(400, "Invalid request")
 	}
 
-	return c.JSON(200, params)
+	return r.createTicket(c, params)
 }
 
 func (r *RoomRouter) createTicket(c echo.Context, params CreateTicketParams) error {
