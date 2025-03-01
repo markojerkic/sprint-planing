@@ -33,7 +33,7 @@ templ CreateRoom() {
 	}
 }
 
-templ roomDetail(room dbgen.Room) {
+templ roomDetail(room dbgen.GetRoomDetailsRow) {
 	@components.PageLayout(fmt.Sprintf("Room: %s", room.Name)) {
 		<div class="container">
 			<h1>{ room.Name }</h1>

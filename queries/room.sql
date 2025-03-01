@@ -20,7 +20,12 @@ JOIN room ON room.id = room_user.room_id
 WHERE room_user.user_id = :id;
 
 -- name: GetRoomDetails :one
-SELECT
-    room.*
+SELECT room.*,
+       room.created_by = :user_id as is_owner
 FROM room
-WHERE room.id = ?;
+WHERE room.id = :id;
+
+-- name: GetRoomTickets :many
+select ticket.*
+from ticket
+where ticket.room_id = :room_id;
