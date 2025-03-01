@@ -14,13 +14,7 @@ templ RoomList(rooms []dbgen.GetMyRoomsRow) {
 			<h1 class="mb-4">My Rooms</h1>
 			<div class="room-actions-container mb-4">
 				<a href="/room" class="btn btn-primary mr-3">Create Room</a>
-				<button
-					class="btn"
-					hx-get="/join-room-form"
-					hx-target="#join-room-modal"
-					hx-trigger="click"
-					_="on click set #join-room-modal.style.display to 'block'"
-				>
+				<button class="btn" popovertarget="join-room-popover">
 					Join Existing Room
 				</button>
 			</div>
@@ -33,21 +27,67 @@ templ RoomList(rooms []dbgen.GetMyRoomsRow) {
 					}
 				</div>
 			}
-			<!-- Modal for joining a room -->
-			<div id="join-room-modal" class="modal" style="display: none;">
-				<div class="modal-content">
-					<div class="modal-header">
+			<!-- Modern popover for joining a room -->
+			<div id="join-room-popover" popover="manual" class="popover-container">
+				<div class="popover-content">
+					<div class="popover-header">
 						<h2>Join Existing Room</h2>
-						<span class="close" _="on click set #join-room-modal.style.display to 'none'">&times;</span>
+						<button class="close-btn" popovertarget="join-room-popover" popovertargetaction="hide">
+							&times;
+						</button>
 					</div>
-					<div class="modal-body" id="join-room-form-container">
+					<div class="popover-body" id="join-room-form-container">
 						@joinRoomForm()
 					</div>
 				</div>
 			</div>
 		</div>
-		<!-- Include Hyperscript for simple interactions -->
-		<script src="https://unpkg.com/hyperscript.org@0.9.11"></script>
+		<script>
+    // Initialize popover behavior when the page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        const popover = document.getElementById('join-room-popover');
+
+        // Hide popover initially (in case it's showing on load)
+        if (popover) {
+            popover.hidePopover();
+        }
+
+        // Check if browser supports Popover API
+        if (!HTMLElement.prototype.hasOwnProperty('popover')) {
+            // Convert popover to dialog
+            if (popover) {
+                popover.removeAttribute('popover');
+                popover.classList.add('dialog-fallback');
+                popover.style.display = 'none';
+
+                // Update buttons to use dialog methods
+                const openButtons = document.querySelectorAll('[popovertarget="join-room-popover"]');
+                openButtons.forEach(btn => {
+                    btn.removeAttribute('popovertarget');
+                    btn.addEventListener('click', () => {
+                        popover.style.display = 'flex';
+                    });
+                });
+
+                const closeButtons = document.querySelectorAll('[popovertargetaction="hide"]');
+                closeButtons.forEach(btn => {
+                    btn.removeAttribute('popovertargetaction');
+                    btn.removeAttribute('popovertarget');
+                    btn.addEventListener('click', () => {
+                        popover.style.display = 'none';
+                    });
+                });
+
+                // Close when clicking outside
+                window.addEventListener('click', (e) => {
+                    if (e.target === popover) {
+                        popover.style.display = 'none';
+                    }
+                });
+            }
+        }
+    });
+</script>
 	}
 }
 
@@ -57,6 +97,15 @@ templ joinRoomForm() {
 			<label for="roomId" class="form-label">Room ID</label>
 			<input type="text" id="roomId" name="roomId" class="form-input" placeholder="Enter room ID" required/>
 			<div class="form-help-text">Enter the ID of the room you want to join</div>
+		</div>
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary">Join Room</button>
+			<button
+				type="button"
+				class="btn btn-secondary ml-2"
+				popovertarget="join-room-popover"
+				popovertargetaction="hide"
+			>Cancel</button>
 		</div>
 	</form>
 }
@@ -86,25 +135,6 @@ templ noRooms() {
 	</div>
 }
 
-// Join Room Form - will be loaded via HTMX
-templ JoinRoomForm() {
-	<form id="join-room-form" hx-post="/join-room" hx-target="#join-room-form-container">
-		<div class="form-group">
-			<label for="roomId" class="form-label">Room ID</label>
-			<input type="text" id="roomId" name="roomId" class="form-input" placeholder="Enter room ID" required/>
-			<div class="form-help-text">Enter the ID of the room you want to join</div>
-		</div>
-		<div class="form-actions">
-			<button type="submit" class="btn btn-primary">Join Room</button>
-			<button
-				type="button"
-				class="btn btn-secondary ml-2"
-				_="on click set #join-room-modal.style.display to 'none'"
-			>Cancel</button>
-		</div>
-	</form>
-}
-
 // Success feedback after joining a room
 templ JoinRoomSuccess(roomId string) {
 	<div class="alert alert-success">
@@ -115,7 +145,8 @@ templ JoinRoomSuccess(roomId string) {
 		<button
 			type="button"
 			class="btn btn-secondary ml-2"
-			_="on click set #join-room-modal.style.display to 'none'"
+			popovertarget="join-room-popover"
+			popovertargetaction="hide"
 		>Close</button>
 	</div>
 }
@@ -142,7 +173,8 @@ templ JoinRoomError(errorMsg string) {
 			<button
 				type="button"
 				class="btn btn-secondary ml-2"
-				_="on click set #join-room-modal.style.display to 'none'"
+				popovertarget="join-room-popover"
+				popovertargetaction="hide"
 			>Cancel</button>
 		</div>
 	</form>
