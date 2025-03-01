@@ -1,10 +1,43 @@
 package room
 
 import "github.com/markojerkic/spring-planing/internal/database/dbgen"
+import "fmt"
 
 templ ticketThumbnail(ticket dbgen.Ticket) {
 	<div class="ticket-detail">
 		<h3>{ ticket.Name }</h3>
 		<p>{ ticket.Description }</p>
+		@estimationForm(ticket)
 	</div>
+}
+
+templ estimationForm(ticket dbgen.Ticket) {
+	<form
+		class="estimation"
+		hx-post="/room/ticket/estimate"
+		hx-swap="outerHTML"
+		data-estimation-form={ fmt.Sprintf("%d",
+    ticket.ID) }
+	>
+		<input type="hidden" name="ticketID" value={ fmt.Sprintf("%d", ticket.ID) }/>
+		<div class="estimation-form">
+			<div class="estimation-form-group">
+				<label for="weekEstimate" class="form-label">Weeks</label>
+				<input type="number" name="weekEstimate" class="form-input" placeholder="W"/>
+			</div>
+			<div class="estimation-form-group">
+				<label for="dayEstimate" class="form-label">Days</label>
+				<input type="number" name="dayEstimate" class="form-input" placeholder="D"/>
+			</div>
+			<div class="estimation-form-group">
+				<label for="hourEstimate" class="form-label">Hours</label>
+				<input type="number" name="hourEstimate" class="form-input" placeholder="H"/>
+			</div>
+		</div>
+		<button type="submit" class="btn btn-primary">Estimate</button>
+	</form>
+}
+
+templ myEstimation(estimate string) {
+	<span class="my-estimation">Your estimate: { estimate }</span>
 }

@@ -21,6 +21,7 @@ func NewRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {
 	e.GET("/:id", r.roomDetailsHandler)
 	e.POST("", r.createRoom)
 	e.POST("/ticket", r.createTicketHandler)
+	e.POST("/ticket/estimate", r.estimateTicketHandler)
 
 	return r
 }

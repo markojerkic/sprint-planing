@@ -64,7 +64,6 @@ func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 				if err == nil {
 					// User found, set in context and proceed
 					c.Set("user", user)
-					log.Printf("User found: %v", user)
 					return next(c)
 				}
 				// Invalid user ID, will create new user below
