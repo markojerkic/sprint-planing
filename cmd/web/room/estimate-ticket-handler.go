@@ -62,7 +62,11 @@ func (r *RoomRouter) estimateTicket(c echo.Context, params EstimateTicketParams,
 		return c.String(500, "Error committing transaction")
 	}
 
-	return myEstimation(prettyEstimate).Render(c.Request().Context(), c.Response().Writer)
+	go func() {
+		r.updateAverageEstimateForTicket(params.TicketID)
+	}()
+
+	return myEstimation(params.TicketID, prettyEstimate).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func formatEstimate(estimate int64) string {

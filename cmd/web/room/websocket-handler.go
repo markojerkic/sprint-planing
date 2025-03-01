@@ -3,6 +3,7 @@ package room
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"sync"
@@ -71,4 +72,47 @@ func (r *RoomRouter) sendNewTicket(ticket dbgen.Ticket) {
 	}
 	hub.mutex.Unlock()
 
+}
+
+func (r *RoomRouter) updateAverageEstimateForTicket(ticketID int64) {
+	tx, err := r.db.DB.BeginTx(context.Background(), nil)
+	if err != nil {
+		log.Printf("Error creating transaction: %v", err)
+		return
+	}
+	defer tx.Rollback()
+
+	q := r.db.Queries.WithTx(tx)
+	estimation, err := q.GetTicketAverageEstimation(context.Background(), ticketID)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Error fetching averate estimation of ticket %v", err)
+		return
+	}
+
+	answeredByUsers, err := q.GetHowManyUsersHaveEstimated(context.Background(), ticketID)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Error fetching how many users have estimated ticket %v", err)
+		return
+	}
+
+	prettyEstimation := fmt.Sprintf("%dw %dd %dh", estimation.Weeks, estimation.Days, estimation.Hours)
+	prettyAnsweredByUsers := fmt.Sprintf("%d/%d", answeredByUsers.EstimatedUsers, answeredByUsers.TotalUsers)
+
+	renderedUpdate := new(bytes.Buffer)
+	if err := updatedEstimation(ticketID, prettyEstimation, prettyAnsweredByUsers).Render(context.Background(), renderedUpdate); err != nil {
+		log.Printf("Error rendering ticket thumbnail: %v", err)
+		return
+	}
+
+	hub.mutex.Lock()
+	for conn := range hub.rooms[estimation.RoomID] {
+		if err := conn.WriteMessage(websocket.TextMessage, renderedUpdate.Bytes()); err != nil {
+			log.Printf("Error writing message to websocket: %v", err)
+			conn.Close()
+			delete(hub.rooms[estimation.RoomID], conn)
+		}
+	}
+	hub.mutex.Unlock()
 }
