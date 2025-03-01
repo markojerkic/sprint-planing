@@ -12,21 +12,140 @@ templ RoomList(rooms []dbgen.GetMyRoomsRow) {
 	@components.PageLayout("Homepage") {
 		<div class="container">
 			<h1 class="mb-4">My Rooms</h1>
+			<div class="room-actions-container mb-4">
+				<a href="/room" class="btn btn-primary mr-3">Create Room</a>
+				<button
+					class="btn"
+					hx-get="/join-room-form"
+					hx-target="#join-room-modal"
+					hx-trigger="click"
+					_="on click set #join-room-modal.style.display to 'block'"
+				>
+					Join Existing Room
+				</button>
+			</div>
 			if len(rooms) == 0 {
-				<p>You don't have any rooms yet. Create one now!</p>
-				@createRoomButton()
+				@noRooms()
 			} else {
-				@createRoomButton()
-				for _, room := range rooms {
-					@roomCard(room)
-				}
+				<div class="room-list pt-4">
+					for _, room := range rooms {
+						@roomCard(room)
+					}
+				</div>
 			}
+			<!-- Modal for joining a room -->
+			<div id="join-room-modal" class="modal" style="display: none;">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h2>Join Existing Room</h2>
+						<span class="close" _="on click set #join-room-modal.style.display to 'none'">&times;</span>
+					</div>
+					<div class="modal-body" id="join-room-form-container">
+						@joinRoomForm()
+					</div>
+				</div>
+			</div>
 		</div>
+		<!-- Include Hyperscript for simple interactions -->
+		<script src="https://unpkg.com/hyperscript.org@0.9.11"></script>
 	}
 }
 
-templ createRoomButton() {
-	<a href="/room" class="btn">Create Room</a>
+templ joinRoomForm() {
+	<form id="join-room-form" hx-post="/join-room" hx-target="#join-room-form-container">
+		<div class="form-group">
+			<label for="roomId" class="form-label">Room ID</label>
+			<input type="text" id="roomId" name="roomId" class="form-input" placeholder="Enter room ID" required/>
+			<div class="form-help-text">Enter the ID of the room you want to join</div>
+		</div>
+	</form>
+}
+
+templ noRooms() {
+	<div class="empty-state">
+		<div class="empty-state-icon">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="48"
+				height="48"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+				<path d="M16 2v5"></path>
+				<path d="M8 2v5"></path>
+				<path d="M3 10h18"></path>
+			</svg>
+		</div>
+		<h3 class="empty-state-title">No Rooms Found</h3>
+		<p class="empty-state-description">You haven't created or joined any rooms yet</p>
+	</div>
+}
+
+// Join Room Form - will be loaded via HTMX
+templ JoinRoomForm() {
+	<form id="join-room-form" hx-post="/join-room" hx-target="#join-room-form-container">
+		<div class="form-group">
+			<label for="roomId" class="form-label">Room ID</label>
+			<input type="text" id="roomId" name="roomId" class="form-input" placeholder="Enter room ID" required/>
+			<div class="form-help-text">Enter the ID of the room you want to join</div>
+		</div>
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary">Join Room</button>
+			<button
+				type="button"
+				class="btn btn-secondary ml-2"
+				_="on click set #join-room-modal.style.display to 'none'"
+			>Cancel</button>
+		</div>
+	</form>
+}
+
+// Success feedback after joining a room
+templ JoinRoomSuccess(roomId string) {
+	<div class="alert alert-success">
+		Successfully joined the room!
+	</div>
+	<div class="form-actions mt-3">
+		<a href={ templ.SafeURL(fmt.Sprintf("/room/%s", roomId)) } class="btn btn-primary">Go to Room</a>
+		<button
+			type="button"
+			class="btn btn-secondary ml-2"
+			_="on click set #join-room-modal.style.display to 'none'"
+		>Close</button>
+	</div>
+}
+
+// Error feedback when joining fails
+templ JoinRoomError(errorMsg string) {
+	<div class="alert alert-error">
+		{ errorMsg }
+	</div>
+	<form id="join-room-form" hx-post="/join-room" hx-target="#join-room-form-container">
+		<div class="form-group">
+			<label for="roomId" class="form-label">Room ID</label>
+			<input
+				type="text"
+				id="roomId"
+				name="roomId"
+				class="form-input input-error"
+				placeholder="Enter room ID"
+				required
+			/>
+		</div>
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary">Try Again</button>
+			<button
+				type="button"
+				class="btn btn-secondary ml-2"
+				_="on click set #join-room-modal.style.display to 'none'"
+			>Cancel</button>
+		</div>
+	</form>
 }
 
 templ roomCard(room dbgen.GetMyRoomsRow) {
@@ -49,7 +168,13 @@ templ roomCard(room dbgen.GetMyRoomsRow) {
 			<div class="room-actions">
 				<a href={ templ.SafeURL(fmt.Sprintf("/room/%d", room.ID)) } class="btn mr-2">Join Room</a>
 				if room.IsOwner {
-					<button class="btn btn-secondary">
+					<button
+						class="btn btn-secondary"
+						hx-delete={ fmt.Sprintf("/room/%d", room.ID) }
+						hx-confirm="Are you sure you want to delete this room? This action cannot be undone."
+						hx-target="closest .card"
+						hx-swap="outerHTML"
+					>
 						Delete
 					</button>
 				}
