@@ -16,6 +16,12 @@ func (r *RoomRouter) createTicketHandler(c echo.Context) error {
 	if err := c.Bind(&params); err != nil {
 		return c.String(400, "Invalid request")
 	}
+	if err := c.Validate(params); err != nil {
+		c.Logger().Errorf("Error validating form: %v", err)
+		c.Response().Header().Set("HX-Target", "#ticket-form")
+		c.Response().Header().Set("HX-Swap", "beforeend")
+		return c.HTML(400, "<div class='error-message'>Form validation failed. Please check your input.</div>")
+	}
 
 	return r.createTicket(c, params)
 }

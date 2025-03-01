@@ -40,7 +40,9 @@ templ roomDetail(room dbgen.GetRoomDetailsRow, tickets []dbgen.Ticket) {
 				<h2>Room Details</h2>
 				<p>Created by: { fmt.Sprintf("%d", room.CreatedBy) }</p>
 				<p>Created on: { room.CreatedAt.Time.Format("2006-01-02 15:04:05") }</p>
-				@createTicket(room.ID)
+				if room.IsOwner {
+					@createTicket(room.ID)
+				}
 			</div>
 			@ticketList(tickets)
 		}

@@ -4,11 +4,6 @@ INSERT INTO
 VALUES
   (?, ?) RETURNING *;
 
--- name: AddUserToRoom :exec
-INSERT INTO
-  room_user (room_id, user_id)
-VALUES  (?, ?);
-
 -- name: GetMyRooms :many
 SELECT
     room.id,
@@ -24,3 +19,9 @@ SELECT room.*,
        room.created_by = :user_id as is_owner
 FROM room
 WHERE room.id = :id;
+
+-- name: AddUserToRoom :exec
+INSERT INTO
+  room_user (room_id, user_id)
+VALUES  (?, ?)
+ON CONFLICT (room_id, user_id) DO NOTHING;

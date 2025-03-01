@@ -18,6 +18,10 @@ func (r *RoomRouter) roomDetailsHandler(c echo.Context) error {
 		return c.String(500, "Error getting room details")
 	}
 
+	if err := r.addUserToRoomIfNotAlreadyThere(c, c.Get("user").(dbgen.User), roomID); err != nil {
+		return c.String(500, "Error adding user to room")
+	}
+
 	return roomDetail(room, tickets).Render(c.Request().Context(), c.Response().Writer)
 }
 
@@ -52,4 +56,11 @@ func (r *RoomRouter) roomDetailData(c echo.Context, roomID int64) (dbgen.GetRoom
 	}
 
 	return room, tickets, nil
+}
+
+func (r *RoomRouter) addUserToRoomIfNotAlreadyThere(c echo.Context, user dbgen.User, roomID int64) error {
+	return r.db.Queries.AddUserToRoom(c.Request().Context(), dbgen.AddUserToRoomParams{
+		UserID: user.ID,
+		RoomID: roomID,
+	})
 }

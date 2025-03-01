@@ -23,15 +23,21 @@ popoverElement.addEventListener("toggle", function (event) {
 });
 
 // Close popover when successfully created a ticket
-formElement.addEventListener("htmx:afterRequest", (event) =>
-  resetFormOnSuccess(event.detail),
+formElement.addEventListener(
+  "htmx:afterRequest",
+  (event) => resetFormOnSuccess(event.detail),
+  popoverElement.hidePopover(),
 );
 
 /**
  * @param {HtmxResponseInfo} event
  */
 function resetFormOnSuccess(event) {
-  console.log("afterRequest", formElement);
+  if (event.xhr.status !== 200) {
+    console.error("Request failed");
+    return;
+  }
+
   formElement.reset();
   document.getElementById("create-ticket-popover").hidePopover();
 }

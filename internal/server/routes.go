@@ -9,6 +9,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/coder/websocket"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/markojerkic/spring-planing/cmd/web"
@@ -16,8 +17,17 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/room"
 )
 
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i any) error {
+	return cv.validator.Struct(i)
+}
+
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
 	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 

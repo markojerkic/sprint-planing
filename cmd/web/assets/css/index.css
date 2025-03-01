@@ -49,6 +49,12 @@ body {
   padding: 0 1rem;
 }
 
+.error-message {
+  color: var(--error);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
 /* Card components */
 .card {
   background-color: var(--card-bg);
