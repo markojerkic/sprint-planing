@@ -4,8 +4,14 @@ import "github.com/markojerkic/spring-planing/internal/database/dbgen"
 import "fmt"
 import "database/sql"
 
+templ toTopOfListTicketThumbnail(ticket dbgen.GetTicketsOfRoomRow) {
+	<div hx-swap-oob="afterbegin:#ticket-list">
+		@ticketThumbnail(ticket)
+	</div>
+}
+
 templ ticketThumbnail(ticket dbgen.GetTicketsOfRoomRow) {
-	<div class="ticket-detail">
+	<div class="ticket-detail" data-ticket-id={ fmt.Sprintf("%d", ticket.ID) }>
 		<h3>{ ticket.Name }</h3>
 		<p>{ ticket.Description }</p>
 		if ticket.HasEstimate {

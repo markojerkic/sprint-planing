@@ -63,6 +63,7 @@ func (r *RoomRouter) createTicket(c echo.Context, params CreateTicketParams) err
 		c.Logger().Errorf("Error committing transaction: %v", err)
 		return c.String(500, "Error committing transaction")
 	}
+	r.sendNewTicket(ticket)
 
 	return ticketList(tickets).Render(c.Request().Context(), c.Response().Writer)
 }

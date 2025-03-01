@@ -18,7 +18,9 @@ FROM
     LEFT JOIN ticket_user_estimate ON ticket_user_estimate.ticket_id = ticket.id
         AND ticket_user_estimate.user_id = :user_id
 WHERE
-room_id = :room_id;
+room_id = :room_id
+ORDER BY
+  ticket.created_at DESC;
 
 -- name: EstimateTicket :one
 INSERT INTO
