@@ -2,7 +2,6 @@ package room
 
 import "github.com/markojerkic/spring-planing/cmd/web/components"
 
-import "github.com/markojerkic/spring-planing/internal/database/dbgen"
 import "fmt"
 import "time"
 import "github.com/markojerkic/spring-planing/cmd/web/components/ticket"
@@ -12,7 +11,7 @@ type RoomPageProps struct {
 	Name               string
 	CreatedAt          time.Time
 	IsCurrentUserOwner bool
-	Tickets            []dbgen.GetTicketsOfRoomRow
+	Tickets            []ticket.TicketDetailProps
 }
 
 templ RoomPage(room RoomPageProps) {
@@ -27,8 +26,7 @@ templ RoomPage(room RoomPageProps) {
 					@ticket.CreateTicket(room.ID)
 				}
 			</div>
-			<p>TICKET LIST</p>
-			<!--	@ticketList(tickets) -->
+			@ticket.TicketList(room.Tickets)
 		}
 	}
 }

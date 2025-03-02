@@ -13,8 +13,9 @@ import (
 )
 
 type RoomRouter struct {
-	roomService *service.RoomService
-	group       *echo.Group
+	roomService   *service.RoomService
+	ticketService *service.TicketService
+	group         *echo.Group
 }
 
 func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
@@ -44,18 +45,26 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		return ctx.String(500, "Error getting room")
 	}
 
+	roomTickets, err := r.ticketService.GetTicketsOfRoom(ctx.Request().Context(), roomID, user.ID, nil)
+	if err != nil {
+		ctx.Logger().Errorf("Error getting room tickets: %v", err)
+		return ctx.String(500, "Error getting room tickets")
+	}
+
 	return room.RoomPage(room.RoomPageProps{
 		ID:                 roomDetails.ID,
 		Name:               roomDetails.Name,
 		CreatedAt:          roomDetails.CreatedAt.Time,
 		IsCurrentUserOwner: roomDetails.IsOwner,
+		Tickets:            roomTickets,
 	}).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
 
 func newRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {
 	r := &RoomRouter{
-		roomService: service.NewRoomService(db),
-		group:       group,
+		roomService:   service.NewRoomService(db),
+		ticketService: service.NewTicketService(db),
+		group:         group,
 	}
 	e := r.group
 	e.GET("", echo.WrapHandler(templ.Handler(room.CreateRoom())))
