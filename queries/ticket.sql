@@ -8,18 +8,33 @@ VALUES
 SELECT
     ticket.*,
     ticket_user_estimate_avg.avg_estimate,
-    ticket_user_estimate_avg.estimated_users,
     ticket_user_estimate.estimate IS NOT NULL as has_estimate,
-    ticket_user_estimate.estimate as user_estimate
+    ticket_user_estimate.estimate as user_estimate,
+    (
+        SELECT
+            COUNT(DISTINCT tue.user_id)
+        FROM
+            ticket_user_estimate tue
+        WHERE
+            tue.ticket_id = ticket.id
+    ) AS users_estimated,
+    (
+        SELECT
+            COUNT(DISTINCT ru.user_id)
+        FROM
+            room_user ru
+        WHERE
+            ru.room_id = ticket.room_id
+    ) AS total_users_in_room
 FROM
-  ticket
+    ticket
     LEFT JOIN ticket_user_estimate_avg ON ticket_user_estimate_avg.ticket_id = ticket.id
     LEFT JOIN ticket_user_estimate ON ticket_user_estimate.ticket_id = ticket.id
         AND ticket_user_estimate.user_id = :user_id
 WHERE
-room_id = :room_id
+    ticket.room_id = :room_id
 ORDER BY
-  ticket.created_at DESC;
+    ticket.created_at DESC;
 
 -- name: GetTicketAverageEstimation :one
 select

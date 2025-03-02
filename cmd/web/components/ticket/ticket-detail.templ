@@ -11,6 +11,7 @@ type TicketDetailProps struct {
 	UserEstimate    string
 	AnsweredBy      string
 	AverageEstimate string
+	EstimatedBy     string
 }
 
 templ TicketDetail(props TicketDetailProps) {
@@ -25,7 +26,7 @@ templ TicketDetail(props TicketDetailProps) {
 			}
 		</div>
 		if props.HasEstimate || props.IsClosed {
-			@EstimationDetail(props.ID, props.UserEstimate, props.AverageEstimate)
+			@EstimationDetail(props.ID, props.UserEstimate, props.AverageEstimate, props.EstimatedBy)
 		}
 	</div>
 }

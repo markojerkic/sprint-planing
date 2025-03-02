@@ -121,6 +121,7 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 			AnsweredBy:      "TBD",
 			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
 			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),
+			EstimatedBy:     fmt.Sprintf("%d/%d", t.UsersEstimated, t.TotalUsersInRoom),
 		}
 	}
 
