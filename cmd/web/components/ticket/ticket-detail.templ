@@ -3,27 +3,29 @@ package ticket
 import "fmt"
 
 type TicketDetailProps struct {
-	ID           int64
-	Name         string
-	Description  string
-	HasEstimate  bool
-	IsClosed     bool
-	UserEstimate string
-	AnsweredBy   string
+	ID              int64
+	Name            string
+	Description     string
+	HasEstimate     bool
+	IsClosed        bool
+	UserEstimate    string
+	AnsweredBy      string
+	AverageEstimate string
 }
 
 templ TicketDetail(props TicketDetailProps) {
 	<div class="ticket-detail" data-ticket-id={ fmt.Sprintf("%d", props.ID) }>
 		<h3>{ props.Name }</h3>
 		<p>{ props.Description }</p>
-		<div>
+		<div data-estimation-ticket-id={ fmt.Sprintf("%d", props.ID) }>
 			if props.HasEstimate {
-				<p>ESTIMATE</p>
-			} else if props.IsClosed {
-				<p>CLOSED</p>
-			} else {
-				<p>ESTIMATE FORM</p>
+				{ props.UserEstimate }
+			} else if !props.IsClosed {
+				@estimationForm(props.ID)
 			}
 		</div>
+		if props.HasEstimate || props.IsClosed {
+			@EstimationDetail(props.ID, props.UserEstimate, props.AverageEstimate)
+		}
 	</div>
 }

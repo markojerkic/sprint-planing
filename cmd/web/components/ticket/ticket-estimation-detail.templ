@@ -1,0 +1,9 @@
+package ticket
+
+import "fmt"
+
+templ EstimationDetail(ticketID int64, usersEstimate string, averateEstimate string) {
+	<div data-ticket-average-estimation={ fmt.Sprintf("%d", ticketID) }>
+		<p>Average estimate: { averateEstimate }</p>
+	</div>
+}

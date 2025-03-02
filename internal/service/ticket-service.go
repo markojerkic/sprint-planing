@@ -21,6 +21,43 @@ type CreateTicketForm struct {
 	RoomID            int64  `json:"roomID" form:"roomID" validate:"required"`
 }
 
+type EstimateTicketForm struct {
+	TicketID     int64 `json:"ticketID" form:"ticketID" validate:"required"`
+	WeekEstimate int64 `json:"weekEstimate" form:"weekEstimate" default:"0"`
+	DayEstimate  int64 `json:"dayEstimate" form:"dayEstimate" default:"0"`
+	HourEstimate int64 `json:"hourEstimate" form:"hourEstimate" default:"0"`
+}
+
+func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form EstimateTicketForm) (string, error) {
+	tx, err := t.db.DB.BeginTx(ctx, nil)
+	if err != nil {
+		slog.Error("Error creating transaction", slog.Any("error", err))
+		return "", err
+	}
+	defer tx.Rollback()
+
+	q := t.db.Queries.WithTx(tx)
+
+	// Assumes a day is 8 hours, and a week is 5 days
+	estimate, err := q.EstimateTicket(ctx, dbgen.EstimateTicketParams{
+		Estimate: form.WeekEstimate*5*8 + form.DayEstimate*8 + form.HourEstimate,
+		UserID:   userID,
+		TicketID: form.TicketID,
+	})
+	if err != nil {
+		tx.Rollback()
+		slog.Error("Error estimating ticket", slog.Any("error", err))
+		return "", err
+	}
+
+	if err := tx.Commit(); err != nil {
+		slog.Error("Error committing transaction", slog.Any("error", err))
+		return "", err
+	}
+
+	return prettyPrintEstimate(sql.NullInt64{Int64: estimate.Estimate, Valid: true}), nil
+}
+
 func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form CreateTicketForm) ([]ticket.TicketDetailProps, error) {
 	tx, err := t.db.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -76,13 +113,14 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 	details := make([]ticket.TicketDetailProps, len(tickets))
 	for i, t := range tickets {
 		details[i] = ticket.TicketDetailProps{
-			ID:           t.ID,
-			Name:         t.Name,
-			Description:  t.Description,
-			HasEstimate:  t.HasEstimate,
-			IsClosed:     false,
-			AnsweredBy:   "TBD",
-			UserEstimate: prettyPrintEstimate(t.UserEstimate),
+			ID:              t.ID,
+			Name:            t.Name,
+			Description:     t.Description,
+			HasEstimate:     t.HasEstimate,
+			IsClosed:        false,
+			AnsweredBy:      "TBD",
+			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
+			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),
 		}
 	}
 

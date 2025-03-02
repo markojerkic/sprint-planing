@@ -7,9 +7,8 @@ VALUES
 -- name: GetTicketsOfRoom :many
 SELECT
     ticket.*,
-    ticket_user_estimate_avg.weeks,
-    ticket_user_estimate_avg.days,
-    ticket_user_estimate_avg.hours,
+    ticket_user_estimate_avg.avg_estimate,
+    ticket_user_estimate_avg.estimated_users,
     ticket_user_estimate.estimate IS NOT NULL as has_estimate,
     ticket_user_estimate.estimate as user_estimate
 FROM

@@ -16,6 +16,26 @@ type TicketRouter struct {
 	group   *echo.Group
 }
 
+func (r *TicketRouter) estimateTicketHandler(c echo.Context) error {
+	var form service.EstimateTicketForm
+	if err := c.Bind(&form); err != nil {
+		return c.String(400, "Invalid request")
+	}
+	if err := c.Validate(form); err != nil {
+		c.Logger().Errorf("Error validating form: %v", err)
+		return c.String(400, "Form validation failed. Please check your input.")
+	}
+	user := c.Get("user").(dbgen.User)
+
+	estimate, err := r.service.EstimateTicket(c.Request().Context(), user.ID, form)
+	if err != nil {
+		c.Logger().Errorf("Error estimating ticket: %v", err)
+		return c.String(500, "Error estimating ticket")
+	}
+
+	return c.String(200, estimate)
+}
+
 func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 	var form service.CreateTicketForm
 	if err := c.Bind(&form); err != nil {
@@ -45,6 +65,7 @@ func newTicketRouter(db *database.Database, group *echo.Group) *TicketRouter {
 	e := r.group
 
 	e.POST("", r.createTicketHandler)
+	e.POST("/estimate", r.estimateTicketHandler)
 
 	return r
 }
