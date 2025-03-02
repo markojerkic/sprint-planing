@@ -1,9 +1,11 @@
 package room
 
 import "github.com/markojerkic/spring-planing/cmd/web/components"
+
 import "github.com/markojerkic/spring-planing/internal/database/dbgen"
 import "fmt"
 import "time"
+import "github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 
 type RoomPageProps struct {
 	ID                 int64
@@ -22,8 +24,7 @@ templ RoomPage(room RoomPageProps) {
 				<h2>Room Details</h2>
 				<p>Created on: { room.CreatedAt.Format("02.01.2006. 15:04:05") }</p>
 				if room.IsCurrentUserOwner {
-					<p>TICKET FORM</p>
-					<!-- @createTicket(room.ID) -->
+					@ticket.CreateTicket(room.ID)
 				}
 			</div>
 			<p>TICKET LIST</p>
