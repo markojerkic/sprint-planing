@@ -2,60 +2,6 @@ package components
 
 import "fmt"
 
-// Button component with variants
-templ Button(text string, props ButtonProps) {
-	<button
-		type={ props.Type }
-		id={ props.ID }
-		class={ fmt.Sprintf("btn %s %s %s", templ.SafeClass(props.ClassName),
-    templ.SafeClass(Ternary(props.IsBlock, "btn-block" , "" )), templ.SafeClass(Ternary(props.IsLarge, "btn-lg" , "" )),
-    ) }
-		disabled?={ props.Disabled }
-		form={ props.FormID }
-		aria-label={ props.AriaLabel }
-	>
-		{ text }
-	</button>
-}
-
-// Form Input component with label
-templ FormInput(props InputProps) {
-	<div class="form-group">
-		if props.Label != "" {
-			<label for={ props.ID } class={ fmt.Sprintf("form-label %s", templ.SafeClass(props.LabelClass)) }>
-				{ props.Label }
-				if props.Required {
-					<span class="text-required">*</span>
-				}
-			</label>
-		}
-		<input
-			type={ TernaryStr(props.Type, "text") }
-			id={ props.ID }
-			name={ props.Name }
-			value={ props.Value }
-			placeholder={ props.Placeholder }
-			class={ fmt.Sprintf("form-input %s %s", templ.SafeClass(props.ClassName),
-        templ.SafeClass(Ternary(props.HasError, "input-error" , "" )), ) }
-			required?={ props.Required }
-			disabled?={
-        props.Disabled }
-			if props.MaxLength> 0 {
-				maxlength={ fmt.Sprintf("%d", props.MaxLength) }
-			}
-			if props.Pattern != "" {
-				pattern={ props.Pattern }
-			}
-		/>
-		if props.HelpText != "" {
-			<div class="form-help-text">{ props.HelpText }</div>
-		}
-		if props.HasError && props.ErrorMsg != "" {
-			<div class="form-error-text">{ props.ErrorMsg }</div>
-		}
-	</div>
-}
-
 // Card component
 templ Card(props CardProps) {
 	<div
@@ -76,23 +22,6 @@ templ Card(props CardProps) {
 			{ children... }
 		</div>
 	</div>
-}
-
-// Form component
-templ Form(props FormProps) {
-	<form
-		id={ props.ID }
-		action={ templ.SafeURL(props.Action) }
-		method={ TernaryStr(props.Method, "POST") }
-		class={ templ.SafeClass(props.ClassName) }
-		onsubmit={ props.OnSubmit }
-		if props.HasEnctype {
-			enctype="multipart/form-data"
-		}
-		novalidate?={ props.NoValidate }
-	>
-		{ children... }
-	</form>
 }
 
 // Page layout component

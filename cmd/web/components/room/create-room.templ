@@ -1,0 +1,30 @@
+package room
+
+import "github.com/markojerkic/spring-planing/cmd/web/components"
+
+templ CreateRoom() {
+	@components.PageLayout("Create Room") {
+		<div style="max-width: 500px; margin: 0 auto;">
+			@components.Card(components.CardProps{
+				HasAccent: true,
+				Title:     "Create a Sprint Poker Room",
+			}) {
+				<form action="/room" method="POST">
+					<div class="form-group">
+						<label for="roomName" class="form-label">Room name</label>
+						<input
+							type="text"
+							id="roomName"
+							name="roomName"
+							class="form-input"
+							placeholder="Enter name of the room"
+							required
+						/>
+						<div class="form-help-text">Choose a descriptive name for your planning session</div>
+					</div>
+					<button type="submit" class="btn btn-primary">Create room</button>
+				</form>
+			}
+		</div>
+	}
+}

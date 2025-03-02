@@ -4,70 +4,37 @@ import "github.com/markojerkic/spring-planing/cmd/web/components"
 import "github.com/markojerkic/spring-planing/internal/database/dbgen"
 import "fmt"
 
-templ CreateRoom() {
-	@components.PageLayout("Create Room") {
-		<div style="max-width: 500px; margin: 0 auto;">
-			@components.Card(components.CardProps{
-				HasAccent: true,
-				Title:     "Create a Sprint Poker Room",
-			}) {
-				<form action="/room" method="POST">
-					<div class="form-group">
-						<label for="roomName" class="form-label">Room name</label>
-						<input
-							type="text"
-							id="roomName"
-							name="roomName"
-							class="form-input"
-							placeholder="Enter name of the room"
-							required
-						/>
-						<div class="form-help-text">Choose a descriptive name for your planning session</div>
-					</div>
-					<button type="submit" class="btn btn-primary">Create room</button>
-				</form>
-			}
-		</div>
-	}
-}
-
 templ roomDetail(room dbgen.GetRoomDetailsRow, tickets []dbgen.GetTicketsOfRoomRow) {
-	@components.PageLayout(fmt.Sprintf("Room: %s", room.Name)) {
-		@components.Card(components.CardProps{
-			Title: room.Name,
-		}) {
-			<div hx-ext="ws" ws-connect={ fmt.Sprintf("/room/%d/updates", room.ID) }>
-				<h2>Room Details</h2>
-				<p>Created by: { fmt.Sprintf("%d", room.CreatedBy) }</p>
-				<p>Created on: { room.CreatedAt.Time.Format("2006-01-02 15:04:05") }</p>
-				if room.IsOwner {
-					@createTicket(room.ID)
-				}
-			</div>
-			@ticketList(tickets)
-		}
-	}
+@components.PageLayout(fmt.Sprintf("Room: %s", room.Name)) {
+@components.Card(components.CardProps{
+Title: room.Name,
+}) {
+<div hx-ext="ws" ws-connect={ fmt.Sprintf("/room/%d/updates", room.ID) }>
+    <h2>Room Details</h2>
+    <p>Created by: { fmt.Sprintf("%d", room.CreatedBy) }</p>
+    <p>Created on: { room.CreatedAt.Time.Format("2006-01-02 15:04:05") }</p>
+    if room.IsOwner {
+    @createTicket(room.ID)
+    }
+</div>
+@ticketList(tickets)
+}
+}
 }
 
 templ ticketList(tickets []dbgen.GetTicketsOfRoomRow) {
-	<style>
-    .ticket-list {
-        display: flex;
-        flex-direction: column;
-        jusitfy-content: center;
-        gap: 1rem;
-    }
+<style>
 </style>
-	<div>
-		<h2>Tickets</h2>
-		if len(tickets) == 0 {
-			<p>No tickets in this room</p>
-		} else {
-			<div class="ticket-list" id="ticket-list">
-				for _, ticket := range tickets {
-					@ticketThumbnail(ticket)
-				}
-			</div>
-		}
-	</div>
+<div>
+    <h2>Tickets</h2>
+    if len(tickets) == 0 {
+    <p>No tickets in this room</p>
+    } else {
+    <div class="ticket-list" id="ticket-list">
+        for _, ticket := range tickets {
+        @ticketThumbnail(ticket)
+        }
+    </div>
+    }
+</div>
 }

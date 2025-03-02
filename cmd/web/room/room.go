@@ -17,7 +17,6 @@ func NewRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {
 		group: group,
 	}
 	e := r.group
-	e.GET("", echo.WrapHandler(templ.Handler(CreateRoom())))
 	e.GET("/:id", r.roomDetailsHandler)
 	e.GET("/:id/updates", r.webSocketHandler)
 	e.POST("", r.createRoom)

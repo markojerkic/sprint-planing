@@ -1,0 +1,29 @@
+package ticket
+
+import "fmt"
+
+type TicketDetailProps struct {
+	ID           int64
+	Name         string
+	Description  string
+	HasEstimate  bool
+	IsClosed     bool
+	UserEstimate string
+	AnsweredBy   string
+}
+
+templ TicketDetail(props TicketDetailProps) {
+	<div class="ticket-detail" data-ticket-id={ fmt.Sprintf("%d", props.ID) }>
+		<h3>{ props.Name }</h3>
+		<p>{ props.Description }</p>
+		<div>
+			if props.HasEstimate {
+				<p>ESTIMATE</p>
+			} else if props.IsClosed {
+				<p>CLOSED</p>
+			} else {
+				<p>ESTIMATE FORM</p>
+			}
+		</div>
+	</div>
+}

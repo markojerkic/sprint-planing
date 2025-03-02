@@ -633,3 +633,10 @@ form.estimation {
   align-items: center;
   gap: 0.5rem;
 }
+
+.ticket-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
