@@ -1,9 +1,9 @@
 services:
   app:
+    image: docker.io/markojerkic/sprint-planing:latest
     build:
       context: .
       dockerfile: Dockerfile
-      target: prod
     restart: unless-stopped
     ports:
       - ${PORT}:${PORT}
@@ -12,6 +12,6 @@ services:
       PORT: ${PORT}
       BLUEPRINT_DB_URL: ${BLUEPRINT_DB_URL}
     volumes:
-      - sqlite_bp:/app/db
+      - sqlite_bp:/app/data
 volumes:
   sqlite_bp:
