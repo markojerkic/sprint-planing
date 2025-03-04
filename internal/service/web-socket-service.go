@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
@@ -31,12 +32,85 @@ func writePump() {
 		case msg := <-buffer:
 			if err := msg.conn.WriteMessage(websocket.TextMessage, *msg.data); err != nil {
 				log.Printf("Error writing message: %v", err)
-				mutex.Lock()
-				delete(rooms[msg.roomID], msg.conn)
-				mutex.Unlock()
+				removeConnection(msg.conn, msg.roomID)
+			}
+		}
+	}
+}
+
+// removeConnection removes a connection from a room and cleans up empty rooms
+func removeConnection(conn *websocket.Conn, roomID int64) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	// Check if the room exists
+	if conns, ok := rooms[roomID]; ok {
+		// Remove the connection
+		delete(conns, conn)
+
+		// If the room is empty, remove it
+		if len(conns) == 0 {
+			delete(rooms, roomID)
+			log.Printf("Room %d is empty and has been removed", roomID)
+		}
+	}
+}
+
+// readPump reads from the websocket connection to detect disconnects
+func (w *WebSocketService) readPump(conn *websocket.Conn, roomID int64) {
+	defer func() {
+		conn.Close()
+		removeConnection(conn, roomID)
+		log.Printf("Connection closed for room %d", roomID)
+	}()
+
+	// Set read deadline
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	// Read messages from the websocket
+	for {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("Error reading message: %v", err)
+			}
+			break
+		}
+	}
+}
+
+// CleanupInactiveConnections periodically checks and removes inactive connections
+func (w *WebSocketService) CleanupInactiveConnections() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+		mutex.Lock()
+		// Log current state
+		log.Printf("Checking for inactive connections. Current rooms: %d", len(rooms))
+
+		// For each room, ping each connection
+		for roomID, conns := range rooms {
+			for conn := range conns {
+				if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
+					log.Printf("Failed to ping client in room %d: %v", roomID, err)
+					delete(conns, conn)
+					conn.Close()
+				}
 			}
 
+			// If room is empty after checking connections, remove it
+			if len(conns) == 0 {
+				delete(rooms, roomID)
+				log.Printf("Room %d is now empty and has been removed", roomID)
+			}
 		}
+		mutex.Unlock()
 	}
 }
 
@@ -47,7 +121,6 @@ func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEsti
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
 	}
-
 	log.Printf("Closing ticket and sending render %d for roomID %d", ticketID, roomID)
 	bytes := removedTicketForm.Bytes()
 	mutex.Lock()
@@ -65,7 +138,6 @@ func (w *WebSocketService) UpdateEstimate(ticketID int64, roomID int64, averageE
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
 	}
-
 	bytes := renderedTicket.Bytes()
 	mutex.Lock()
 	conns := rooms[roomID]
@@ -82,13 +154,12 @@ func (w *WebSocketService) SendNewTicket(tticket ticket.TicketDetailProps) {
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
 	}
-
 	bytes := renderedTicket.Bytes()
 	mutex.Lock()
 	conns := rooms[tticket.RoomID]
 	mutex.Unlock()
 	for conn := range conns {
-		buffer <- message{conn: conn, data: &bytes}
+		buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 	}
 }
 
@@ -99,6 +170,16 @@ func (w *WebSocketService) Register(conn *websocket.Conn, roomID int64) {
 	}
 	rooms[roomID][conn] = true
 	mutex.Unlock()
+
+	// Set up ping/pong to keep connection alive
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	// Start a goroutine to read from the websocket to detect disconnects
+	go w.readPump(conn, roomID)
 }
 
 func NewWebSocketService(ticketService *TicketService) *WebSocketService {
@@ -110,6 +191,9 @@ func NewWebSocketService(ticketService *TicketService) *WebSocketService {
 	for range 30 {
 		go writePump()
 	}
+
+	// Start the cleanup routine
+	go service.CleanupInactiveConnections()
 
 	return service
 }

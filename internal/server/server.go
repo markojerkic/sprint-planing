@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/markojerkic/spring-planing/internal/database"
+	"github.com/robfig/cron/v3"
 )
 
 type Server struct {
@@ -37,5 +39,63 @@ func NewServer() *http.Server {
 	}
 
 	log.Printf("Server running on port %d", NewServer.port)
+
+	NewServer.cleanupCRON()
+
 	return server
+}
+
+func (s *Server) cleanupCRON() {
+	cron := cron.New()
+
+	// Run every 10 days
+	_, err := cron.AddFunc("@every 240h", func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cancel()
+
+		err := s.cleanup(ctx)
+		if err != nil {
+			log.Printf("Failed to cleanup: %v", err)
+		}
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to add cleanup job: %v", err)
+	}
+
+	cron.Start()
+	log.Printf("Cleanup cron job started")
+
+}
+
+func (s *Server) cleanup(ctx context.Context) error {
+	tx, err := s.db.DB.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
+		return err
+	}
+	defer tx.Rollback()
+	qtx := s.db.Queries.WithTx(tx)
+
+	if err := qtx.CleanupOldTickets(ctx); err != nil {
+		return fmt.Errorf("failed to cleanup ticket estimates: %w", err)
+	}
+
+	if err := qtx.CleanupClosedTickets(ctx); err != nil {
+		return fmt.Errorf("failed to cleanup closed tickets: %w", err)
+	}
+
+	if err := qtx.CleanupUnusedRooms(ctx); err != nil {
+		return fmt.Errorf("failed to cleanup unused rooms: %w", err)
+	}
+
+	if err := qtx.CleanupUnusedUsers(ctx); err != nil {
+		return fmt.Errorf("failed to cleanup unused users: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		return err
+	}
+	return nil
 }
