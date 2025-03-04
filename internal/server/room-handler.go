@@ -51,13 +51,14 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		return ctx.String(500, "Error getting room tickets")
 	}
 
+	isOwner := roomDetails.IsOwner
 	return room.RoomPage(room.RoomPageProps{
 		ID:                 roomDetails.ID,
 		Name:               roomDetails.Name,
 		CreatedAt:          roomDetails.CreatedAt.Time,
 		IsCurrentUserOwner: roomDetails.IsOwner,
 		Tickets:            roomTickets,
-	}).Render(ctx.Request().Context(), ctx.Response().Writer)
+	}, isOwner).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
 
 func newRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {

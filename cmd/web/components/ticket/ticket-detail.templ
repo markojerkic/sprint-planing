@@ -15,7 +15,7 @@ type TicketDetailProps struct {
 	EstimatedBy     string
 }
 
-templ TicketDetail(props TicketDetailProps) {
+templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 	<div class="ticket-detail" data-ticket-id={ fmt.Sprintf("%d", props.ID) }>
 		<h3>{ props.Name }</h3>
 		<p>{ props.Description }</p>
@@ -29,11 +29,22 @@ templ TicketDetail(props TicketDetailProps) {
 		if props.HasEstimate || props.IsClosed {
 			@EstimationDetail(props.ID, props.AverageEstimate, props.EstimatedBy)
 		}
+		if isRoomOwner && !props.IsClosed {
+			<button
+				style="margin-top: 10px;"
+				hx-post="/ticket/close"
+				hx-swap="outerHTML"
+				name="id"
+				value={ fmt.Sprintf("%d",
+        props.ID) }
+				class="btn btn-danger"
+			>Close</button>
+		}
 	</div>
 }
 
 templ CreatedTicketUpdate(props TicketDetailProps) {
 	<div hx-swap-oob="afterbegin:#ticket-list">
-		@TicketDetail(props)
+		@TicketDetail(props, false)
 	</div>
 }

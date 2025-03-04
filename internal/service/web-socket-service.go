@@ -40,6 +40,24 @@ func writePump() {
 	}
 }
 
+func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEstimate string, estimatedBy string) {
+	removedTicketForm := new(bytes.Buffer)
+	if err := ticket.ClosedEstimation(ticketID, averageEstimate, estimatedBy).
+		Render(context.Background(), removedTicketForm); err != nil {
+		log.Printf("Error rendering ticket thumbnail: %v", err)
+		return
+	}
+
+	log.Printf("Closing ticket and sending render %d for roomID %d", ticketID, roomID)
+	bytes := removedTicketForm.Bytes()
+	mutex.Lock()
+	conns := rooms[roomID]
+	mutex.Unlock()
+	for conn := range conns {
+		buffer <- message{conn: conn, data: &bytes, roomID: roomID}
+	}
+}
+
 func (w *WebSocketService) UpdateEstimate(ticketID int64, roomID int64, averageEstimate string, estimatedBy string) {
 	renderedTicket := new(bytes.Buffer)
 	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, estimatedBy).

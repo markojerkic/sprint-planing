@@ -14,7 +14,7 @@ type RoomPageProps struct {
 	Tickets            []ticket.TicketDetailProps
 }
 
-templ RoomPage(room RoomPageProps) {
+templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 	@components.PageLayout(fmt.Sprintf("Room: %s", room.Name)) {
 		@components.Card(components.CardProps{
 			Title: room.Name,
@@ -26,7 +26,7 @@ templ RoomPage(room RoomPageProps) {
 					@ticket.CreateTicket(room.ID)
 				}
 			</div>
-			@ticket.TicketList(room.Tickets)
+			@ticket.TicketList(room.Tickets, isRoomOwner)
 		}
 	}
 }

@@ -58,7 +58,7 @@ select
     ) AS total_users_in_room
 from
   ticket
-  join ticket_user_estimate_avg on ticket.id = ticket_user_estimate_avg.ticket_id
+  left join ticket_user_estimate_avg on ticket.id = ticket_user_estimate_avg.ticket_id
 where
   ticket.id = :ticket_id;
 
@@ -87,3 +87,10 @@ INSERT INTO
   ticket_user_estimate (estimate, user_id, ticket_id)
 VALUES
   (?, ?, ?) RETURNING *;
+
+
+-- name: CloseTicket :one
+UPDATE
+  ticket SET closed_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING *;

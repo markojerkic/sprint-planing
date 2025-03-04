@@ -19,3 +19,9 @@ templ UpdatedEstimationDetail(ticketID int64, averateEstimate string, estimatedB
 		@EstimationDetail(ticketID, averateEstimate, estimatedBy)
 	</div>
 }
+
+templ ClosedEstimation(ticketID int64, averateEstimate string, estimatedBy string) {
+	<div hx-swap-oob={ fmt.Sprintf("outerHTML:form[data-estimation-form='%d' ]", ticketID) }>
+		@EstimationDetail(ticketID, averateEstimate, estimatedBy)
+	</div>
+}

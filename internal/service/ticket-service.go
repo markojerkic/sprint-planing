@@ -51,7 +51,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form E
 		return "", err
 	}
 
-	updatedTickets, err := q.GetTicketAverageEstimation(ctx, form.TicketID)
+	avgEst, err := q.GetTicketAverageEstimation(ctx, form.TicketID)
 	if err != nil {
 		tx.Rollback()
 		slog.Error("Error getting ticket average estimation", slog.Any("error", err))
@@ -64,13 +64,31 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form E
 		return "", err
 	}
 
-	averageEstimate := updatedTickets.AvgEstimate.Float64
-	t.webSocketService.UpdateEstimate(updatedTickets.ID,
-		updatedTickets.RoomID,
+	averageEstimate := avgEst.AvgEstimate.Float64
+	t.webSocketService.UpdateEstimate(avgEst.ID,
+		avgEst.RoomID,
 		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
-		fmt.Sprintf("%d/%d", updatedTickets.UsersEstimated, updatedTickets.TotalUsersInRoom))
+		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
 
 	return prettyPrintEstimate(sql.NullInt64{Int64: estimate.Estimate, Valid: true}), nil
+}
+
+func (t *TicketService) CloseTicket(ctx context.Context, ticketID int64) (*dbgen.Ticket, error) {
+
+	ticket, err := t.db.Queries.CloseTicket(ctx, ticketID)
+	if err != nil {
+		slog.Error("Error closing ticket", slog.Any("error", err))
+		return nil, err
+	}
+	avgEst, err := t.db.Queries.GetTicketAverageEstimation(ctx, ticketID)
+
+	averageEstimate := avgEst.AvgEstimate.Float64
+	t.webSocketService.CloseTicket(ticketID,
+		avgEst.RoomID,
+		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
+		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
+
+	return &ticket, nil
 }
 
 func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form CreateTicketForm) ([]ticket.TicketDetailProps, error) {
@@ -135,7 +153,7 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 			Name:            t.Name,
 			Description:     t.Description,
 			HasEstimate:     t.HasEstimate,
-			IsClosed:        false,
+			IsClosed:        t.ClosedAt.Valid,
 			AnsweredBy:      "TBD",
 			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
 			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),

@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
@@ -54,7 +55,19 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 		return c.String(500, "Error creating ticket")
 	}
 
-	return ticket.TicketList(ticketList).Render(c.Request().Context(), c.Response().Writer)
+	return ticket.TicketList(ticketList, true).Render(c.Request().Context(), c.Response().Writer)
+}
+
+func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
+	ticketID, err := strconv.ParseInt(c.FormValue("id"), 10, 64)
+	if err != nil {
+		return c.String(400, "Invalid ticket id")
+	}
+	if _, err := r.service.CloseTicket(c.Request().Context(), ticketID); err != nil {
+		return c.String(500, "Error closing ticket")
+	}
+
+	return c.String(200, fmt.Sprintf("Closed ticket %d", ticketID))
 }
 
 func newTicketRouter(db *database.Database, group *echo.Group) *TicketRouter {
@@ -66,6 +79,7 @@ func newTicketRouter(db *database.Database, group *echo.Group) *TicketRouter {
 
 	e.POST("", r.createTicketHandler)
 	e.POST("/estimate", r.estimateTicketHandler)
+	e.POST("/close", r.closeTicketHandler)
 
 	return r
 }
