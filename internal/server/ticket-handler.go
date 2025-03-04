@@ -33,7 +33,7 @@ func (r *TicketRouter) estimateTicketHandler(c echo.Context) error {
 		return c.String(500, "Error estimating ticket")
 	}
 
-	return c.String(200, estimate)
+	return ticket.UsersEstimate(form.TicketID, estimate).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (r *TicketRouter) createTicketHandler(c echo.Context) error {
