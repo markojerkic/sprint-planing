@@ -4,6 +4,7 @@ import "fmt"
 
 type TicketDetailProps struct {
 	ID              int64
+	RoomID          int64
 	Name            string
 	Description     string
 	HasEstimate     bool
@@ -26,7 +27,13 @@ templ TicketDetail(props TicketDetailProps) {
 			}
 		</div>
 		if props.HasEstimate || props.IsClosed {
-			@EstimationDetail(props.ID, props.UserEstimate, props.AverageEstimate, props.EstimatedBy)
+			@EstimationDetail(props.ID, props.AverageEstimate, props.EstimatedBy)
 		}
+	</div>
+}
+
+templ CreatedTicketUpdate(props TicketDetailProps) {
+	<div hx-swap-oob="afterbegin:#ticket-list">
+		@TicketDetail(props)
 	</div>
 }

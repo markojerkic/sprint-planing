@@ -19,7 +19,7 @@ templ RoomPage(room RoomPageProps) {
 		@components.Card(components.CardProps{
 			Title: room.Name,
 		}) {
-			<div hx-ext="ws" ws-connect={ fmt.Sprintf("/room/%d/updates", room.ID) }>
+			<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/%d", room.ID) }>
 				<h2>Room Details</h2>
 				<p>Created on: { room.CreatedAt.Format("02.01.2006. 15:04:05") }</p>
 				if room.IsCurrentUserOwner {

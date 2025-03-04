@@ -2,9 +2,15 @@ package ticket
 
 import "fmt"
 
-templ EstimationDetail(ticketID int64, usersEstimate string, averateEstimate string, estimatedBy string) {
+templ EstimationDetail(ticketID int64, averateEstimate string, estimatedBy string) {
 	<div data-ticket-average-estimation={ fmt.Sprintf("%d", ticketID) }>
 		<p>Average estimate: { averateEstimate }</p>
 		<p>Estimated by: { estimatedBy } users</p>
+	</div>
+}
+
+templ UpdatedEstimationDetail(ticketID int64, averateEstimate string, estimatedBy string) {
+	<div hx-swap-oob={ fmt.Sprintf("div[data-ticket-average-estimation='%d' ]", ticketID) }>
+		@EstimationDetail(ticketID, averateEstimate, estimatedBy)
 	</div>
 }

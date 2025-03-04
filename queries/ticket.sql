@@ -39,9 +39,23 @@ ORDER BY
 -- name: GetTicketAverageEstimation :one
 select
   ticket.*,
-  ticket_user_estimate_avg.weeks,
-  ticket_user_estimate_avg.days,
-  ticket_user_estimate_avg.hours
+    ticket_user_estimate_avg.avg_estimate,
+    (
+        SELECT
+            COUNT(DISTINCT tue.user_id)
+        FROM
+            ticket_user_estimate tue
+        WHERE
+            tue.ticket_id = ticket.id
+    ) AS users_estimated,
+    (
+        SELECT
+            COUNT(DISTINCT ru.user_id)
+        FROM
+            room_user ru
+        WHERE
+            ru.room_id = ticket.room_id
+    ) AS total_users_in_room
 from
   ticket
   join ticket_user_estimate_avg on ticket.id = ticket_user_estimate_avg.ticket_id

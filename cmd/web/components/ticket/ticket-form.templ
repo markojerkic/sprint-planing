@@ -24,7 +24,7 @@ templ CreateTicket(roomId int64) {
 }
 
 templ createTicketForm(roomId int64) {
-	<form hx-post="/ticket" hx-target="#ticket-list" id="ticket-form">
+	<form hx-post="/ticket" hx-target="#ticket-list" hx-swap="outerHTML" id="ticket-form" hx-select="#ticket-list">
 		<input type="hidden" name="roomId" value={ fmt.Sprintf("%d", roomId) }/>
 		<div class="form-group">
 			<label for="ticketName" class="form-label">Ticket name</label>

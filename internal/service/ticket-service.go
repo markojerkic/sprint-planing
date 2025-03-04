@@ -12,7 +12,8 @@ import (
 )
 
 type TicketService struct {
-	db *database.Database
+	db               *database.Database
+	webSocketService *WebSocketService
 }
 
 type CreateTicketForm struct {
@@ -50,10 +51,24 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form E
 		return "", err
 	}
 
+	updatedTickets, err := q.GetTicketAverageEstimation(ctx, form.TicketID)
+	if err != nil {
+		tx.Rollback()
+		slog.Error("Error getting ticket average estimation", slog.Any("error", err))
+		return "", err
+	}
+
 	if err := tx.Commit(); err != nil {
+		tx.Rollback()
 		slog.Error("Error committing transaction", slog.Any("error", err))
 		return "", err
 	}
+
+	averageEstimate := updatedTickets.AvgEstimate.Float64
+	t.webSocketService.UpdateEstimate(updatedTickets.ID,
+		updatedTickets.RoomID,
+		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
+		fmt.Sprintf("%d/%d", updatedTickets.UsersEstimated, updatedTickets.TotalUsersInRoom))
 
 	return prettyPrintEstimate(sql.NullInt64{Int64: estimate.Estimate, Valid: true}), nil
 }
@@ -67,7 +82,7 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form Cre
 	defer tx.Rollback()
 
 	q := t.db.Queries.WithTx(tx)
-	ticket, err := q.CreateTicket(ctx, dbgen.CreateTicketParams{
+	tticket, err := q.CreateTicket(ctx, dbgen.CreateTicketParams{
 		Name:        form.TicketName,
 		Description: form.TicketDescription,
 		RoomID:      form.RoomID,
@@ -77,7 +92,7 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form Cre
 		slog.Error("Error creating ticket", slog.Any("error", err))
 		return nil, err
 	}
-	slog.Info("Created ticket", slog.Any("ticket", ticket))
+	slog.Info("Created ticket", slog.Any("ticket", tticket))
 
 	tickets, err := t.GetTicketsOfRoom(ctx, form.RoomID, userID, q)
 
@@ -91,6 +106,8 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form Cre
 		slog.Error("Error committing transaction", slog.Any("error", err))
 		return nil, err
 	}
+
+	t.webSocketService.SendNewTicket(tickets[0])
 
 	return tickets, nil
 }
@@ -114,6 +131,7 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 	for i, t := range tickets {
 		details[i] = ticket.TicketDetailProps{
 			ID:              t.ID,
+			RoomID:          t.RoomID,
 			Name:            t.Name,
 			Description:     t.Description,
 			HasEstimate:     t.HasEstimate,
@@ -129,9 +147,11 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 }
 
 func NewTicketService(db *database.Database) *TicketService {
-	return &TicketService{
+	ticketService := &TicketService{
 		db: db,
 	}
+	ticketService.webSocketService = NewWebSocketService(ticketService)
+	return ticketService
 }
 
 func prettyPrintEstimate(nEstimate sql.NullInt64) string {
