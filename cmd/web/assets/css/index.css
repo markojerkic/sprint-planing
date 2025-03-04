@@ -71,6 +71,18 @@ body {
   margin-bottom: 1.5rem;
 }
 
+.link {
+  color: var(--primary-light);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
 /* Typography */
 .text-center {
   text-align: center;

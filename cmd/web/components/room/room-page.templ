@@ -19,6 +19,7 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 		@components.Card(components.CardProps{
 			Title: room.Name,
 		}) {
+			<a href="/" class="link mb-4">‹ Back to Homepage</a>
 			<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/%d", room.ID) }>
 				<h2>Room Details</h2>
 				<p>Created on: { room.CreatedAt.Format("02.01.2006. 15:04:05") }</p>

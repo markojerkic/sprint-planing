@@ -1,63 +1,21 @@
-# Project github.com/markojerkic/spring-planing
+# Sprint belote
 
-One Paragraph of project description goes here
+A lightweight, opinionated sprint estimation tool built with Go.
 
-## Getting Started
+Show Image
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+## Features
 
-## MakeFile
+- No Login Required: Anonymous participation for quick setup
+- Real-time Updates: Instantly see new tickets and estimations using [HTMX](https://htmx.org/)
+- Time-based Estimation: Estimate in weeks, days, and hours instead of story points
+- Blind Estimation: View the team's average only after submitting your own estimate
+- Simple Room Management: Create rooms, add tickets, and close them when estimates are complete
 
-Run build make command with tests
+## Technology Stack
 
-```bash
-make all
-```
-
-Build the application
-
-```bash
-make build
-```
-
-Run the application
-
-```bash
-make run
-```
-
-Create DB container
-
-```bash
-make docker-run
-```
-
-Shutdown DB Container
-
-```bash
-make docker-down
-```
-
-DB Integrations Test:
-
-```bash
-make itest
-```
-
-Live reload the application:
-
-```bash
-make watch
-```
-
-Run the test suite:
-
-```bash
-make test
-```
-
-Clean up binary from the last build:
-
-```bash
-make clean
-```
+- Backend: Go
+- Database: SQL with sqlc for type-safe database access
+- Frontend:
+  - [Templ](https://templ.guide/) for HTML templating
+  - [HTMX](https://htmx.org/) for dynamic interactions without JavaScript

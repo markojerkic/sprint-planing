@@ -10,6 +10,7 @@ import (
 
 templ RoomList(rooms []dbgen.GetMyRoomsRow) {
 	@components.PageLayout("Homepage") {
+		<script type="module" src="/assets/js/join-room.js"></script>
 		<div class="container">
 			<h1 class="mb-4">My Rooms</h1>
 			<div class="room-actions-container mb-4">
