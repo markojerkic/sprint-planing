@@ -11,6 +11,7 @@ services:
       APP_ENV: ${APP_ENV}
       PORT: ${PORT}
       BLUEPRINT_DB_URL: ${BLUEPRINT_DB_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
     volumes:
       - sqlite_bp:/app/data
 volumes:
