@@ -1,6 +1,7 @@
 package homepage
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/labstack/echo/v4"
@@ -11,6 +12,12 @@ import (
 func HomepageHandler(db *database.Database) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(dbgen.User)
+
+		roomId := c.QueryParam("roomId")
+
+		if roomId != "" {
+			return c.Redirect(302, fmt.Sprintf("/room/%s", roomId))
+		}
 
 		rooms, err := db.Queries.GetMyRooms(c.Request().Context(), user.ID)
 		if err != nil {

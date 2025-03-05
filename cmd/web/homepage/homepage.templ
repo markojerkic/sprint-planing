@@ -10,7 +10,6 @@ import (
 
 templ RoomList(rooms []dbgen.GetMyRoomsRow) {
 	@components.PageLayout("Homepage") {
-		<script type="module" src="/assets/js/join-room.js"></script>
 		<div class="container">
 			<h1 class="mb-4">My Rooms</h1>
 			<div class="room-actions-container mb-4">
@@ -58,7 +57,7 @@ templ RoomList(rooms []dbgen.GetMyRoomsRow) {
 }
 
 templ joinRoomForm() {
-	<form id="join-room-form" hx-post="/join-room" hx-target="#join-room-form-container">
+	<form id="join-room-form" submit="joinRoom">
 		<div class="form-group">
 			<label for="roomId" class="form-label">Room ID</label>
 			<input type="text" id="roomId" name="roomId" class="form-input" placeholder="Enter room ID" required/>
