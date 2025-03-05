@@ -7,7 +7,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
-	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	"github.com/markojerkic/spring-planing/internal/service"
 )
@@ -70,9 +69,9 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 	return c.String(200, fmt.Sprintf("Closed ticket %d", ticketID))
 }
 
-func newTicketRouter(db *database.Database, group *echo.Group) *TicketRouter {
+func newTicketRouter(ticketService *service.TicketService, group *echo.Group) *TicketRouter {
 	r := &TicketRouter{
-		service: service.NewTicketService(db),
+		service: ticketService,
 		group:   group,
 	}
 	e := r.group

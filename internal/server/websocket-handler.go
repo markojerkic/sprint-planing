@@ -5,7 +5,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/service"
 )
 
@@ -35,10 +34,9 @@ func (r *WebSocketRouter) webSocketHandler(c echo.Context) error {
 
 }
 
-func newWebsocketRouter(db *database.Database, group *echo.Group) *WebSocketRouter {
-	ticketService := service.NewTicketService(db)
+func newWebsocketRouter(webSocketService *service.WebSocketService, group *echo.Group) *WebSocketRouter {
 	r := &WebSocketRouter{
-		service: service.NewWebSocketService(ticketService),
+		service: webSocketService,
 		group:   group,
 	}
 	e := r.group

@@ -14,15 +14,15 @@ templ estimationForm(ticketID int64) {
 		<div class="estimation-form">
 			<div class="estimation-form-group">
 				<label for="weekEstimate" class="form-label">Weeks</label>
-				<input type="number" name="weekEstimate" class="form-input" placeholder="W"/>
+				<input type="number" name="weekEstimate" class="form-input" placeholder="W" min="0"/>
 			</div>
 			<div class="estimation-form-group">
 				<label for="dayEstimate" class="form-label">Days</label>
-				<input type="number" name="dayEstimate" class="form-input" placeholder="D"/>
+				<input type="number" name="dayEstimate" class="form-input" placeholder="D" min="0"/>
 			</div>
 			<div class="estimation-form-group">
 				<label for="hourEstimate" class="form-label">Hours</label>
-				<input type="number" name="hourEstimate" class="form-input" placeholder="H"/>
+				<input type="number" name="hourEstimate" class="form-input" placeholder="H" min="0"/>
 			</div>
 		</div>
 		<button type="submit" class="btn btn-primary">Estimate</button>

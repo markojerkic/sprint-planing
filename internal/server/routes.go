@@ -1,12 +1,14 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/markojerkic/spring-planing/cmd/web"
 	"github.com/markojerkic/spring-planing/cmd/web/homepage"
-	"net/http"
+	"github.com/markojerkic/spring-planing/internal/service"
 )
 
 type CustomValidator struct {
@@ -35,9 +37,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
 
-	newRoomRouter(s.db, e.Group("/room"))
-	newTicketRouter(s.db, e.Group("/ticket"))
-	newWebsocketRouter(s.db, e.Group("/ws"))
+	roomService := service.NewRoomService(s.db)
+	ticketService := service.NewTicketService(s.db)
+	websocketService := service.NewWebSocketService(ticketService)
+
+	newRoomRouter(roomService, ticketService, e.Group("/room"))
+	newTicketRouter(ticketService, e.Group("/ticket"))
+	newWebsocketRouter(websocketService, e.Group("/ws"))
 	e.GET("/", homepage.HomepageHandler(s.db))
 
 	return e

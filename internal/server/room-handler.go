@@ -7,7 +7,6 @@ import (
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/room"
-	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	"github.com/markojerkic/spring-planing/internal/service"
 )
@@ -61,10 +60,10 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 	}, isOwner).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
 
-func newRoomRouter(db *database.Database, group *echo.Group) *RoomRouter {
+func newRoomRouter(roomService *service.RoomService, ticketService *service.TicketService, group *echo.Group) *RoomRouter {
 	r := &RoomRouter{
-		roomService:   service.NewRoomService(db),
-		ticketService: service.NewTicketService(db),
+		roomService:   roomService,
+		ticketService: ticketService,
 		group:         group,
 	}
 	e := r.group

@@ -122,12 +122,25 @@ func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEsti
 		return
 	}
 	log.Printf("Closing ticket and sending render %d for roomID %d", ticketID, roomID)
+
+	averageEstimateRendered := new(bytes.Buffer)
+	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, estimatedBy).
+		Render(context.Background(), averageEstimateRendered); err != nil {
+		log.Printf("Error rendering ticket thumbnail: %v", err)
+		return
+	}
+	averageEstimateBytes := averageEstimateRendered.Bytes()
+
 	bytes := removedTicketForm.Bytes()
+	mergedBytes := append(bytes, averageEstimateBytes...)
+
 	mutex.Lock()
 	conns := rooms[roomID]
 	mutex.Unlock()
 	for conn := range conns {
-		buffer <- message{conn: conn, data: &bytes, roomID: roomID}
+		// buffer <- message{conn: conn, data: &bytes, roomID: roomID}
+		// buffer <- message{conn: conn, data: &averageEstimateBytes, roomID: roomID}
+		buffer <- message{conn: conn, data: &mergedBytes, roomID: roomID}
 	}
 }
 
@@ -188,9 +201,9 @@ func NewWebSocketService(ticketService *TicketService) *WebSocketService {
 	}
 
 	// Start N writePump goroutines
-	for range 30 {
-		go writePump()
-	}
+	// for range 30 {
+	// }
+	go writePump()
 
 	// Start the cleanup routine
 	go service.CleanupInactiveConnections()
