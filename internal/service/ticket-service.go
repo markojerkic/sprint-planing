@@ -158,7 +158,7 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 			Description:     t.Description,
 			HasEstimate:     t.HasEstimate,
 			IsClosed:        t.ClosedAt.Valid,
-			AnsweredBy:      "TBD",
+			AnsweredBy:      "0",
 			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
 			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),
 			MedianEstimate:  prettyPrintEstimatef(t.MedianEstimate),

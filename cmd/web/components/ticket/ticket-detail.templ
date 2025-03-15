@@ -31,7 +31,7 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 		if props.HasEstimate || props.IsClosed {
 			@EstimationDetail(props.ID, props.AverageEstimate, props.MedianEstimate, props.StdEstimate, props.EstimatedBy)
 		}
-		<span data-answered-by={ fmt.Sprintf("%d", props.ID) }>Answered by: 0</span>
+		<span data-answered-by={ fmt.Sprintf("%d", props.ID) }>Estimated by: { props.EstimatedBy }</span>
 		if isRoomOwner && !props.IsClosed {
 			<button
 				style="margin-top: 10px;"
