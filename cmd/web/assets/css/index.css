@@ -666,3 +666,18 @@ hr.estimate-divider {
 	border-top: 1px solid var(--border-color);
 	margin: 1rem 0;
 }
+
+.estimates-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	color: var(--text-light);
+}
+
+blockquote {
+	border-left: 5px solid var(--primary);
+	padding: 0.5rem 1rem;
+	margin-left: 0.3rem;
+	margin: 0;
+	color: var(--text-light);
+}

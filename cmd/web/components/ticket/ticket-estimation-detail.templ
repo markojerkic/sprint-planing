@@ -10,6 +10,7 @@ templ EstimationDetail(ticketID int64, averateEstimate string, medianEstimate st
 		<span>Median estimate: { medianEstimate }</span>
 		<span>Standard deviation: { stdEstimate }</span>
 		<hr class="estimate-divider"/>
+		@EstimatesPopupButton(ticketID)
 		//	<span data-answered-by={ fmt.Sprintf("%d", ticketID) }>Estimated by: { estimatedBy } users</span>
 	</div>
 }

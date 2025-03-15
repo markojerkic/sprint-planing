@@ -95,6 +95,21 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int64) (*dbgen
 	return &ticket, nil
 }
 
+func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int64) ([]string, error) {
+	estimates, err := t.db.Queries.GetTicketEstimates(ctx, ticketID)
+	if err != nil {
+		slog.Error("Error getting ticket estimates", slog.Any("error", err))
+		return nil, err
+	}
+
+	prettyEstimates := make([]string, len(estimates))
+	for i, e := range estimates {
+		prettyEstimates[i] = prettyPrintEstimate(sql.NullInt64{Int64: e, Valid: true})
+	}
+
+	return prettyEstimates, nil
+}
+
 func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form CreateTicketForm) ([]ticket.TicketDetailProps, error) {
 	tx, err := t.db.DB.BeginTx(ctx, nil)
 	if err != nil {

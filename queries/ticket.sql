@@ -94,3 +94,12 @@ UPDATE
   ticket SET closed_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING *;
+
+-- name: GetTicketEstimates :many
+SELECT
+    estimate
+FROM
+    ticket_user_estimate
+WHERE
+    ticket_id = ?
+ORDER BY estimate ASC, created_at DESC;

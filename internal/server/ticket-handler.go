@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"fmt"
 	"strconv"
 
@@ -57,6 +56,19 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 	return ticket.TicketList(ticketList, true).Render(c.Request().Context(), c.Response().Writer)
 }
 
+func (r *TicketRouter) ticketEstimatesHandler(c echo.Context) error {
+	ticketID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return c.String(400, "Invalid ticket id")
+	}
+	estimates, err := r.service.GetTicketEstimates(c.Request().Context(), ticketID)
+	if err != nil {
+		return c.String(500, "Error getting ticket estimates")
+	}
+
+	return ticket.EstimatesPopupContent(estimates).Render(c.Request().Context(), c.Response().Writer)
+}
+
 func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 	ticketID, err := strconv.ParseInt(c.FormValue("id"), 10, 64)
 	if err != nil {
@@ -79,19 +91,7 @@ func newTicketRouter(ticketService *service.TicketService, group *echo.Group) *T
 	e.POST("", r.createTicketHandler)
 	e.POST("/estimate", r.estimateTicketHandler)
 	e.POST("/close", r.closeTicketHandler)
+	e.GET("/estimates/:id", r.ticketEstimatesHandler)
 
 	return r
-}
-
-func prettyPrintEstimate(nEstimate sql.NullInt64) string {
-	if !nEstimate.Valid {
-		return "No estimate"
-	}
-	estimate := nEstimate.Int64
-
-	weeks := estimate / 40
-	days := (estimate % 40) / 8
-	hours := estimate % 8
-
-	return fmt.Sprintf("%dw %dd %dh", weeks, days, hours)
 }
