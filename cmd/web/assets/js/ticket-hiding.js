@@ -37,3 +37,16 @@ document.addEventListener(
 		}
 	},
 );
+
+// Format created on date
+function formatDate() {
+	const dateElement = document.querySelector("time");
+	if (dateElement) {
+		const date = new Date(dateElement.getAttribute("datetime"));
+		dateElement.textContent = date.toLocaleString();
+	}
+}
+// After boosted link change
+document.addEventListener("htmx:afterSwap", formatDate);
+// On page load
+formatDate();
