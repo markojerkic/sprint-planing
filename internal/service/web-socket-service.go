@@ -205,7 +205,9 @@ func NewWebSocketService(ticketService *TicketService) *WebSocketService {
 	// Start N writePump goroutines
 	// for range 30 {
 	// }
-	go writePump()
+	for range 30 {
+		go writePump()
+	}
 
 	// Start the cleanup routine
 	go service.CleanupInactiveConnections()

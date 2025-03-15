@@ -10,7 +10,7 @@ templ EstimationDetail(ticketID int64, averateEstimate string, medianEstimate st
 		<span>Median estimate: { medianEstimate }</span>
 		<span>Standard deviation: { stdEstimate }</span>
 		<hr class="estimate-divider"/>
-		<span>Estimated by: { estimatedBy } users</span>
+		//	<span data-answered-by={ fmt.Sprintf("%d", ticketID) }>Estimated by: { estimatedBy } users</span>
 	</div>
 }
 
@@ -23,6 +23,11 @@ templ UpdatedEstimationDetail(ticketID int64, averateEstimate string, medianEsti
 	estimatedBy string) {
 	<div hx-swap-oob={ fmt.Sprintf("outerHTML:div[data-ticket-average-estimation='%d' ]", ticketID) }>
 		@EstimationDetail(ticketID, averateEstimate, medianEstimate, stdEstimate, estimatedBy)
+	</div>
+	<div hx-swap-oob={ fmt.Sprintf("outerHTML:span[data-answered-by='%d' ]", ticketID) }>
+		<span data-answered-by={ fmt.Sprintf("%d", ticketID) }>
+			Estimated by: { estimatedBy }
+		</span>
 	</div>
 }
 
