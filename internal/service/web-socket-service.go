@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"log"
 	"sync"
 	"time"
@@ -112,6 +113,26 @@ func (w *WebSocketService) CleanupInactiveConnections() {
 		}
 		mutex.Unlock()
 	}
+}
+
+func (w *WebSocketService) HideTicket(ticketID int64, roomID int64, isHidden bool) {
+	dto := HideTicketDto{
+		TicketID: ticketID,
+		IsHidden: isHidden,
+	}
+	jsonDto, err := json.Marshal(dto)
+	if err != nil {
+		log.Printf("Error marshalling dto: %v", err)
+		return
+	}
+
+	mutex.Lock()
+	conns := rooms[roomID]
+	mutex.Unlock()
+	for conn := range conns {
+		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
+	}
+
 }
 
 func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEstimate string,

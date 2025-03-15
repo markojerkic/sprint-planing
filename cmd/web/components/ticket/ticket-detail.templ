@@ -1,6 +1,7 @@
 package ticket
 
 import "fmt"
+import "github.com/markojerkic/spring-planing/cmd/web/components"
 
 type TicketDetailProps struct {
 	ID              int64
@@ -9,6 +10,7 @@ type TicketDetailProps struct {
 	Description     string
 	HasEstimate     bool
 	IsClosed        bool
+	IsHidden        bool
 	UserEstimate    string
 	AnsweredBy      string
 	AverageEstimate string
@@ -18,7 +20,12 @@ type TicketDetailProps struct {
 }
 
 templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
-	<div class="ticket-detail" data-ticket-id={ fmt.Sprintf("%d", props.ID) }>
+	<div
+		class="ticket-detail"
+		data-ticket-id={ fmt.Sprintf("%d", props.ID) }
+		data-is-owner={ fmt.Sprintf("%t", isRoomOwner) }
+		style={ fmt.Sprintf("display: %s;", components.Ternary(!isRoomOwner && props.IsHidden, "none", "flex")) }
+	>
 		<h3>{ props.Name }</h3>
 		<p>{ props.Description }</p>
 		<div data-estimation-ticket-id={ fmt.Sprintf("%d", props.ID) }>
@@ -43,7 +50,34 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 				class="btn btn-danger"
 			>Close</button>
 		}
+		if isRoomOwner {
+			@HideToggle(props.ID, props.IsHidden)
+		}
 	</div>
+}
+
+templ HideToggle(ticketID int64, isHidden bool) {
+	if isHidden {
+		<button
+			hx-post="/ticket/hide"
+			hx-swap="outerHTML"
+			name="id"
+			value={ fmt.Sprintf("%d", ticketID) }
+			class="btn btn-success mt-4"
+		>
+			Reveal
+		</button>
+	} else {
+		<button
+			hx-post="/ticket/hide"
+			hx-swap="outerHTML"
+			name="id"
+			value={ fmt.Sprintf("%d", ticketID) }
+			class="btn btn-warn mt-4"
+		>
+			Hide
+		</button>
+	}
 }
 
 templ CreatedTicketUpdate(props TicketDetailProps) {

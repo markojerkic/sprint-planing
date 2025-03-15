@@ -29,6 +29,21 @@ type EstimateTicketForm struct {
 	HourEstimate int64 `json:"hourEstimate" form:"hourEstimate" default:"0"`
 }
 
+type HideTicketDto struct {
+	TicketID int64 `json:"ticketID" form:"ticketID"`
+	IsHidden bool  `json:"isHidden" form:"isHidden"`
+}
+
+func (t *TicketService) HideTicket(ctx context.Context, ticketID int64) (*dbgen.Ticket, error) {
+	ticket, err := t.db.Queries.ToggleTicketHidden(ctx, ticketID)
+	if err != nil {
+		return nil, err
+	}
+
+	t.webSocketService.HideTicket(ticketID, ticket.RoomID, ticket.Hidden)
+	return &ticket, nil
+}
+
 func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form EstimateTicketForm) (string, error) {
 	tx, err := t.db.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -173,6 +188,7 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 			Description:     t.Description,
 			HasEstimate:     t.HasEstimate,
 			IsClosed:        t.ClosedAt.Valid,
+			IsHidden:        t.Hidden,
 			AnsweredBy:      "0",
 			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
 			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),

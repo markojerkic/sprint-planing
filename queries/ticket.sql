@@ -103,3 +103,9 @@ FROM
 WHERE
     ticket_id = ?
 ORDER BY estimate ASC, created_at DESC;
+
+-- name: ToggleTicketHidden :one
+UPDATE
+  ticket SET hidden = NOT hidden
+WHERE id = ?
+RETURNING *;

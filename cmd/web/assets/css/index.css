@@ -191,6 +191,22 @@ body {
 	width: 100%;
 }
 
+.btn-warn {
+	background-color: var(--warning);
+}
+
+.btn-warn:hover {
+	background-color: #ff9800;
+}
+
+.btn-success {
+	background-color: var(--success);
+}
+
+.btn-success:hover {
+	background-color: #4caf50;
+}
+
 .btn-lg {
 	padding: 1rem 2rem;
 	font-size: 1.125rem;
@@ -470,6 +486,19 @@ body {
 }
 .ml-4 {
 	margin-left: 2rem;
+}
+
+.mt-1 {
+	margin-top: 0.5rem;
+}
+.mt-2 {
+	margin-top: 1rem;
+}
+.mt-3 {
+	margin-top: 1.5rem;
+}
+.mt-4 {
+	margin-top: 2rem;
 }
 
 /* Padding utilities */

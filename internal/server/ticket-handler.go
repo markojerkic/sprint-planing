@@ -81,6 +81,20 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 	return c.String(200, fmt.Sprintf("Closed ticket %d", ticketID))
 }
 
+func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
+	c.Logger().Info("Hiding ticket")
+	ticketID, err := strconv.ParseInt(c.FormValue("id"), 10, 64)
+	if err != nil {
+		return c.String(400, "Invalid ticket id")
+	}
+	updatedTicket, err := r.service.HideTicket(c.Request().Context(), ticketID)
+	if err != nil {
+		return c.String(500, "Error hiding ticket")
+	}
+
+	return ticket.HideToggle(ticketID, updatedTicket.Hidden).Render(c.Request().Context(), c.Response().Writer)
+}
+
 func newTicketRouter(ticketService *service.TicketService, group *echo.Group) *TicketRouter {
 	r := &TicketRouter{
 		service: ticketService,
@@ -89,6 +103,7 @@ func newTicketRouter(ticketService *service.TicketService, group *echo.Group) *T
 	e := r.group
 
 	e.POST("", r.createTicketHandler)
+	e.POST("/hide", r.hideTicketHandler)
 	e.POST("/estimate", r.estimateTicketHandler)
 	e.POST("/close", r.closeTicketHandler)
 	e.GET("/estimates/:id", r.ticketEstimatesHandler)
