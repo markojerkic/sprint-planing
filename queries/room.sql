@@ -12,7 +12,8 @@ SELECT
     room.created_by = :id as is_owner
     FROM room_user
 JOIN room ON room.id = room_user.room_id
-WHERE room_user.user_id = :id;
+WHERE room_user.user_id = :id
+ORDER BY room.created_at DESC;
 
 -- name: GetRoomDetails :one
 SELECT room.*,

@@ -69,7 +69,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form E
 		avgEst.RoomID,
 		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
 		prettyPrintEstimatef(avgEst.MedianEstimate),
-		fmt.Sprintf("%.3fh", avgEst.StdDevEstimate.Float64),
+		prettyPrintStd(avgEst.StdDevEstimate),
 		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
 
 	return prettyPrintEstimate(sql.NullInt64{Int64: estimate.Estimate, Valid: true}), nil
@@ -89,7 +89,7 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int64) (*dbgen
 		avgEst.RoomID,
 		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
 		prettyPrintEstimatef(avgEst.MedianEstimate),
-		fmt.Sprintf("%.3fh", avgEst.StdDevEstimate.Float64),
+		prettyPrintStd(avgEst.StdDevEstimate),
 		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
 
 	return &ticket, nil
@@ -162,7 +162,7 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
 			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),
 			MedianEstimate:  prettyPrintEstimatef(t.MedianEstimate),
-			StdEstimate:     fmt.Sprintf("%.3fh", t.StdDevEstimate.Float64),
+			StdEstimate:     prettyPrintStd(t.StdDevEstimate),
 			EstimatedBy:     fmt.Sprintf("%d/%d", t.UsersEstimated, t.TotalUsersInRoom),
 		}
 	}
@@ -176,6 +176,19 @@ func NewTicketService(db *database.Database) *TicketService {
 	}
 	ticketService.webSocketService = NewWebSocketService(ticketService)
 	return ticketService
+}
+
+func prettyPrintStd(stdf sql.NullFloat64) string {
+	if !stdf.Valid {
+		return "No estimate"
+	}
+	estimate := stdf.Float64
+
+	weeks := int64(estimate) / 40
+	days := (int64(estimate) % 40) / 8
+	hours := float64(int64(estimate)%8) + (estimate - float64(int64(estimate)))
+
+	return fmt.Sprintf("%dw %dd %.2fh", weeks, days, hours)
 }
 
 func prettyPrintEstimatef(nEstimate sql.NullFloat64) string {
