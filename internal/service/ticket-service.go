@@ -68,6 +68,8 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form E
 	t.webSocketService.UpdateEstimate(avgEst.ID,
 		avgEst.RoomID,
 		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
+		prettyPrintEstimatef(avgEst.MedianEstimate),
+		fmt.Sprintf("%.3fh", avgEst.StdDevEstimate.Float64),
 		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
 
 	return prettyPrintEstimate(sql.NullInt64{Int64: estimate.Estimate, Valid: true}), nil
@@ -86,6 +88,8 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int64) (*dbgen
 	t.webSocketService.CloseTicket(ticketID,
 		avgEst.RoomID,
 		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
+		prettyPrintEstimatef(avgEst.MedianEstimate),
+		fmt.Sprintf("%.3fh", avgEst.StdDevEstimate.Float64),
 		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
 
 	return &ticket, nil
@@ -157,6 +161,8 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 			AnsweredBy:      "TBD",
 			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
 			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),
+			MedianEstimate:  prettyPrintEstimatef(t.MedianEstimate),
+			StdEstimate:     fmt.Sprintf("%.3fh", t.StdDevEstimate.Float64),
 			EstimatedBy:     fmt.Sprintf("%d/%d", t.UsersEstimated, t.TotalUsersInRoom),
 		}
 	}
@@ -170,6 +176,19 @@ func NewTicketService(db *database.Database) *TicketService {
 	}
 	ticketService.webSocketService = NewWebSocketService(ticketService)
 	return ticketService
+}
+
+func prettyPrintEstimatef(nEstimate sql.NullFloat64) string {
+	if !nEstimate.Valid {
+		return "No estimate"
+	}
+	estimate := int64(nEstimate.Float64)
+
+	weeks := estimate / 40
+	days := (estimate % 40) / 8
+	hours := estimate % 8
+
+	return fmt.Sprintf("%dw %dd %dh", weeks, days, hours)
 }
 
 func prettyPrintEstimate(nEstimate sql.NullInt64) string {

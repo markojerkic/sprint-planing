@@ -6,13 +6,14 @@ import (
 	"embed"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 )
 
@@ -46,13 +47,23 @@ func New() *Database {
 		return dbInstance
 	}
 
-	log.Printf("Connected to database: %s", dburl)
-	db, err := sql.Open("sqlite3", dburl)
+	// Register a connection with custom functions
+	sql.Register("sqlite3_with_sqrt", &sqlite3.SQLiteDriver{
+		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+			// Register SQRT function
+			return conn.RegisterFunc("SQRT", math.Sqrt, true)
+		},
+	})
+
+	// Use the connection with custom functions
+	db, err := sql.Open("sqlite3_with_sqrt", dburl)
+
 	if err != nil {
 		// This will not be a connection error, but a DSN parse error or
 		// another initialization error.
 		log.Fatal(err)
 	}
+	log.Printf("Connected to database: %s", dburl)
 
 	dbInstance = &Database{
 		DB: db,

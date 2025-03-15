@@ -114,9 +114,10 @@ func (w *WebSocketService) CleanupInactiveConnections() {
 	}
 }
 
-func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEstimate string, estimatedBy string) {
+func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEstimate string,
+	medianEstimate string, stdEstimate string, estimatedBy string) {
 	removedTicketForm := new(bytes.Buffer)
-	if err := ticket.ClosedEstimation(ticketID, averageEstimate, estimatedBy).
+	if err := ticket.ClosedEstimation(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
 		Render(context.Background(), removedTicketForm); err != nil {
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
@@ -124,7 +125,7 @@ func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEsti
 	log.Printf("Closing ticket and sending render %d for roomID %d", ticketID, roomID)
 
 	averageEstimateRendered := new(bytes.Buffer)
-	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, estimatedBy).
+	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
 		Render(context.Background(), averageEstimateRendered); err != nil {
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
@@ -144,9 +145,10 @@ func (w *WebSocketService) CloseTicket(ticketID int64, roomID int64, averageEsti
 	}
 }
 
-func (w *WebSocketService) UpdateEstimate(ticketID int64, roomID int64, averageEstimate string, estimatedBy string) {
+func (w *WebSocketService) UpdateEstimate(ticketID int64, roomID int64, averageEstimate string,
+	medianEstimate string, stdEstimate string, estimatedBy string) {
 	renderedTicket := new(bytes.Buffer)
-	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, estimatedBy).
+	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
 		Render(context.Background(), renderedTicket); err != nil {
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
