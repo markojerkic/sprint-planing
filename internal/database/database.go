@@ -2,17 +2,20 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"log"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	"github.com/pressly/goose/v3"
 
-	"github.com/jackc/pgx/v5"
+	// This is the important import for goose to find the postgres driver
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 //go:embed migrations/*.sql
@@ -23,7 +26,6 @@ type Service interface {
 	// Health returns a map of health status information.
 	// The keys and values in the map are service-specific.
 	Health() map[string]string
-
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
@@ -66,15 +68,13 @@ func (s *Database) runMigrations() {
 	// Set the goose environment
 	goose.SetBaseFS(embedMigrations)
 
-	// Get a single connection from the pool for migrations
-
 	// Optional: Set goose dialect to postgres
 	if err := goose.SetDialect("postgres"); err != nil {
 		log.Fatalf("failed to set goose dialect: %v", err)
 	}
 
-	// Run the migrations using a temporary sql.DB
-	db, err := goose.OpenDBWithDriver("postgres", dburl)
+	// Open the database using the pgx driver via its stdlib adapter
+	db, err := sql.Open("pgx", dburl)
 	if err != nil {
 		log.Fatalf("failed to open DB for migrations: %v", err)
 	}
@@ -91,7 +91,6 @@ func (s *Database) runMigrations() {
 func (s *Database) Health() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-
 	stats := make(map[string]string)
 
 	// Ping the database
@@ -128,6 +127,5 @@ func (s *Database) Health() map[string]string {
 // If an error occurs while closing the connection, it returns the error.
 func (s *Database) Close() error {
 	log.Printf("Disconnected from database: %s", dburl)
-	s.Conn.Close(context.Background())
-	return nil
+	return s.Conn.Close(context.Background())
 }
