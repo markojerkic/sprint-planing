@@ -61,7 +61,7 @@ func (r *TicketRouter) ticketEstimatesHandler(c echo.Context) error {
 	if err != nil {
 		return c.String(400, "Invalid ticket id")
 	}
-	estimates, err := r.service.GetTicketEstimates(c.Request().Context(), ticketID)
+	estimates, err := r.service.GetTicketEstimates(c.Request().Context(), int32(ticketID))
 	if err != nil {
 		return c.String(500, "Error getting ticket estimates")
 	}
@@ -74,7 +74,7 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 	if err != nil {
 		return c.String(400, "Invalid ticket id")
 	}
-	if _, err := r.service.CloseTicket(c.Request().Context(), ticketID); err != nil {
+	if _, err := r.service.CloseTicket(c.Request().Context(), int32(ticketID)); err != nil {
 		return c.String(500, "Error closing ticket")
 	}
 
@@ -87,12 +87,12 @@ func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 	if err != nil {
 		return c.String(400, "Invalid ticket id")
 	}
-	updatedTicket, err := r.service.HideTicket(c.Request().Context(), ticketID)
+	updatedTicket, err := r.service.HideTicket(c.Request().Context(), int32(ticketID))
 	if err != nil {
 		return c.String(500, "Error hiding ticket")
 	}
 
-	return ticket.HideToggle(ticketID, updatedTicket.Hidden).Render(c.Request().Context(), c.Response().Writer)
+	return ticket.HideToggle(int32(ticketID), updatedTicket.Hidden).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func newTicketRouter(ticketService *service.TicketService, group *echo.Group) *TicketRouter {

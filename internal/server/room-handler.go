@@ -38,13 +38,13 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		return ctx.String(400, "Invalid room id")
 	}
 
-	roomDetails, err := r.roomService.GetRoom(ctx.Request().Context(), roomID, user.ID)
+	roomDetails, err := r.roomService.GetRoom(ctx.Request().Context(), int32(roomID), user.ID)
 	if err != nil {
 		ctx.Logger().Errorf("Error getting room: %v", err)
 		return ctx.String(500, "Error getting room")
 	}
 
-	roomTickets, err := r.ticketService.GetTicketsOfRoom(ctx.Request().Context(), roomID, user.ID, nil)
+	roomTickets, err := r.ticketService.GetTicketsOfRoom(ctx.Request().Context(), int32(roomID), user.ID, nil)
 	if err != nil {
 		ctx.Logger().Errorf("Error getting room tickets: %v", err)
 		return ctx.String(500, "Error getting room tickets")

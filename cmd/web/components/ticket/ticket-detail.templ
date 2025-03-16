@@ -4,8 +4,8 @@ import "fmt"
 import "github.com/markojerkic/spring-planing/cmd/web/components"
 
 type TicketDetailProps struct {
-	ID              int64
-	RoomID          int64
+	ID              int32
+	RoomID          int32
 	Name            string
 	Description     string
 	HasEstimate     bool
@@ -56,7 +56,7 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 	</div>
 }
 
-templ HideToggle(ticketID int64, isHidden bool) {
+templ HideToggle(ticketID int32, isHidden bool) {
 	if isHidden {
 		<button
 			hx-post="/ticket/hide"

@@ -1,8 +1,8 @@
 -- name: CreateTicket :one
 INSERT INTO
-  ticket (name, description, room_id)
+  public.ticket (name, description, room_id)
 VALUES
-  (?, ?, ?) RETURNING *;
+  ($1, $2, $3) RETURNING *;
 
 -- name: GetTicketsOfRoom :many
 SELECT
@@ -14,7 +14,7 @@ SELECT
         SELECT
             COUNT(DISTINCT tue.user_id)
         FROM
-            ticket_user_estimate tue
+            public.ticket_user_estimate tue
         WHERE
             tue.ticket_id = ticket.id
     ) AS users_estimated,
@@ -22,28 +22,28 @@ SELECT
         SELECT
             COUNT(DISTINCT ru.user_id)
         FROM
-            room_user ru
+            public.room_user ru
         WHERE
             ru.room_id = ticket.room_id
     ) AS total_users_in_room
 FROM
-    ticket
-  left join ticket_estimate_statistics on ticket.id = ticket_estimate_statistics.ticket_id
-    LEFT JOIN ticket_user_estimate ON ticket_user_estimate.ticket_id = ticket.id
-        AND ticket_user_estimate.user_id = :user_id
+    public.ticket
+LEFT JOIN public.ticket_estimate_statistics ON ticket.id = ticket_estimate_statistics.ticket_id
+LEFT JOIN public.ticket_user_estimate ON ticket_user_estimate.ticket_id = ticket.id
+    AND ticket_user_estimate.user_id = $1
 WHERE
-    ticket.room_id = :room_id
+    ticket.room_id = $2
 ORDER BY
     ticket.created_at DESC;
 
 -- name: GetTicketAverageEstimation :one
-select
+SELECT
   ticket.*,
     (
         SELECT
             COUNT(DISTINCT tue.user_id)
         FROM
-            ticket_user_estimate tue
+            public.ticket_user_estimate tue
         WHERE
             tue.ticket_id = ticket.id
     ) AS users_estimated,
@@ -51,16 +51,16 @@ select
         SELECT
             COUNT(DISTINCT ru.user_id)
         FROM
-            room_user ru
+            public.room_user ru
         WHERE
             ru.room_id = ticket.room_id
     ) AS total_users_in_room,
     ticket_estimate_statistics.*
-from
-  ticket
-  left join ticket_estimate_statistics on ticket.id = ticket_estimate_statistics.ticket_id
-where
-  ticket.id = :ticket_id;
+FROM
+  public.ticket
+LEFT JOIN public.ticket_estimate_statistics ON ticket.id = ticket_estimate_statistics.ticket_id
+WHERE
+  ticket.id = $1;
 
 -- name: GetHowManyUsersHaveEstimated :one
 SELECT
@@ -68,44 +68,45 @@ SELECT
     SELECT
       COUNT(DISTINCT user_id)
     FROM
-      ticket_user_estimate
+      public.ticket_user_estimate
     WHERE
-        ticket_id = :ticket_id
+        ticket_id = $1
   ) AS estimated_users,
   (
     SELECT
       COUNT(DISTINCT room_user.user_id)
     FROM
-      room_user
-      JOIN ticket ON ticket.room_id = room_user.room_id
+      public.room_user
+      JOIN public.ticket ON ticket.room_id = room_user.room_id
     WHERE
-      ticket.id = :ticket_id
+      ticket.id = $1
   ) AS total_users;
 
 -- name: EstimateTicket :one
 INSERT INTO
-  ticket_user_estimate (estimate, user_id, ticket_id)
+  public.ticket_user_estimate (estimate, user_id, ticket_id)
 VALUES
-  (?, ?, ?) RETURNING *;
-
+  ($1, $2, $3) RETURNING *;
 
 -- name: CloseTicket :one
 UPDATE
-  ticket SET closed_at = CURRENT_TIMESTAMP
-WHERE id = ?
+  public.ticket
+SET closed_at = CURRENT_TIMESTAMP
+WHERE id = $1
 RETURNING *;
 
 -- name: GetTicketEstimates :many
 SELECT
     estimate
 FROM
-    ticket_user_estimate
+    public.ticket_user_estimate
 WHERE
-    ticket_id = ?
+    ticket_id = $1
 ORDER BY estimate ASC, created_at DESC;
 
 -- name: ToggleTicketHidden :one
 UPDATE
-  ticket SET hidden = NOT hidden
-WHERE id = ?
+  public.ticket
+SET hidden = NOT hidden
+WHERE id = $1
 RETURNING *;

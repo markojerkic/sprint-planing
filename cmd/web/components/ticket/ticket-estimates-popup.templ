@@ -2,7 +2,7 @@ package ticket
 
 import "fmt"
 
-templ EstimatesPopupButton(ticketID int64) {
+templ EstimatesPopupButton(ticketID int32) {
 	<div
 		id={ fmt.Sprintf("estimates-popup-%d", ticketID) }
 		popover="manual"

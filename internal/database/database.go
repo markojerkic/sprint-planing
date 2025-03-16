@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"embed"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 	"github.com/pressly/goose/v3"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 //go:embed migrations/*.sql
@@ -32,7 +30,7 @@ type Service interface {
 }
 
 type Database struct {
-	Pool    *pgxpool.Pool
+	Conn    *pgx.Conn
 	Queries *dbgen.Queries
 }
 
@@ -48,31 +46,18 @@ func New() *Database {
 	}
 
 	// Parse connection string
-	config, err := pgxpool.ParseConfig(dburl)
+	conn, err := pgx.Connect(context.Background(), dburl)
 	if err != nil {
-		log.Fatalf("Unable to parse database URL: %v", err)
+		log.Fatalf("failed to parse connection string: %v", err)
 	}
-
-	// Configure pool settings
-	config.MaxConns = 10
-	config.MinConns = 1
-	config.MaxConnLifetime = time.Hour
-	config.MaxConnIdleTime = 30 * time.Minute
-
-	// Connect to database
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
-	}
-	log.Printf("Connected to database: %s", dburl)
 
 	dbInstance = &Database{
-		Pool: pool,
+		Conn: conn,
 	}
 	dbInstance.runMigrations()
 
 	// Initialize queries with the connection pool
-	dbInstance.Queries = dbgen.New(pool)
+	dbInstance.Queries = dbgen.New(dbInstance.Conn)
 
 	return dbInstance
 }
@@ -82,25 +67,14 @@ func (s *Database) runMigrations() {
 	goose.SetBaseFS(embedMigrations)
 
 	// Get a single connection from the pool for migrations
-	conn, err := s.Pool.Acquire(context.Background())
-	if err != nil {
-		log.Fatalf("failed to acquire connection for migrations: %v", err)
-	}
-	defer conn.Release()
 
 	// Optional: Set goose dialect to postgres
 	if err := goose.SetDialect("postgres"); err != nil {
 		log.Fatalf("failed to set goose dialect: %v", err)
 	}
 
-	// Get the underlying *sql.DB from pgx
-	sqlDB, err := conn.Conn().PgConn().ConnConfig().ConnString()
-	if err != nil {
-		log.Fatalf("failed to get connection string: %v", err)
-	}
-
 	// Run the migrations using a temporary sql.DB
-	db, err := goose.OpenDBWithDriver("postgres", sqlDB)
+	db, err := goose.OpenDBWithDriver("postgres", dburl)
 	if err != nil {
 		log.Fatalf("failed to open DB for migrations: %v", err)
 	}
@@ -121,31 +95,28 @@ func (s *Database) Health() map[string]string {
 	stats := make(map[string]string)
 
 	// Ping the database
-	err := s.Pool.Ping(ctx)
-	if err != nil {
+	if err := s.Conn.Ping(ctx); err != nil {
 		stats["status"] = "down"
-		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf("db down: %v", err) // Log the error and terminate the program
+		stats["error"] = err.Error()
 		return stats
 	}
 
-	// Database is up, add more statistics
-	stats["status"] = "up"
-	stats["message"] = "It's healthy"
-
-	// Get database stats
-	poolStats := s.Pool.Stat()
-	stats["total_connections"] = strconv.Itoa(poolStats.TotalConns())
-	stats["acquired_connections"] = strconv.Itoa(poolStats.AcquiredConns())
-	stats["idle_connections"] = strconv.Itoa(poolStats.IdleConns())
-
-	// Evaluate stats to provide a health message
-	if poolStats.AcquiredConns() > 8 { // Assuming 10 is the max for this example
-		stats["message"] = "The database is experiencing heavy load."
+	// Get the database version
+	var version string
+	if err := s.Conn.QueryRow(ctx, "SELECT version()").Scan(&version); err != nil {
+		stats["status"] = "down"
+		stats["error"] = err.Error()
+		return stats
 	}
+	stats["status"] = "up"
+	stats["version"] = version
 
-	if poolStats.TotalConns() == 10 && poolStats.IdleConns() == 0 {
-		stats["message"] = "All connections are in use, indicating potential bottlenecks."
+	// Get the number of active connections
+	var connections int
+	if err := s.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM pg_stat_activity").Scan(&connections); err != nil {
+		stats["connections"] = "unknown"
+	} else {
+		stats["connections"] = strconv.Itoa(connections)
 	}
 
 	return stats
@@ -157,6 +128,6 @@ func (s *Database) Health() map[string]string {
 // If an error occurs while closing the connection, it returns the error.
 func (s *Database) Close() error {
 	log.Printf("Disconnected from database: %s", dburl)
-	s.Pool.Close()
+	s.Conn.Close(context.Background())
 	return nil
 }
