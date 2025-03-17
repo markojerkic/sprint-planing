@@ -28,7 +28,7 @@ func (r *WebSocketRouter) webSocketHandler(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	r.service.Register(conn, roomId)
+	r.service.Register(conn, int32(roomId))
 
 	return nil
 

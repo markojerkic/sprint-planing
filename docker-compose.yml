@@ -10,9 +10,25 @@ services:
     environment:
       APP_ENV: ${APP_ENV}
       PORT: ${PORT}
-      BLUEPRINT_DB_URL: ${BLUEPRINT_DB_URL}
+      DB_URL: ${DB_URL}
       SESSION_SECRET: ${SESSION_SECRET}
+    depends_on:
+      - db
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    ports:
+      - 15432:5432
     volumes:
-      - sqlite_bp:/app/data
+      - postgres_data:/var/lib/postgresql/data
 volumes:
-  sqlite_bp:
+  postgres_data:

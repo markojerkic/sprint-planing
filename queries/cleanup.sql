@@ -1,40 +1,40 @@
 -- name: CleanupOldTickets :exec
-DELETE FROM ticket_user_estimate
+DELETE FROM public.ticket_user_estimate
 WHERE
   ticket_id IN (
     SELECT
       id
     FROM
-      ticket
+      public.ticket
     WHERE
       closed_at IS NOT NULL
-      AND datetime (closed_at) < datetime ('now', '-30 days')
+      AND closed_at < NOW () - INTERVAL '30 days'
   );
 
 -- name: CleanupClosedTickets :exec
-DELETE FROM ticket
+DELETE FROM public.ticket
 WHERE
   closed_at IS NOT NULL
-  AND datetime (closed_at) < datetime ('now', '-30 days');
+  AND closed_at < NOW () - INTERVAL '30 days';
 
 -- name: CleanupUnusedRooms :exec
-DELETE FROM room
+DELETE FROM public.room
 WHERE
   id NOT IN (
     SELECT DISTINCT
       room_id
     FROM
-      ticket
+      public.ticket
   )
-  AND datetime (created_at) < datetime ('now', '-30 days');
+  AND created_at < NOW () - INTERVAL '30 days';
 
 -- name: CleanupUnusedUsers :exec
-DELETE FROM user
+DELETE FROM public.user
 WHERE
   id NOT IN (
     SELECT DISTINCT
       user_id
     FROM
-      room_user
+      public.room_user
   )
-  AND datetime (created_at) < datetime ('now', '-30 days');
+  AND created_at < NOW () - INTERVAL '30 days';

@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log/slog"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
@@ -19,22 +20,22 @@ type TicketService struct {
 type CreateTicketForm struct {
 	TicketName        string `json:"ticketName" form:"ticketName" validate:"required"`
 	TicketDescription string `json:"ticketDescription" form:"ticketDescription" validate:"required"`
-	RoomID            int64  `json:"roomID" form:"roomID" validate:"required"`
+	RoomID            int32  `json:"roomID" form:"roomID" validate:"required"`
 }
 
 type EstimateTicketForm struct {
-	TicketID     int64 `json:"ticketID" form:"ticketID" validate:"required"`
-	WeekEstimate int64 `json:"weekEstimate" form:"weekEstimate" default:"0"`
-	DayEstimate  int64 `json:"dayEstimate" form:"dayEstimate" default:"0"`
-	HourEstimate int64 `json:"hourEstimate" form:"hourEstimate" default:"0"`
+	TicketID     int32 `json:"ticketID" form:"ticketID" validate:"required"`
+	WeekEstimate int32 `json:"weekEstimate" form:"weekEstimate" default:"0"`
+	DayEstimate  int32 `json:"dayEstimate" form:"dayEstimate" default:"0"`
+	HourEstimate int32 `json:"hourEstimate" form:"hourEstimate" default:"0"`
 }
 
 type HideTicketDto struct {
-	TicketID int64 `json:"ticketID" form:"ticketID"`
+	TicketID int32 `json:"ticketID" form:"ticketID"`
 	IsHidden bool  `json:"isHidden" form:"isHidden"`
 }
 
-func (t *TicketService) HideTicket(ctx context.Context, ticketID int64) (*dbgen.Ticket, error) {
+func (t *TicketService) HideTicket(ctx context.Context, ticketID int32) (*dbgen.Ticket, error) {
 	ticket, err := t.db.Queries.ToggleTicketHidden(ctx, ticketID)
 	if err != nil {
 		return nil, err
@@ -44,13 +45,13 @@ func (t *TicketService) HideTicket(ctx context.Context, ticketID int64) (*dbgen.
 	return &ticket, nil
 }
 
-func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form EstimateTicketForm) (string, error) {
-	tx, err := t.db.DB.BeginTx(ctx, nil)
+func (t *TicketService) EstimateTicket(ctx context.Context, userID int32, form EstimateTicketForm) (string, error) {
+	tx, err := t.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		slog.Error("Error creating transaction", slog.Any("error", err))
 		return "", err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(ctx)
 
 	q := t.db.Queries.WithTx(tx)
 
@@ -61,20 +62,20 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form E
 		TicketID: form.TicketID,
 	})
 	if err != nil {
-		tx.Rollback()
+		tx.Rollback(ctx)
 		slog.Error("Error estimating ticket", slog.Any("error", err))
 		return "", err
 	}
 
 	avgEst, err := q.GetTicketAverageEstimation(ctx, form.TicketID)
 	if err != nil {
-		tx.Rollback()
+		tx.Rollback(ctx)
 		slog.Error("Error getting ticket average estimation", slog.Any("error", err))
 		return "", err
 	}
 
-	if err := tx.Commit(); err != nil {
-		tx.Rollback()
+	if err := tx.Commit(ctx); err != nil {
+		tx.Rollback(ctx)
 		slog.Error("Error committing transaction", slog.Any("error", err))
 		return "", err
 	}
@@ -82,15 +83,15 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID int64, form E
 	averageEstimate := avgEst.AvgEstimate.Float64
 	t.webSocketService.UpdateEstimate(avgEst.ID,
 		avgEst.RoomID,
-		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
+		prettyPrintEstimate(pgtype.Int4{Int32: int32(averageEstimate), Valid: true}),
 		prettyPrintEstimatef(avgEst.MedianEstimate),
 		prettyPrintStd(avgEst.StdDevEstimate),
 		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
 
-	return prettyPrintEstimate(sql.NullInt64{Int64: estimate.Estimate, Valid: true}), nil
+	return prettyPrintEstimate(pgtype.Int4{Int32: estimate.Estimate, Valid: true}), nil
 }
 
-func (t *TicketService) CloseTicket(ctx context.Context, ticketID int64) (*dbgen.Ticket, error) {
+func (t *TicketService) CloseTicket(ctx context.Context, ticketID int32) (*dbgen.Ticket, error) {
 
 	ticket, err := t.db.Queries.CloseTicket(ctx, ticketID)
 	if err != nil {
@@ -102,7 +103,7 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int64) (*dbgen
 	averageEstimate := avgEst.AvgEstimate.Float64
 	t.webSocketService.CloseTicket(ticketID,
 		avgEst.RoomID,
-		prettyPrintEstimate(sql.NullInt64{Int64: int64(averageEstimate), Valid: true}),
+		prettyPrintEstimate(pgtype.Int4{Int32: int32(averageEstimate), Valid: true}),
 		prettyPrintEstimatef(avgEst.MedianEstimate),
 		prettyPrintStd(avgEst.StdDevEstimate),
 		fmt.Sprintf("%d/%d", avgEst.UsersEstimated, avgEst.TotalUsersInRoom))
@@ -110,7 +111,7 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int64) (*dbgen
 	return &ticket, nil
 }
 
-func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int64) ([]string, error) {
+func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) ([]string, error) {
 	estimates, err := t.db.Queries.GetTicketEstimates(ctx, ticketID)
 	if err != nil {
 		slog.Error("Error getting ticket estimates", slog.Any("error", err))
@@ -119,19 +120,19 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int64) 
 
 	prettyEstimates := make([]string, len(estimates))
 	for i, e := range estimates {
-		prettyEstimates[i] = prettyPrintEstimate(sql.NullInt64{Int64: e, Valid: true})
+		prettyEstimates[i] = prettyPrintEstimate(pgtype.Int4{Int32: e, Valid: true})
 	}
 
 	return prettyEstimates, nil
 }
 
-func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form CreateTicketForm) ([]ticket.TicketDetailProps, error) {
-	tx, err := t.db.DB.BeginTx(ctx, nil)
+func (t *TicketService) CreateTicket(ctx context.Context, userID int32, form CreateTicketForm) ([]ticket.TicketDetailProps, error) {
+	tx, err := t.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		slog.Error("Error creating transaction", slog.Any("error", err))
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(ctx)
 
 	q := t.db.Queries.WithTx(tx)
 	tticket, err := q.CreateTicket(ctx, dbgen.CreateTicketParams{
@@ -140,7 +141,7 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form Cre
 		RoomID:      form.RoomID,
 	})
 	if err != nil {
-		tx.Rollback()
+		tx.Rollback(ctx)
 		slog.Error("Error creating ticket", slog.Any("error", err))
 		return nil, err
 	}
@@ -149,12 +150,12 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form Cre
 	tickets, err := t.GetTicketsOfRoom(ctx, form.RoomID, userID, q)
 
 	if err != nil {
-		tx.Rollback()
+		tx.Rollback(ctx)
 		slog.Error("Error getting tickets", slog.Any("error", err))
 		return nil, err
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		slog.Error("Error committing transaction", slog.Any("error", err))
 		return nil, err
 	}
@@ -164,7 +165,7 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID int64, form Cre
 	return tickets, nil
 }
 
-func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, userID int64, q *dbgen.Queries) ([]ticket.TicketDetailProps, error) {
+func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int32, userID int32, q *dbgen.Queries) ([]ticket.TicketDetailProps, error) {
 	queries := q
 	if q == nil {
 		queries = t.db.Queries
@@ -186,12 +187,12 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int64, user
 			RoomID:          t.RoomID,
 			Name:            t.Name,
 			Description:     t.Description,
-			HasEstimate:     t.HasEstimate,
+			HasEstimate:     false, // t.HasEstimate,
 			IsClosed:        t.ClosedAt.Valid,
 			IsHidden:        t.Hidden,
 			AnsweredBy:      "0",
 			UserEstimate:    prettyPrintEstimate(t.UserEstimate),
-			AverageEstimate: prettyPrintEstimate(sql.NullInt64{Int64: int64(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),
+			AverageEstimate: prettyPrintEstimate(pgtype.Int4{Int32: int32(t.AvgEstimate.Float64), Valid: t.AvgEstimate.Valid}),
 			MedianEstimate:  prettyPrintEstimatef(t.MedianEstimate),
 			StdEstimate:     prettyPrintStd(t.StdDevEstimate),
 			EstimatedBy:     fmt.Sprintf("%d/%d", t.UsersEstimated, t.TotalUsersInRoom),
@@ -209,24 +210,24 @@ func NewTicketService(db *database.Database) *TicketService {
 	return ticketService
 }
 
-func prettyPrintStd(stdf sql.NullFloat64) string {
+func prettyPrintStd(stdf pgtype.Float8) string {
 	if !stdf.Valid {
 		return "No estimate"
 	}
 	estimate := stdf.Float64
 
-	weeks := int64(estimate) / 40
-	days := (int64(estimate) % 40) / 8
-	hours := float64(int64(estimate)%8) + (estimate - float64(int64(estimate)))
+	weeks := int32(estimate) / 40
+	days := (int32(estimate) % 40) / 8
+	hours := float64(int32(estimate)%8) + (estimate - float64(int32(estimate)))
 
 	return fmt.Sprintf("%dw %dd %.2fh", weeks, days, hours)
 }
 
-func prettyPrintEstimatef(nEstimate sql.NullFloat64) string {
+func prettyPrintEstimatef(nEstimate pgtype.Float8) string {
 	if !nEstimate.Valid {
 		return "No estimate"
 	}
-	estimate := int64(nEstimate.Float64)
+	estimate := int32(nEstimate.Float64)
 
 	weeks := estimate / 40
 	days := (estimate % 40) / 8
@@ -235,11 +236,11 @@ func prettyPrintEstimatef(nEstimate sql.NullFloat64) string {
 	return fmt.Sprintf("%dw %dd %dh", weeks, days, hours)
 }
 
-func prettyPrintEstimate(nEstimate sql.NullInt64) string {
+func prettyPrintEstimate(nEstimate pgtype.Int4) string {
 	if !nEstimate.Valid {
 		return "No estimate"
 	}
-	estimate := nEstimate.Int64
+	estimate := nEstimate.Int32
 
 	weeks := estimate / 40
 	days := (estimate % 40) / 8

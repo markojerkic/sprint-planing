@@ -2,7 +2,7 @@ package ticket
 
 import "fmt"
 
-templ CreateTicket(roomId int64) {
+templ CreateTicket(roomId int32) {
 	<script type="module" src="/assets/js/create-ticket.js"></script>
 	<button type="button" class="btn btn-primary" popovertarget="create-ticket-popover" popovertargetaction="show">
 		Create
@@ -23,7 +23,7 @@ templ CreateTicket(roomId int64) {
 	</div>
 }
 
-templ createTicketForm(roomId int64) {
+templ createTicketForm(roomId int32) {
 	<form hx-post="/ticket" hx-target="#ticket-list" hx-swap="outerHTML" id="ticket-form" hx-select="#ticket-list">
 		<input type="hidden" name="roomId" value={ fmt.Sprintf("%d", roomId) }/>
 		<div class="form-group">

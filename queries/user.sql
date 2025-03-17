@@ -1,13 +1,13 @@
 -- name: CreateUser :one
 INSERT INTO
-  user (created_at)
+  public.user (created_at)
 VALUES
-  (CURRENT_TIMESTAMP) RETURNING *;
+  (NOW()) RETURNING *;
 
 -- name: GetUser :one
 SELECT
   *
 FROM
-  user
+  public.user
 WHERE
-  id = ?;
+  id = $1;

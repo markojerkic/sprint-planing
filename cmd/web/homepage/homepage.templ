@@ -1,11 +1,11 @@
 package homepage
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/markojerkic/spring-planing/cmd/web/components"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	"time"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 templ RoomList(rooms []dbgen.GetMyRoomsRow) {
@@ -187,14 +187,14 @@ func ternary(condition bool, trueVal, falseVal string) string {
 	return falseVal
 }
 
-func formatCreatedAt(createdAt sql.NullTime) string {
+func formatCreatedAt(createdAt pgtype.Timestamp) string {
 	if createdAt.Valid {
 		return createdAt.Time.Format("Jan 2, 2006")
 	}
 	return ""
 }
 
-func isRecent(createdAt sql.NullTime) bool {
+func isRecent(createdAt pgtype.Timestamp) bool {
 	if createdAt.Valid {
 		return createdAt.Time.After(time.Now().Add(-24 * time.Hour))
 	}

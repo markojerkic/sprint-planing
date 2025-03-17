@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/markojerkic/spring-planing/internal/database"
@@ -69,12 +70,12 @@ func (s *Server) cleanupCRON() {
 }
 
 func (s *Server) cleanup(ctx context.Context) error {
-	tx, err := s.db.DB.BeginTx(ctx, nil)
+	tx, err := s.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		log.Printf("Failed to begin transaction: %v", err)
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(ctx)
 	qtx := s.db.Queries.WithTx(tx)
 
 	if err := qtx.CleanupOldTickets(ctx); err != nil {
@@ -93,7 +94,7 @@ func (s *Server) cleanup(ctx context.Context) error {
 		return fmt.Errorf("failed to cleanup unused users: %w", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		log.Printf("Failed to commit transaction: %v", err)
 		return err
 	}

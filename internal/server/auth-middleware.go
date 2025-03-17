@@ -59,7 +59,7 @@ func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		userIDInterface := sess.Values[sessionUserID]
 		if userIDInterface != nil {
 			// Try to get the user from the database
-			if userID, ok := userIDInterface.(int64); ok {
+			if userID, ok := userIDInterface.(int32); ok {
 				user, err := s.db.Queries.GetUser(ctx, userID)
 				if err == nil {
 					// User found, set in context and proceed
