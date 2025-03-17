@@ -9,12 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	"github.com/pressly/goose/v3"
 
-	// This is the important import for goose to find the postgres driver
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -32,7 +31,7 @@ type Service interface {
 }
 
 type Database struct {
-	Conn    *pgx.Conn
+	DB      *pgxpool.Pool
 	Queries *dbgen.Queries
 }
 
@@ -48,18 +47,18 @@ func New() *Database {
 	}
 
 	// Parse connection string
-	conn, err := pgx.Connect(context.Background(), dburl)
+	dbpool, err := pgxpool.New(context.Background(), dburl)
 	if err != nil {
 		log.Fatalf("failed to parse connection string: %v", err)
 	}
 
 	dbInstance = &Database{
-		Conn: conn,
+		DB: dbpool,
 	}
 	dbInstance.runMigrations()
 
 	// Initialize queries with the connection pool
-	dbInstance.Queries = dbgen.New(dbInstance.Conn)
+	dbInstance.Queries = dbgen.New(dbpool)
 
 	return dbInstance
 }
@@ -94,7 +93,7 @@ func (s *Database) Health() map[string]string {
 	stats := make(map[string]string)
 
 	// Ping the database
-	if err := s.Conn.Ping(ctx); err != nil {
+	if err := s.DB.Ping(ctx); err != nil {
 		stats["status"] = "down"
 		stats["error"] = err.Error()
 		return stats
@@ -102,7 +101,7 @@ func (s *Database) Health() map[string]string {
 
 	// Get the database version
 	var version string
-	if err := s.Conn.QueryRow(ctx, "SELECT version()").Scan(&version); err != nil {
+	if err := s.DB.QueryRow(ctx, "SELECT version()").Scan(&version); err != nil {
 		stats["status"] = "down"
 		stats["error"] = err.Error()
 		return stats
@@ -112,7 +111,7 @@ func (s *Database) Health() map[string]string {
 
 	// Get the number of active connections
 	var connections int
-	if err := s.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM pg_stat_activity").Scan(&connections); err != nil {
+	if err := s.DB.QueryRow(ctx, "SELECT COUNT(*) FROM pg_stat_activity").Scan(&connections); err != nil {
 		stats["connections"] = "unknown"
 	} else {
 		stats["connections"] = strconv.Itoa(connections)
@@ -127,5 +126,6 @@ func (s *Database) Health() map[string]string {
 // If an error occurs while closing the connection, it returns the error.
 func (s *Database) Close() error {
 	log.Printf("Disconnected from database: %s", dburl)
-	return s.Conn.Close(context.Background())
+	s.DB.Close()
+	return nil
 }

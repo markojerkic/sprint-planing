@@ -46,7 +46,7 @@ func (t *TicketService) HideTicket(ctx context.Context, ticketID int32) (*dbgen.
 }
 
 func (t *TicketService) EstimateTicket(ctx context.Context, userID int32, form EstimateTicketForm) (string, error) {
-	tx, err := t.db.Conn.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := t.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		slog.Error("Error creating transaction", slog.Any("error", err))
 		return "", err
@@ -127,7 +127,7 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 }
 
 func (t *TicketService) CreateTicket(ctx context.Context, userID int32, form CreateTicketForm) ([]ticket.TicketDetailProps, error) {
-	tx, err := t.db.Conn.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := t.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		slog.Error("Error creating transaction", slog.Any("error", err))
 		return nil, err

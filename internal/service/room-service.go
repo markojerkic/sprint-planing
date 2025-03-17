@@ -14,7 +14,7 @@ type RoomService struct {
 }
 
 func (r *RoomService) CreateRoom(ctx context.Context, userID int32, roomName string) (*dbgen.Room, error) {
-	tx, err := r.db.Conn.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := r.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		slog.Error("Error creating transaction", slog.Any("error", err))
 		return nil, err
@@ -52,7 +52,7 @@ func (r *RoomService) CreateRoom(ctx context.Context, userID int32, roomName str
 }
 
 func (r *RoomService) GetRoom(ctx context.Context, roomID int32, userID int32) (*dbgen.GetRoomDetailsRow, error) {
-	tx, err := r.db.Conn.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := r.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		slog.Error("Error creating transaction", slog.Any("error", err))
 		return nil, err

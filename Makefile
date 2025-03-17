@@ -111,8 +111,12 @@ install-watchexec:
 	fi;
 
 
+db:
+	@docker compose up -d db
+	@sleep 1
+
 # Live Reload
-watch: install-watchexec
+watch: install-watchexec db
 	@watchexec -r -e go,templ,html,css,js,sql -d 1s -- make dev-run
 
 .PHONY: all build run test clean watch templ-install sqlc-install

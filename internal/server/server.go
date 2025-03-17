@@ -70,7 +70,7 @@ func (s *Server) cleanupCRON() {
 }
 
 func (s *Server) cleanup(ctx context.Context) error {
-	tx, err := s.db.Conn.BeginTx(ctx, pgx.TxOptions{})
+	tx, err := s.db.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		log.Printf("Failed to begin transaction: %v", err)
 		return err

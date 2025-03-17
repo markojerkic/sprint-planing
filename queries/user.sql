@@ -2,7 +2,7 @@
 INSERT INTO
   public.user (created_at)
 VALUES
-  (CURRENT_TIMESTAMP) RETURNING *;
+  (NOW()) RETURNING *;
 
 -- name: GetUser :one
 SELECT
