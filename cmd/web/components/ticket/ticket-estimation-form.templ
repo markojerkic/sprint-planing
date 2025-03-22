@@ -2,7 +2,7 @@ package ticket
 
 import "fmt"
 
-templ estimationForm(ticketID uint) {
+templ estimationForm(ticketID uint, roomID uint) {
 	<form
 		class="estimation"
 		hx-post="/ticket/estimate"
@@ -11,6 +11,7 @@ templ estimationForm(ticketID uint) {
     ticketID) }
 	>
 		<input type="hidden" name="ticketID" value={ fmt.Sprintf("%d", ticketID) }/>
+		<input type="hidden" name="roomID" value={ fmt.Sprintf("%d", roomID) }/>
 		<div class="estimation-form">
 			<div class="estimation-form-group">
 				<label for="weekEstimate" class="form-label">Weeks</label>

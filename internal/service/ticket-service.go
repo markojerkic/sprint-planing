@@ -11,20 +11,21 @@ import (
 )
 
 var ticketQuery = `
-        SELECT
-            AVG(e.estimate) AS average_estimate,
-            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY e.estimate) AS median_estimate,
-            STDDEV(e.estimate) AS std_dev_estimate,
-            COUNT(DISTINCT e.id) AS estimate_count,
-            COUNT(DISTINCT room_users.user_id) AS user_count,
-            users_estimate.estimate AS users_estimate
-        FROM tickets t
-                 LEFT JOIN estimates e ON t.id = e.ticket_id
-                 LEFT JOIN estimates users_estimate ON t.id = users_estimate.ticket_id AND users_estimate.user_id = ?
-                 LEFT JOIN room_users ON t.room_id = room_users.room_id
-        WHERE t.room_id = ?
-        GROUP BY t.id, t.created_at, room_users.room_id, users_estimate.estimate
-        ORDER BY t.created_at DESC;`
+    SELECT t.*,
+           AVG(e.estimate)                                         AS average_estimate,
+           PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY e.estimate) AS median_estimate,
+           STDDEV(e.estimate)                                      AS std_dev_estimate,
+           COUNT(DISTINCT e.id)                                    AS estimate_count,
+           COUNT(DISTINCT room_users.user_id)                      AS user_count,
+           users_estimate.estimate                                 AS users_estimate
+    FROM tickets t
+             LEFT JOIN estimates e ON t.id = e.ticket_id
+             LEFT JOIN estimates users_estimate ON t.id = users_estimate.ticket_id AND users_estimate.user_id = ?
+             LEFT JOIN room_users ON t.room_id = room_users.room_id
+    WHERE t.room_id = ?
+      AND t.deleted_at IS NULL
+    GROUP BY t.id, t.created_at, users_estimate.estimate
+    ORDER BY t.created_at DESC;`
 
 type TicketService struct {
 	db               *database.Database
@@ -39,6 +40,7 @@ type CreateTicketForm struct {
 
 type EstimateTicketForm struct {
 	TicketID     uint  `json:"ticketID" form:"ticketID" validate:"required"`
+	RoomID       uint  `json:"roomID" form:"roomID" validate:"required"`
 	WeekEstimate int32 `json:"weekEstimate" form:"weekEstimate" default:"0"`
 	DayEstimate  int32 `json:"dayEstimate" form:"dayEstimate" default:"0"`
 	HourEstimate int32 `json:"hourEstimate" form:"hourEstimate" default:"0"`
@@ -82,22 +84,20 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 		}
 
 		if err := tx.Create(&estimate).Error; err != nil {
+			slog.Error("Error creating estimate", slog.Any("error", err))
 			return err
 		}
 
-		ticketEstimates := []database.Estimate{}
-		if err := tx.Where("ticket_id = ?", form.TicketID).Find(&ticketEstimates).Error; err != nil {
-			return err
-		}
-
-		updatedTicket, err := t.GetTicket(ctx, tx, userID, form.TicketID)
+		updatedTicket, err := t.GetTicket(ctx, tx, userID, form.RoomID, form.TicketID)
 		if err != nil {
+			slog.Error("Error getting ticket", slog.Any("error", err))
 			return err
 		}
 
 		var usersInRoom int
 		if err := tx.Raw("SELECT COUNT(*) FROM room_users WHERE room_id = ?",
 			updatedTicket.RoomID).Scan(&usersInRoom).Error; err != nil {
+			slog.Error("Error getting users in room", slog.Any("error", err))
 			return err
 		}
 		slog.Info("Estimate ticket", slog.Any("users", usersInRoom))
@@ -108,7 +108,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 			prettyPrintEstimate(int(updatedTicket.AverageEstimate)),
 			prettyPrintEstimate(int(updatedTicket.MedianEstimate)),
 			fmt.Sprintf("%.2fh", updatedTicket.StdDevEstimate),
-			fmt.Sprintf("%d/%d", len(ticketEstimates), usersInRoom),
+			fmt.Sprintf("%d/%d", updatedTicket.EstimateCount, updatedTicket.UserCount),
 		)
 		return nil
 	})
@@ -166,26 +166,39 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 	return estimates, nil
 }
 
-func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint, ticketID uint) (*database.TicketWithEstimateStatistics, error) {
-	var ticket database.TicketWithEstimateStatistics
+func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint, roomID uint, ticketID uint) (*database.TicketWithEstimateStatistics, error) {
+	var tickets []database.TicketWithEstimateStatistics
+	var room database.Room
 
-	if err := db.WithContext(ctx).Raw(ticketQuery, userID, ticketID).First(&ticket).Error; err != nil {
+	if err := db.WithContext(ctx).First(&room, roomID).Error; err != nil {
+		slog.Error("Error getting room", slog.Any("error", err))
 		return nil, err
 	}
 
-	return &ticket, nil
+	if err := db.WithContext(ctx).
+		Raw(ticketQuery, userID, roomID).
+		Scan(&tickets).Error; err != nil {
+		slog.Error("Error getting ticket", slog.Int("userID", int(userID)),
+			slog.Int("ticketID", int(ticketID)), slog.Any("error", err))
+		return nil, err
+	}
+
+	for _, ticket := range tickets {
+		if ticket.ID == ticketID {
+			return &ticket, nil
+		}
+	}
+
+	return nil, fmt.Errorf("ticket not found")
 }
 
 func (t *TicketService) GetTicketsOfRoom(ctx context.Context, db *gorm.DB, userID uint, roomID uint) ([]database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
-
 	if err := db.WithContext(ctx).
-		Model(&database.TicketWithEstimateStatistics{}).
 		Raw(ticketQuery, userID, roomID).
 		Scan(&tickets).Error; err != nil {
 		return nil, err
 	}
-
 	return tickets, nil
 }
 
