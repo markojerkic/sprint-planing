@@ -4,12 +4,15 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/gorm"
 )
 
@@ -37,18 +40,33 @@ func (r *RoomServiceSuite) TearDownSubTest() {
 // SetupSubTest implements suite.SetupSubTest.
 func (r *RoomServiceSuite) SetupSubTest() {
 	// Prepare user with id 1
+	var savedUser database.User
 	err := r.db.DB.Create(&database.User{
 		Model: gorm.Model{
 			ID: 1,
 		},
-	}).Error
+	}).Scan(&savedUser).Error
 	assert.NoError(r.T(), err)
+	log.Printf("User created %v", savedUser)
 }
 
 // SetupSuite implements suite.SetupAllSuite.
 func (r *RoomServiceSuite) SetupSuite() {
 	ctx := context.Background()
-	postgresContainer, err := postgres.Run(ctx, "postgres:17")
+	postgresContainer, err := postgres.Run(ctx,
+		"postgres:17",
+		postgres.WithDatabase("postgres"),
+		postgres.WithUsername("postgres"),
+		postgres.WithPassword("postgres"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second)),
+		testcontainers.WithEnv(map[string]string{
+			"POSTGRES_HOST_AUTH_METHOD": "trust",
+			"POSTGRES_SSL":              "false",
+		}),
+	)
 	if err != nil {
 		log.Fatalf("Failed to start postgres container: %v", err)
 	}
