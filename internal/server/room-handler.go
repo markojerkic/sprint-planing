@@ -50,7 +50,7 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 	tickets := roomDetails.TicketsWithStatistics
 	ticketDetails := make([]ticket.TicketDetailProps, len(tickets))
 	for i, t := range tickets {
-		ticketDetails[i] = t.ToDetailProp(len(tickets))
+		ticketDetails[i] = t.ToDetailProp()
 	}
 
 	isOwner := roomDetails.CreatedBy == user.ID

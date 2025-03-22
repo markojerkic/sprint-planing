@@ -10,6 +10,20 @@ import (
 	"gorm.io/gorm"
 )
 
+var ticketQuery = `
+        SELECT
+            AVG(e.estimate) AS average_estimate,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY e.estimate) AS median_estimate,
+            STDDEV(e.estimate) AS std_dev_estimate,
+            COUNT(DISTINCT e.id) AS estimate_count,
+            COUNT(DISTINCT room_users.user_id) AS user_count
+        FROM tickets t
+                 LEFT JOIN estimates e ON t.id = e.ticket_id
+                 LEFT JOIN room_users ON t.room_id = room_users.room_id
+        WHERE t.room_id = ?
+        GROUP BY t.id, t.created_at, room_users.room_id
+        ORDER BY t.created_at DESC;`
+
 type TicketService struct {
 	db               *database.Database
 	webSocketService *WebSocketService
@@ -74,7 +88,26 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 			return err
 		}
 
+		updatedTicket, err := t.GetTicket(ctx, tx, userID, form.TicketID)
+		if err != nil {
+			return err
+		}
+
+		var usersInRoom int
+		if err := tx.Raw("SELECT COUNT(*) FROM room_users WHERE room_id = ?",
+			updatedTicket.RoomID).Scan(&usersInRoom).Error; err != nil {
+			return err
+		}
+		slog.Info("Estimate ticket", slog.Any("users", usersInRoom))
+
 		prettyEstimate = prettyPrintEstimate(estimate.Estimate)
+		t.webSocketService.UpdateEstimate(updatedTicket.ID,
+			updatedTicket.RoomID,
+			prettyPrintEstimate(int(updatedTicket.AverageEstimate)),
+			prettyPrintEstimate(int(updatedTicket.MedianEstimate)),
+			fmt.Sprintf("%.2fh", updatedTicket.StdDevEstimate),
+			fmt.Sprintf("%d/%d", len(ticketEstimates), usersInRoom),
+		)
 		return nil
 	})
 	if err != nil {
@@ -131,30 +164,28 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 	return estimates, nil
 }
 
+func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint, ticketID uint) (*database.TicketWithEstimateStatistics, error) {
+	var ticket database.TicketWithEstimateStatistics
+
+	if err := db.WithContext(ctx).Raw(ticketQuery, ticketID).First(&ticket).Error; err != nil {
+		return nil, err
+	}
+
+	return &ticket, nil
+}
+
 func (t *TicketService) GetTicketsOfRoom(ctx context.Context, db *gorm.DB, userID uint, roomID uint) ([]database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
 
-	if err := db.WithContext(ctx).Raw(`
-            SELECT
-                t.*,
-                AVG(e.estimate) AS average_estimate,
-                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY e.estimate) AS median_estimate,
-                STDDEV(e.estimate) AS std_dev_estimate
-            FROM tickets t
-            LEFT JOIN estimates e ON t.id = e.ticket_id
-            WHERE t.room_id = ?
-            GROUP BY t.id
-            ORDER BY t.created_at DESC
-        `, roomID).Scan(&tickets).Error; err != nil {
+	if err := db.WithContext(ctx).Raw(ticketQuery, roomID).Scan(&tickets).Error; err != nil {
 		return nil, err
 	}
 
 	return tickets, nil
 }
 
-func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, int, error) {
+func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
-	var usersInRoom int
 
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		ticket := database.Ticket{
@@ -168,10 +199,6 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 			return err
 		}
 
-		if err := tx.Raw("SELECT COUNT(*) FROM room_users WHERE room_id = ?", form.RoomID).Scan(&usersInRoom).Error; err != nil {
-			return err
-		}
-
 		roomTickets, err := t.GetTicketsOfRoom(ctx, tx, userID, form.RoomID)
 		if err != nil {
 			return err
@@ -182,10 +209,10 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 	})
 	if err != nil {
 		slog.Error("Error creating ticket", slog.Any("error", err))
-		return nil, 0, err
+		return nil, err
 	}
 
-	return tickets, usersInRoom, nil
+	return tickets, nil
 }
 
 func NewTicketService(db *database.Database) *TicketService {
@@ -197,7 +224,6 @@ func NewTicketService(db *database.Database) *TicketService {
 }
 
 func prettyPrintEstimate(estimate int) string {
-
 	weeks := estimate / 40
 	days := (estimate % 40) / 8
 	hours := estimate % 8

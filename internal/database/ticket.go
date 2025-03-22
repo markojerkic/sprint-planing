@@ -25,16 +25,17 @@ type TicketWithEstimateStatistics struct {
 	AverageEstimate float64
 	MedianEstimate  float64
 	StdDevEstimate  float64
+	EstimateCount   int
+	UserCount       int
 }
 
-func (t *TicketWithEstimateStatistics) ToDetailProp(numUsersInRoom int) ticket.TicketDetailProps {
-
+func (t *TicketWithEstimateStatistics) ToDetailProp() ticket.TicketDetailProps {
 	return ticket.TicketDetailProps{
 		ID:              t.ID,
 		Name:            t.Name,
 		RoomID:          t.RoomID,
 		Description:     t.Description,
-		EstimatedBy:     fmt.Sprintf("%d/%d", len(t.Estimates), numUsersInRoom),
+		EstimatedBy:     fmt.Sprintf("%d/%d", t.EstimateCount, t.UserCount),
 		IsClosed:        t.ClosedAt != nil,
 		AverageEstimate: prettyPrintEstimate(t.AverageEstimate),
 		MedianEstimate:  prettyPrintEstimate(t.MedianEstimate),

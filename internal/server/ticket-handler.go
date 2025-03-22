@@ -49,7 +49,7 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 
 	user := c.Get("user").(database.User)
 
-	allTickets, usersInRoom, err := r.service.CreateTicket(c.Request().Context(), user.ID, form)
+	allTickets, err := r.service.CreateTicket(c.Request().Context(), user.ID, form)
 	if err != nil {
 		c.Logger().Errorf("Error creating ticket: %v", err)
 		return c.String(500, "Error creating ticket")
@@ -57,7 +57,7 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 
 	tickets := make([]ticket.TicketDetailProps, len(allTickets))
 	for i, t := range allTickets {
-		tickets[i] = t.ToDetailProp(usersInRoom)
+		tickets[i] = t.ToDetailProp()
 	}
 
 	return ticket.TicketList(tickets, true).Render(c.Request().Context(), c.Response().Writer)
