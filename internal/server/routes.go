@@ -41,7 +41,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// websocketService := service.NewWebSocketService(ticketService)
 
 	newRoomRouter(roomService, ticketService, e.Group("/room"))
-	// newTicketRouter(ticketService, e.Group("/ticket"))
+	newTicketRouter(ticketService, e.Group("/ticket"))
 	// newWebsocketRouter(websocketService, e.Group("/ws"))
 	e.GET("/", homepage.HomepageHandler(roomService))
 

@@ -47,21 +47,9 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 
 	tickets := make([]ticket.TicketDetailProps, len(roomDetails.Tickets))
 	for i, t := range roomDetails.Tickets {
-		tickets[i] = ticket.TicketDetailProps{
-			ID:          t.ID,
-			Name:        t.Name,
-			RoomID:      t.RoomID,
-			Description: t.Description,
-			EstimatedBy: fmt.Sprintf("%d/%d", len(t.Estimates), len(t.Room.Users)),
-		}
+		tickets[i] = t.ToDetailProp(len(roomDetails.Users))
 	}
 
-	// roomTickets, err := r.ticketService.GetTicketsOfRoom(ctx.Request().Context(), int32(roomID), user.ID, nil)
-	// if err != nil {
-	// 	ctx.Logger().Errorf("Error getting room tickets: %v", err)
-	// 	return ctx.String(500, "Error getting room tickets")
-	// }
-	//
 	isOwner := roomDetails.CreatedBy == user.ID
 	return room.RoomPage(room.RoomPageProps{
 		ID:                 roomDetails.ID,

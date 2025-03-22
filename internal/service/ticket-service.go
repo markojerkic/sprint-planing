@@ -214,11 +214,12 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 	// return prettyEstimates, nil
 }
 
-func (t *TicketService) CreateTicket(ctx context.Context, userID int32, form CreateTicketForm) (*database.Ticket, error) {
-	var ticket database.Ticket
+func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.Ticket, int, error) {
+	var tickets []database.Ticket
+	var usersInRoom int
 
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		ticket = database.Ticket{
+		ticket := database.Ticket{
 			Name:        form.TicketName,
 			Description: form.TicketDescription,
 			RoomID:      uint(form.RoomID),
@@ -229,51 +230,24 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID int32, form Cre
 			return err
 		}
 
+		if err := tx.Raw("SELECT COUNT(*) FROM room_users WHERE room_id = ?", form.RoomID).Scan(&usersInRoom).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Where("room_id = ?", form.RoomID).
+			Order("created_at desc").
+			Find(&tickets).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
 		slog.Error("Error creating ticket", slog.Any("error", err))
-		return nil, err
+		return nil, 0, err
 	}
 
-	return &ticket, nil
-
-	// tx, err := t.db.DB.BeginTx(ctx, pgx.TxOptions{})
-	// if err != nil {
-	// 	slog.Error("Error creating transaction", slog.Any("error", err))
-	// 	return nil, err
-	// }
-	// defer tx.Rollback(ctx)
-	//
-	// q := t.db.Queries.WithTx(tx)
-	// tticket, err := q.CreateTicket(ctx, dbgen.CreateTicketParams{
-	// 	Name:        form.TicketName,
-	// 	Description: form.TicketDescription,
-	// 	RoomID:      form.RoomID,
-	// })
-	// if err != nil {
-	// 	tx.Rollback(ctx)
-	// 	slog.Error("Error creating ticket", slog.Any("error", err))
-	// 	return nil, err
-	// }
-	// slog.Info("Created ticket", slog.Any("ticket", tticket))
-	//
-	// tickets, err := t.GetTicketsOfRoom(ctx, form.RoomID, userID, q)
-	//
-	// if err != nil {
-	// 	tx.Rollback(ctx)
-	// 	slog.Error("Error getting tickets", slog.Any("error", err))
-	// 	return nil, err
-	// }
-	//
-	// if err := tx.Commit(ctx); err != nil {
-	// 	slog.Error("Error committing transaction", slog.Any("error", err))
-	// 	return nil, err
-	// }
-	//
-	// t.webSocketService.SendNewTicket(tickets[0])
-	//
-	// return tickets, nil
+	return tickets, usersInRoom, nil
 }
 
 func (t *TicketService) GetTicketsOfRoom(ctx context.Context, roomID int32, userID int32, q *dbgen.Queries) ([]database.Ticket, error) {

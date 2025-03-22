@@ -62,7 +62,11 @@ func (r *RoomService) GetRoom(ctx context.Context, roomID uint, userID uint) (*d
 			return err
 		}
 
-		if err := tx.Preload("Users").First(&room, roomID).Error; err != nil {
+		if err := tx.Preload("Users").
+			Preload("Tickets", func(db *gorm.DB) *gorm.DB {
+				return db.Preload("Estimates").Order("created_at desc")
+			}).
+			First(&room, roomID).Error; err != nil {
 			return err
 		}
 

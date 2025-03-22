@@ -1,8 +1,10 @@
 package database
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"gorm.io/gorm"
 )
 
@@ -38,4 +40,16 @@ type Estimate struct {
 	TicketID uint
 	UserID   uint
 	Estimate int
+}
+
+func (t *Ticket) ToDetailProp(numUsersInRoom int) ticket.TicketDetailProps {
+	return ticket.TicketDetailProps{
+		ID:          t.ID,
+		Name:        t.Name,
+		RoomID:      t.RoomID,
+		Description: t.Description,
+		EstimatedBy: fmt.Sprintf("%d/%d", len(t.Estimates), numUsersInRoom),
+		IsClosed:    t.ClosedAt != nil,
+	}
+
 }
