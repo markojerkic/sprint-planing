@@ -13,10 +13,11 @@ type User struct {
 
 type Room struct {
 	gorm.Model
-	CreatedBy uint
-	Name      string
-	Tickets   []Ticket
-	Users     []User `gorm:"many2many:room_users;"`
+	CreatedBy             uint
+	Name                  string
+	Tickets               []Ticket
+	TicketsWithStatistics []TicketWithEstimateStatistics `gorm:"-"`
+	Users                 []User                         `gorm:"many2many:room_users;"`
 }
 
 type Estimate struct {

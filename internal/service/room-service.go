@@ -8,7 +8,8 @@ import (
 )
 
 type RoomService struct {
-	db *database.Database
+	ticketService *TicketService
+	db            *database.Database
 }
 
 func (r *RoomService) GetUsersRooms(ctx context.Context, userID int32) ([]database.Room, error) {
@@ -63,12 +64,15 @@ func (r *RoomService) GetRoom(ctx context.Context, roomID uint, userID uint) (*d
 		}
 
 		if err := tx.Preload("Users").
-			Preload("Tickets", func(db *gorm.DB) *gorm.DB {
-				return db.Preload("Estimates").Order("created_at desc")
-			}).
 			First(&room, roomID).Error; err != nil {
 			return err
 		}
+
+		ticketsWithStatistics, err := r.ticketService.GetTicketsOfRoom(ctx, tx, userID, room.ID)
+		if err != nil {
+			return err
+		}
+		room.TicketsWithStatistics = ticketsWithStatistics
 
 		// Check if user is in the room
 		// If not, add user to the room
@@ -97,6 +101,7 @@ func (r *RoomService) GetRoom(ctx context.Context, roomID uint, userID uint) (*d
 
 func NewRoomService(db *database.Database) *RoomService {
 	return &RoomService{
-		db: db,
+		db:            db,
+		ticketService: NewTicketService(db),
 	}
 }

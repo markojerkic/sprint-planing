@@ -131,10 +131,10 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 	return estimates, nil
 }
 
-func (t *TicketService) GetTicketsOfRoom(ctx context.Context, userID uint, roomID uint) ([]database.TicketWithEstimateStatistics, error) {
+func (t *TicketService) GetTicketsOfRoom(ctx context.Context, db *gorm.DB, userID uint, roomID uint) ([]database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
 
-	if err := t.db.DB.WithContext(ctx).Raw(`
+	if err := db.WithContext(ctx).Raw(`
             SELECT
                 t.*,
                 AVG(e.estimate) AS average_estimate,
@@ -172,7 +172,7 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 			return err
 		}
 
-		roomTickets, err := t.GetTicketsOfRoom(ctx, userID, form.RoomID)
+		roomTickets, err := t.GetTicketsOfRoom(ctx, tx, userID, form.RoomID)
 		if err != nil {
 			return err
 		}

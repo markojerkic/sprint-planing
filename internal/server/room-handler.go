@@ -47,11 +47,7 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		return ctx.String(500, "Error getting room")
 	}
 
-	tickets, err := r.ticketService.GetTicketsOfRoom(ctx.Request().Context(), user.ID, roomDetails.ID)
-	if err != nil {
-		ctx.Logger().Errorf("Error getting tickets: %v", err)
-		return ctx.String(500, "Error getting tickets")
-	}
+	tickets := roomDetails.TicketsWithStatistics
 	ticketDetails := make([]ticket.TicketDetailProps, len(tickets))
 	for i, t := range tickets {
 		ticketDetails[i] = t.ToDetailProp(len(tickets))
