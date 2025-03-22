@@ -11,6 +11,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -29,22 +30,35 @@ type Service interface {
 }
 
 type Database struct {
+	dbUrl string
 	DB    *gorm.DB
-	sqlDB *sql.DB
+	SqlDB *sql.DB
 }
 
 var (
-	dburl      = os.Getenv("DB_URL")
 	dbInstance *Database
 )
 
-func New() *Database {
+func New(dbUrl string) *Database {
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
 	}
 
-	db, err := gorm.Open(postgres.Open(dburl), &gorm.Config{})
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second,   // Slow SQL threshold
+			LogLevel:                  logger.Silent, // Log level
+			IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
+			ParameterizedQueries:      true,          // Don't include params in the SQL log
+			Colorful:                  true,          // Disable color
+		},
+	)
+
+	db, err := gorm.Open(postgres.Open(dbUrl), &gorm.Config{
+		Logger: newLogger,
+	})
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -64,7 +78,9 @@ func New() *Database {
 	db.AutoMigrate(&User{}, &Room{}, &Ticket{}, &Estimate{})
 
 	dbInstance = &Database{
-		DB: db,
+		DB:    db,
+		SqlDB: sqlDB,
+		dbUrl: dbUrl,
 	}
 
 	return dbInstance
@@ -76,7 +92,7 @@ func (s *Database) Health() map[string]string {
 	stats := make(map[string]string)
 
 	// Ping the database
-	if err := s.sqlDB.Ping(); err != nil {
+	if err := s.SqlDB.Ping(); err != nil {
 		stats["status"] = "down"
 		stats["error"] = err.Error()
 		return stats
@@ -84,7 +100,7 @@ func (s *Database) Health() map[string]string {
 
 	// Get the database version
 	var version string
-	if err := s.sqlDB.QueryRow("SELECT version()").Scan(&version); err != nil {
+	if err := s.SqlDB.QueryRow("SELECT version()").Scan(&version); err != nil {
 		stats["status"] = "down"
 		stats["error"] = err.Error()
 		return stats
@@ -94,7 +110,7 @@ func (s *Database) Health() map[string]string {
 
 	// Get the number of active connections
 	var connections int
-	if err := s.sqlDB.QueryRow("SELECT COUNT(*) FROM pg_stat_activity").Scan(&connections); err != nil {
+	if err := s.SqlDB.QueryRow("SELECT COUNT(*) FROM pg_stat_activity").Scan(&connections); err != nil {
 		stats["connections"] = "unknown"
 	} else {
 		stats["connections"] = strconv.Itoa(connections)
@@ -108,7 +124,7 @@ func (s *Database) Health() map[string]string {
 // If the connection is successfully closed, it returns nil.
 // If an error occurs while closing the connection, it returns the error.
 func (s *Database) Close() error {
-	log.Printf("Disconnected from database: %s", dburl)
-	s.sqlDB.Close()
+	log.Printf("Disconnected from database: %s", s.dbUrl)
+	s.SqlDB.Close()
 	return nil
 }
