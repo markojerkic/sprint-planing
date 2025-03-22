@@ -3,12 +3,11 @@ package homepage
 import (
 	"fmt"
 	"github.com/markojerkic/spring-planing/cmd/web/components"
-	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	"time"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/markojerkic/spring-planing/internal/database"
 )
 
-templ RoomList(rooms []dbgen.GetMyRoomsRow) {
+templ RoomList(rooms []database.Room) {
 	@components.PageLayout("Homepage") {
 		<div class="container">
 			<h1 class="mb-4">My Rooms</h1>
@@ -145,18 +144,19 @@ templ JoinRoomError(errorMsg string) {
 	</form>
 }
 
-templ roomCard(room dbgen.GetMyRoomsRow) {
-	<div class={ fmt.Sprintf("card mb-3 %s", templ.SafeClass(ternary(room.IsOwner, "card-accent", ""))) }>
+templ roomCard(room database.Room) {
+	{{ isOwner := false }}
+	<div class={ fmt.Sprintf("card mb-3 %s", templ.SafeClass(ternary(isOwner, "card-accent", ""))) }>
 		<div class="card-header">
 			<div class="room-header">
 				<h3 class="title mb-0">{ room.Name }</h3>
-				if room.CreatedAt.Valid && isRecent(room.CreatedAt) {
+				if isRecent(room.CreatedAt) {
 					<span class="badge badge-primary">New</span>
 				}
 			</div>
 			<div class="room-meta">
 				<span class="room-date">Created { formatCreatedAt(room.CreatedAt) }</span>
-				if room.IsOwner {
+				if isOwner {
 					<span class="badge badge-owner">Owner</span>
 				}
 			</div>
@@ -164,7 +164,7 @@ templ roomCard(room dbgen.GetMyRoomsRow) {
 		<div class="card-body">
 			<div class="room-actions">
 				<a href={ templ.SafeURL(fmt.Sprintf("/room/%d", room.ID)) } class="btn mr-2">Join Room</a>
-				if room.IsOwner {
+				if isOwner {
 					<button
 						class="btn btn-secondary"
 						hx-delete={ fmt.Sprintf("/room/%d", room.ID) }
@@ -187,16 +187,10 @@ func ternary(condition bool, trueVal, falseVal string) string {
 	return falseVal
 }
 
-func formatCreatedAt(createdAt pgtype.Timestamp) string {
-	if createdAt.Valid {
-		return createdAt.Time.Format("Jan 2, 2006")
-	}
-	return ""
+func formatCreatedAt(createdAt time.Time) string {
+	return createdAt.Format("Jan 2, 2006")
 }
 
-func isRecent(createdAt pgtype.Timestamp) bool {
-	if createdAt.Valid {
-		return createdAt.Time.After(time.Now().Add(-24 * time.Hour))
-	}
-	return false
+func isRecent(createdAt time.Time) bool {
+	return createdAt.After(time.Now().Add(-24 * time.Hour))
 }

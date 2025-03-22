@@ -38,7 +38,7 @@ func (r *RoomServiceSuite) TearDownSubTest() {
 }
 
 // SetupSubTest implements suite.SetupSubTest.
-func (r *RoomServiceSuite) SetupSubTest() {
+func (r *RoomServiceSuite) SetupTest() {
 	// Prepare user with id 1
 	var savedUser database.User
 	err := r.db.DB.Create(&database.User{
@@ -47,7 +47,6 @@ func (r *RoomServiceSuite) SetupSubTest() {
 		},
 	}).Scan(&savedUser).Error
 	assert.NoError(r.T(), err)
-	log.Printf("User created %v", savedUser)
 }
 
 // SetupSuite implements suite.SetupAllSuite.
@@ -94,7 +93,7 @@ func (r *RoomServiceSuite) TearDownSuite() {
 
 var _ suite.TearDownAllSuite = &RoomServiceSuite{}
 var _ suite.SetupAllSuite = &RoomServiceSuite{}
-var _ suite.SetupSubTest = &RoomServiceSuite{}
+var _ suite.SetupTestSuite = &RoomServiceSuite{}
 var _ suite.TearDownSubTest = &RoomServiceSuite{}
 
 func (r *RoomServiceSuite) TestCreateRoom() {
@@ -105,7 +104,9 @@ func (r *RoomServiceSuite) TestCreateRoom() {
 
 	assert.NoError(t, err, "Error creating room")
 	assert.Equal(t, "roomName", room.Name)
+	assert.Equal(t, uint(1), room.CreatedBy)
 	assert.Equal(t, 1, len(room.Users))
+	assert.Equal(t, 0, len(room.Tickets))
 
 }
 

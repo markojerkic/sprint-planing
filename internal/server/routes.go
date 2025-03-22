@@ -23,6 +23,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	e.Use(middleware.Recover())
+	s.InitSessions(e)
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://*", "http://*"},
@@ -31,8 +32,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
-
-	// s.InitSessions(e)
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
