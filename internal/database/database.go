@@ -1,7 +1,6 @@
 package database
 
 import (
-	"context"
 	"database/sql"
 	"embed"
 	"log"
@@ -10,10 +9,9 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/markojerkic/spring-planing/internal/database/dbgen"
-	"github.com/pressly/goose/v3"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -31,8 +29,8 @@ type Service interface {
 }
 
 type Database struct {
-	DB      *pgxpool.Pool
-	Queries *dbgen.Queries
+	DB    *gorm.DB
+	sqlDB *sql.DB
 }
 
 var (
@@ -46,54 +44,39 @@ func New() *Database {
 		return dbInstance
 	}
 
-	// Parse connection string
-	dbpool, err := pgxpool.New(context.Background(), dburl)
+	db, err := gorm.Open(postgres.Open(dburl), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("failed to parse connection string: %v", err)
+		log.Fatalf("failed to connect to database: %v", err)
 	}
+
+	sqlDB, err := db.DB()
+
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(10)
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	sqlDB.SetMaxOpenConns(100)
+
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	// AutoMigrate
+	db.AutoMigrate(&User{}, &Room{}, &Ticket{}, &Estimate{})
 
 	dbInstance = &Database{
-		DB: dbpool,
+		DB: db,
 	}
-	dbInstance.runMigrations()
-
-	// Initialize queries with the connection pool
-	dbInstance.Queries = dbgen.New(dbpool)
 
 	return dbInstance
-}
-
-func (s *Database) runMigrations() {
-	// Set the goose environment
-	goose.SetBaseFS(embedMigrations)
-
-	// Optional: Set goose dialect to postgres
-	if err := goose.SetDialect("postgres"); err != nil {
-		log.Fatalf("failed to set goose dialect: %v", err)
-	}
-
-	// Open the database using the pgx driver via its stdlib adapter
-	db, err := sql.Open("pgx", dburl)
-	if err != nil {
-		log.Fatalf("failed to open DB for migrations: %v", err)
-	}
-	defer db.Close()
-
-	// Run the migrations
-	if err := goose.Up(db, "migrations"); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
-	}
 }
 
 // Health checks the health of the database connection by pinging the database.
 // It returns a map with keys indicating various health statistics.
 func (s *Database) Health() map[string]string {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
 	stats := make(map[string]string)
 
 	// Ping the database
-	if err := s.DB.Ping(ctx); err != nil {
+	if err := s.sqlDB.Ping(); err != nil {
 		stats["status"] = "down"
 		stats["error"] = err.Error()
 		return stats
@@ -101,7 +84,7 @@ func (s *Database) Health() map[string]string {
 
 	// Get the database version
 	var version string
-	if err := s.DB.QueryRow(ctx, "SELECT version()").Scan(&version); err != nil {
+	if err := s.sqlDB.QueryRow("SELECT version()").Scan(&version); err != nil {
 		stats["status"] = "down"
 		stats["error"] = err.Error()
 		return stats
@@ -111,7 +94,7 @@ func (s *Database) Health() map[string]string {
 
 	// Get the number of active connections
 	var connections int
-	if err := s.DB.QueryRow(ctx, "SELECT COUNT(*) FROM pg_stat_activity").Scan(&connections); err != nil {
+	if err := s.sqlDB.QueryRow("SELECT COUNT(*) FROM pg_stat_activity").Scan(&connections); err != nil {
 		stats["connections"] = "unknown"
 	} else {
 		stats["connections"] = strconv.Itoa(connections)
@@ -126,6 +109,6 @@ func (s *Database) Health() map[string]string {
 // If an error occurs while closing the connection, it returns the error.
 func (s *Database) Close() error {
 	log.Printf("Disconnected from database: %s", dburl)
-	s.DB.Close()
+	s.sqlDB.Close()
 	return nil
 }

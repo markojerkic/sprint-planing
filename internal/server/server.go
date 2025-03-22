@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -70,33 +71,35 @@ func (s *Server) cleanupCRON() {
 }
 
 func (s *Server) cleanup(ctx context.Context) error {
-	tx, err := s.db.DB.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		log.Printf("Failed to begin transaction: %v", err)
-		return err
-	}
-	defer tx.Rollback(ctx)
-	qtx := s.db.Queries.WithTx(tx)
-
-	if err := qtx.CleanupOldTickets(ctx); err != nil {
-		return fmt.Errorf("failed to cleanup ticket estimates: %w", err)
-	}
-
-	if err := qtx.CleanupClosedTickets(ctx); err != nil {
-		return fmt.Errorf("failed to cleanup closed tickets: %w", err)
-	}
-
-	if err := qtx.CleanupUnusedRooms(ctx); err != nil {
-		return fmt.Errorf("failed to cleanup unused rooms: %w", err)
-	}
-
-	if err := qtx.CleanupUnusedUsers(ctx); err != nil {
-		return fmt.Errorf("failed to cleanup unused users: %w", err)
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		log.Printf("Failed to commit transaction: %v", err)
-		return err
-	}
+	slog.Warn("cleanup function not implemented")
+	// tx, err := s.db.DB.BeginTx(ctx, pgx.TxOptions{})
+	// if err != nil {
+	// 	log.Printf("Failed to begin transaction: %v", err)
+	// 	return err
+	// }
+	// defer tx.Rollback(ctx)
+	// qtx := s.db.Queries.WithTx(tx)
+	//
+	// if err := qtx.CleanupOldTickets(ctx); err != nil {
+	// 	return fmt.Errorf("failed to cleanup ticket estimates: %w", err)
+	// }
+	//
+	// if err := qtx.CleanupClosedTickets(ctx); err != nil {
+	// 	return fmt.Errorf("failed to cleanup closed tickets: %w", err)
+	// }
+	//
+	// if err := qtx.CleanupUnusedRooms(ctx); err != nil {
+	// 	return fmt.Errorf("failed to cleanup unused rooms: %w", err)
+	// }
+	//
+	// if err := qtx.CleanupUnusedUsers(ctx); err != nil {
+	// 	return fmt.Errorf("failed to cleanup unused users: %w", err)
+	// }
+	//
+	// if err := tx.Commit(ctx); err != nil {
+	// 	log.Printf("Failed to commit transaction: %v", err)
+	// 	return err
+	// }
+	// return nil
 	return nil
 }
