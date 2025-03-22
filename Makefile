@@ -109,7 +109,7 @@ clean:
 dev-run:
 	@echo "Building..."
 	@templ generate
-	@tailwindcss -i ./input.css -o ./cmd/web/assets/css/output.css
+	@./tailwindcss -i ./cmd/web/assets/css/input.css -o ./cmd/web/assets/css/output.css
 	@go run cmd/api/main.go
 
 
@@ -135,6 +135,6 @@ db:
 # Live Reload
 watch: install-watchexec tailwind-install
 	@echo "Watching..."
-	@watchexec -r -e go,templ,html,css,js,sql -d 1s -- make dev-run
+	@watchexec -r -e go,html,templ,css,js,sql -d 1s -- make dev-run
 
 .PHONY: all build run test clean watch templ-install sqlc-install
