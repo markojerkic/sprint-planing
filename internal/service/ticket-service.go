@@ -16,12 +16,14 @@ var ticketQuery = `
             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY e.estimate) AS median_estimate,
             STDDEV(e.estimate) AS std_dev_estimate,
             COUNT(DISTINCT e.id) AS estimate_count,
-            COUNT(DISTINCT room_users.user_id) AS user_count
+            COUNT(DISTINCT room_users.user_id) AS user_count,
+            users_estimate.estimate AS users_estimate
         FROM tickets t
                  LEFT JOIN estimates e ON t.id = e.ticket_id
+                 LEFT JOIN estimates users_estimate ON t.id = users_estimate.ticket_id AND users_estimate.user_id = ?
                  LEFT JOIN room_users ON t.room_id = room_users.room_id
         WHERE t.room_id = ?
-        GROUP BY t.id, t.created_at, room_users.room_id
+        GROUP BY t.id, t.created_at, room_users.room_id, users_estimate.estimate
         ORDER BY t.created_at DESC;`
 
 type TicketService struct {
@@ -167,7 +169,7 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint, ticketID uint) (*database.TicketWithEstimateStatistics, error) {
 	var ticket database.TicketWithEstimateStatistics
 
-	if err := db.WithContext(ctx).Raw(ticketQuery, ticketID).First(&ticket).Error; err != nil {
+	if err := db.WithContext(ctx).Raw(ticketQuery, userID, ticketID).First(&ticket).Error; err != nil {
 		return nil, err
 	}
 
@@ -177,7 +179,10 @@ func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint,
 func (t *TicketService) GetTicketsOfRoom(ctx context.Context, db *gorm.DB, userID uint, roomID uint) ([]database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
 
-	if err := db.WithContext(ctx).Raw(ticketQuery, roomID).Scan(&tickets).Error; err != nil {
+	if err := db.WithContext(ctx).
+		Model(&database.TicketWithEstimateStatistics{}).
+		Raw(ticketQuery, userID, roomID).
+		Scan(&tickets).Error; err != nil {
 		return nil, err
 	}
 
@@ -211,6 +216,8 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 		slog.Error("Error creating ticket", slog.Any("error", err))
 		return nil, err
 	}
+
+	t.webSocketService.SendNewTicket(tickets[0].ToDetailProp())
 
 	return tickets, nil
 }

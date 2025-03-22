@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
@@ -25,11 +26,13 @@ type TicketWithEstimateStatistics struct {
 	AverageEstimate float64
 	MedianEstimate  float64
 	StdDevEstimate  float64
+	UsersEstimate   *int
 	EstimateCount   int
 	UserCount       int
 }
 
 func (t *TicketWithEstimateStatistics) ToDetailProp() ticket.TicketDetailProps {
+	slog.Info("Users estimate", slog.Any("ticket", t))
 	return ticket.TicketDetailProps{
 		ID:              t.ID,
 		Name:            t.Name,
@@ -40,6 +43,7 @@ func (t *TicketWithEstimateStatistics) ToDetailProp() ticket.TicketDetailProps {
 		AverageEstimate: prettyPrintEstimate(t.AverageEstimate),
 		MedianEstimate:  prettyPrintEstimate(t.MedianEstimate),
 		StdEstimate:     fmt.Sprintf("%.2fh", t.StdDevEstimate),
+		HasEstimate:     t.UsersEstimate != nil,
 	}
 
 }
