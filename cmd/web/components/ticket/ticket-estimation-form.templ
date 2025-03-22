@@ -2,7 +2,7 @@ package ticket
 
 import "fmt"
 
-templ estimationForm(ticketID int32) {
+templ estimationForm(ticketID uint) {
 	<form
 		class="estimation"
 		hx-post="/ticket/estimate"

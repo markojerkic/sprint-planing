@@ -27,7 +27,7 @@ func (r *RoomService) GetUsersRooms(ctx context.Context, userID int32) ([]databa
 	return rooms, nil
 }
 
-func (r *RoomService) CreateRoom(ctx context.Context, userID int32, roomName string) (*database.Room, error) {
+func (r *RoomService) CreateRoom(ctx context.Context, userID uint, roomName string) (*database.Room, error) {
 	var room database.Room
 	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var user database.User
@@ -36,7 +36,7 @@ func (r *RoomService) CreateRoom(ctx context.Context, userID int32, roomName str
 		}
 
 		room = database.Room{
-			CreatedBy: uint(userID),
+			CreatedBy: userID,
 			Name:      roomName,
 			Users:     []database.User{user},
 		}
@@ -54,7 +54,7 @@ func (r *RoomService) CreateRoom(ctx context.Context, userID int32, roomName str
 	return &room, nil
 }
 
-func (r *RoomService) GetRoom(ctx context.Context, roomID int32, userID int32) (*database.Room, error) {
+func (r *RoomService) GetRoom(ctx context.Context, roomID uint, userID uint) (*database.Room, error) {
 	var room database.Room
 	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var user database.User

@@ -12,13 +12,13 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 )
 
-var rooms = make(map[int32]map[*websocket.Conn]bool)
+var rooms = make(map[uint]map[*websocket.Conn]bool)
 var mutex = sync.Mutex{}
 
 type message struct {
 	conn   *websocket.Conn
 	data   *[]byte
-	roomID int32
+	roomID uint
 }
 
 var buffer = make(chan message, 100)
@@ -40,7 +40,7 @@ func writePump() {
 }
 
 // removeConnection removes a connection from a room and cleans up empty rooms
-func removeConnection(conn *websocket.Conn, roomID int32) {
+func removeConnection(conn *websocket.Conn, roomID uint) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -58,7 +58,7 @@ func removeConnection(conn *websocket.Conn, roomID int32) {
 }
 
 // readPump reads from the websocket connection to detect disconnects
-func (w *WebSocketService) readPump(conn *websocket.Conn, roomID int32) {
+func (w *WebSocketService) readPump(conn *websocket.Conn, roomID uint) {
 	defer func() {
 		conn.Close()
 		removeConnection(conn, roomID)
@@ -115,7 +115,7 @@ func (w *WebSocketService) CleanupInactiveConnections() {
 	}
 }
 
-func (w *WebSocketService) HideTicket(ticketID int32, roomID int32, isHidden bool) {
+func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool) {
 	dto := HideTicketDto{
 		TicketID: ticketID,
 		IsHidden: isHidden,
@@ -135,7 +135,7 @@ func (w *WebSocketService) HideTicket(ticketID int32, roomID int32, isHidden boo
 
 }
 
-func (w *WebSocketService) CloseTicket(ticketID int32, roomID int32, averageEstimate string,
+func (w *WebSocketService) CloseTicket(ticketID uint, roomID uint, averageEstimate string,
 	medianEstimate string, stdEstimate string, estimatedBy string) {
 	removedTicketForm := new(bytes.Buffer)
 	if err := ticket.ClosedEstimation(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
@@ -166,7 +166,7 @@ func (w *WebSocketService) CloseTicket(ticketID int32, roomID int32, averageEsti
 	}
 }
 
-func (w *WebSocketService) UpdateEstimate(ticketID int32, roomID int32, averageEstimate string,
+func (w *WebSocketService) UpdateEstimate(ticketID uint, roomID uint, averageEstimate string,
 	medianEstimate string, stdEstimate string, estimatedBy string) {
 	renderedTicket := new(bytes.Buffer)
 	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
@@ -199,7 +199,7 @@ func (w *WebSocketService) SendNewTicket(tticket ticket.TicketDetailProps) {
 	}
 }
 
-func (w *WebSocketService) Register(conn *websocket.Conn, roomID int32) {
+func (w *WebSocketService) Register(conn *websocket.Conn, roomID uint) {
 	mutex.Lock()
 	if _, ok := rooms[roomID]; !ok {
 		rooms[roomID] = make(map[*websocket.Conn]bool)

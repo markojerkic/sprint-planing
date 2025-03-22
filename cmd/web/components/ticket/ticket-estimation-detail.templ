@@ -2,7 +2,7 @@ package ticket
 
 import "fmt"
 
-templ EstimationDetail(ticketID int32, averateEstimate string, medianEstimate string,
+templ EstimationDetail(ticketID uint, averateEstimate string, medianEstimate string,
 	stdEstimate string, estimatedBy string) {
 	<div data-ticket-average-estimation={ fmt.Sprintf("%d", ticketID) }>
 		<hr class="estimate-divider"/>
@@ -15,12 +15,12 @@ templ EstimationDetail(ticketID int32, averateEstimate string, medianEstimate st
 	</div>
 }
 
-templ UsersEstimate(ticketID int32, userEstimate string) {
+templ UsersEstimate(ticketID uint, userEstimate string) {
 	<span>Your estimate: { userEstimate }</span>
 	<div data-ticket-average-estimation={ fmt.Sprintf("%d", ticketID) }></div>
 }
 
-templ UpdatedEstimationDetail(ticketID int32, averateEstimate string, medianEstimate string, stdEstimate string,
+templ UpdatedEstimationDetail(ticketID uint, averateEstimate string, medianEstimate string, stdEstimate string,
 	estimatedBy string) {
 	<div hx-swap-oob={ fmt.Sprintf("outerHTML:div[data-ticket-average-estimation='%d' ]", ticketID) }>
 		@EstimationDetail(ticketID, averateEstimate, medianEstimate, stdEstimate, estimatedBy)
@@ -32,7 +32,7 @@ templ UpdatedEstimationDetail(ticketID int32, averateEstimate string, medianEsti
 	</div>
 }
 
-templ ClosedEstimation(ticketID int32, averateEstimate string, medianEstimate string,
+templ ClosedEstimation(ticketID uint, averateEstimate string, medianEstimate string,
 	stdEstimate string, estimatedBy string) {
 	<div hx-swap-oob={ fmt.Sprintf("outerHTML:form[data-estimation-form='%d' ]", ticketID) }>
 		@EstimationDetail(ticketID, averateEstimate, medianEstimate, stdEstimate, estimatedBy)

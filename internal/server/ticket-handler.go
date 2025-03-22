@@ -85,16 +85,16 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 
 func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 	c.Logger().Info("Hiding ticket")
-	ticketID, err := strconv.ParseInt(c.FormValue("id"), 10, 64)
+	ticketID, err := strconv.Atoi(c.FormValue("id"))
 	if err != nil {
 		return c.String(400, "Invalid ticket id")
 	}
-	updatedTicket, err := r.service.HideTicket(c.Request().Context(), int32(ticketID))
+	updatedTicket, err := r.service.HideTicket(c.Request().Context(), uint(ticketID))
 	if err != nil {
 		return c.String(500, "Error hiding ticket")
 	}
 
-	return ticket.HideToggle(int32(ticketID), updatedTicket.Hidden).Render(c.Request().Context(), c.Response().Writer)
+	return ticket.HideToggle(uint(ticketID), updatedTicket.Hidden).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func newTicketRouter(ticketService *service.TicketService, group *echo.Group) *TicketRouter {

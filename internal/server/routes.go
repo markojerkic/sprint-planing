@@ -37,10 +37,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
 
 	roomService := service.NewRoomService(s.db)
-	// ticketService := service.NewTicketService(s.db)
+	ticketService := service.NewTicketService(s.db)
 	// websocketService := service.NewWebSocketService(ticketService)
 
-	// newRoomRouter(roomService, nil, e.Group("/room"))
+	newRoomRouter(roomService, ticketService, e.Group("/room"))
 	// newTicketRouter(ticketService, e.Group("/ticket"))
 	// newWebsocketRouter(websocketService, e.Group("/ws"))
 	e.GET("/", homepage.HomepageHandler(roomService))

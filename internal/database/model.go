@@ -28,6 +28,7 @@ type Ticket struct {
 	ClosedAt    *time.Time
 	Hidden      bool `gorm:"default:false"`
 	RoomID      uint
+	Room        Room `gorm:"foreignKey:RoomID"`
 	CreatedBy   uint
 	Estimates   []Estimate
 }

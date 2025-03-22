@@ -20,22 +20,22 @@ type TicketService struct {
 type CreateTicketForm struct {
 	TicketName        string `json:"ticketName" form:"ticketName" validate:"required"`
 	TicketDescription string `json:"ticketDescription" form:"ticketDescription" validate:"required"`
-	RoomID            int32  `json:"roomID" form:"roomID" validate:"required"`
+	RoomID            uint   `json:"roomID" form:"roomID" validate:"required"`
 }
 
 type EstimateTicketForm struct {
-	TicketID     int32 `json:"ticketID" form:"ticketID" validate:"required"`
+	TicketID     uint  `json:"ticketID" form:"ticketID" validate:"required"`
 	WeekEstimate int32 `json:"weekEstimate" form:"weekEstimate" default:"0"`
 	DayEstimate  int32 `json:"dayEstimate" form:"dayEstimate" default:"0"`
 	HourEstimate int32 `json:"hourEstimate" form:"hourEstimate" default:"0"`
 }
 
 type HideTicketDto struct {
-	TicketID int32 `json:"ticketID" form:"ticketID"`
-	IsHidden bool  `json:"isHidden" form:"isHidden"`
+	TicketID uint `json:"ticketID" form:"ticketID"`
+	IsHidden bool `json:"isHidden" form:"isHidden"`
 }
 
-func (t *TicketService) HideTicket(ctx context.Context, ticketID int32) (*database.Ticket, error) {
+func (t *TicketService) HideTicket(ctx context.Context, ticketID uint) (*database.Ticket, error) {
 	var ticket database.Ticket
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&ticket, ticketID).Error; err != nil {

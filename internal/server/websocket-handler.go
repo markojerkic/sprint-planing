@@ -19,7 +19,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func (r *WebSocketRouter) webSocketHandler(c echo.Context) error {
-	roomId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	roomId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return c.String(400, "Invalid room roomID")
 	}
@@ -28,7 +28,7 @@ func (r *WebSocketRouter) webSocketHandler(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	r.service.Register(conn, int32(roomId))
+	r.service.Register(conn, uint(roomId))
 
 	return nil
 
