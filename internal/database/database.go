@@ -56,6 +56,8 @@ func New(dbUrl string) *Database {
 		},
 	)
 
+	log.Printf("Connecting to database: %s", dbUrl)
+
 	db, err := gorm.Open(postgres.Open(dbUrl), &gorm.Config{
 		Logger: newLogger,
 	})

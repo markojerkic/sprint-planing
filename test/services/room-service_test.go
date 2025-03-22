@@ -1,7 +1,8 @@
 package services
 
 import (
-	"os"
+	"context"
+	"log"
 	"testing"
 
 	"github.com/markojerkic/spring-planing/internal/database"
@@ -46,10 +47,10 @@ func (r *RoomServiceSuite) SetupSubTest() {
 
 // SetupSuite implements suite.SetupAllSuite.
 func (r *RoomServiceSuite) SetupSuite() {
-	ctx := r.T().Context()
+	ctx := context.Background()
 	postgresContainer, err := postgres.Run(ctx, "postgres:17")
 	if err != nil {
-		r.T().Fatal(err)
+		log.Fatalf("Failed to start postgres container: %v", err)
 	}
 	r.postgresContainer = postgresContainer
 
@@ -58,14 +59,22 @@ func (r *RoomServiceSuite) SetupSuite() {
 		r.T().Fatal(err)
 	}
 
-	// Override env variable DB_URL
-	os.Setenv("DB_URL", connString)
-
 	db := database.New(connString)
+	r.db = db // Add this line
 	r.roomService = service.NewRoomService(db)
 
 }
 
+// TearDownSuite implements suite.TearDownAllSuite.
+func (r *RoomServiceSuite) TearDownSuite() {
+	if r.postgresContainer != nil {
+		if err := r.postgresContainer.Terminate(r.T().Context()); err != nil {
+			r.T().Fatalf("failed to terminate postgres container: %v", err)
+		}
+	}
+}
+
+var _ suite.TearDownAllSuite = &RoomServiceSuite{}
 var _ suite.SetupAllSuite = &RoomServiceSuite{}
 var _ suite.SetupSubTest = &RoomServiceSuite{}
 var _ suite.TearDownSubTest = &RoomServiceSuite{}
