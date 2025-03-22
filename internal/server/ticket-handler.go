@@ -7,7 +7,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
-	"github.com/markojerkic/spring-planing/internal/database/dbgen"
 	"github.com/markojerkic/spring-planing/internal/service"
 )
 
@@ -25,7 +24,7 @@ func (r *TicketRouter) estimateTicketHandler(c echo.Context) error {
 		c.Logger().Errorf("Error validating form: %v", err)
 		return c.String(400, "Form validation failed. Please check your input.")
 	}
-	user := c.Get("user").(dbgen.User)
+	user := c.Get("user").(database.User)
 
 	estimate, err := r.service.EstimateTicket(c.Request().Context(), user.ID, form)
 	if err != nil {

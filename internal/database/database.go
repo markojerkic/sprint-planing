@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"embed"
 	"log"
 	"os"
 	"strconv"
@@ -15,9 +14,6 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
-
-//go:embed migrations/*.sql
-var embedMigrations embed.FS
 
 // Service represents a service that interacts with a database.
 type Service interface {
