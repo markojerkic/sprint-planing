@@ -2,91 +2,93 @@ package service
 
 import (
 	"context"
-	"log/slog"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/markojerkic/spring-planing/internal/database"
-	"github.com/markojerkic/spring-planing/internal/database/dbgen"
+	"gorm.io/gorm"
 )
 
 type RoomService struct {
 	db *database.Database
 }
 
-func (r *RoomService) CreateRoom(ctx context.Context, userID int32, roomName string) (*dbgen.Room, error) {
-	tx, err := r.db.DB.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		slog.Error("Error creating transaction", slog.Any("error", err))
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
+func (r *RoomService) GetUsersRooms(ctx context.Context, userID int32) ([]database.Room, error) {
+	var rooms []database.Room
+	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Preload("Users").Where("created_by = ?", userID).Find(&rooms).Error; err != nil {
+			return err
+		}
 
-	q := r.db.Queries.WithTx(tx)
-	room, err := q.CreateRoom(ctx, dbgen.CreateRoomParams{
-		Name:      roomName,
-		CreatedBy: userID,
+		return nil
 	})
 	if err != nil {
-		tx.Rollback(ctx)
-		slog.Error("Error creating room", slog.Any("error", err))
 		return nil, err
 	}
 
-	// Add user to room
-	err = q.AddUserToRoom(ctx, dbgen.AddUserToRoomParams{
-		RoomID: room.ID,
-		UserID: userID,
+	return rooms, nil
+}
+
+func (r *RoomService) CreateRoom(ctx context.Context, userID int32, roomName string) (*database.Room, error) {
+	var room database.Room
+	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var user database.User
+		if err := tx.First(&user, userID).Error; err != nil {
+			return err
+		}
+
+		room = database.Room{
+			CreatedBy: uint(userID),
+			Name:      roomName,
+			Users:     []database.User{user},
+		}
+
+		if err := tx.Create(&room).Error; err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
-		tx.Rollback(ctx)
-		slog.Error("Error adding user to room", slog.Any("error", err))
-		return nil, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		slog.Error("Error committing transaction", slog.Any("error", err))
 		return nil, err
 	}
 
 	return &room, nil
 }
 
-func (r *RoomService) GetRoom(ctx context.Context, roomID int32, userID int32) (*dbgen.GetRoomDetailsRow, error) {
-	tx, err := r.db.DB.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		slog.Error("Error creating transaction", slog.Any("error", err))
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-	q := r.db.Queries.WithTx(tx)
+func (r *RoomService) GetRoom(ctx context.Context, roomID int32, userID int32) (*database.Room, error) {
+	var room database.Room
+	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var user database.User
+		if err := tx.First(&user, userID).Error; err != nil {
+			return err
+		}
 
-	// Add user to room
-	err = q.AddUserToRoom(ctx, dbgen.AddUserToRoomParams{
-		RoomID: roomID,
-		UserID: userID,
+		if err := tx.Preload("Users").First(&room, roomID).Error; err != nil {
+			return err
+		}
+
+		// Check if user is in the room
+		// If not, add user to the room
+		var found bool
+		for _, u := range room.Users {
+			if u.ID == user.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			room.Users = append(room.Users, user)
+			if err := tx.Save(&room).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
-		tx.Rollback(ctx)
-		slog.Error("Error adding user to room", slog.Any("error", err))
 		return nil, err
 	}
 
-	detail, err := q.GetRoomDetails(ctx, dbgen.GetRoomDetailsParams{
-		CreatedBy: userID,
-		ID:        roomID,
-	})
-
-	if err != nil {
-		tx.Rollback(ctx)
-		slog.Error("Error getting room details", slog.Any("error", err))
-		return nil, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, err
-	}
-
-	return &detail, err
+	return &room, nil
 }
 
 func NewRoomService(db *database.Database) *RoomService {

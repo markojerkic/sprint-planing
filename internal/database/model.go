@@ -16,7 +16,9 @@ type User struct {
 type Room struct {
 	gorm.Model
 	CreatedBy uint
+	Name      string
 	Tickets   []Ticket
+	Users     []User `gorm:"many2many:room_users;"`
 }
 
 type Ticket struct {
@@ -26,6 +28,7 @@ type Ticket struct {
 	ClosedAt    *time.Time
 	Hidden      bool `gorm:"default:false"`
 	RoomID      uint
+	CreatedBy   uint
 	Estimates   []Estimate
 }
 

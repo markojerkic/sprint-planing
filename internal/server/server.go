@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/markojerkic/spring-planing/internal/database"

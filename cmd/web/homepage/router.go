@@ -5,11 +5,11 @@ import (
 	"log"
 
 	"github.com/labstack/echo/v4"
-	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/database/dbgen"
+	"github.com/markojerkic/spring-planing/internal/service"
 )
 
-func HomepageHandler(db *database.Database) echo.HandlerFunc {
+func HomepageHandler(roomService *service.RoomService) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(dbgen.User)
 
@@ -19,7 +19,7 @@ func HomepageHandler(db *database.Database) echo.HandlerFunc {
 			return c.Redirect(302, fmt.Sprintf("/room/%s", roomId))
 		}
 
-		rooms, err := db.Queries.GetMyRooms(c.Request().Context(), user.ID)
+		rooms, err := roomService.GetUsersRooms(c.Request().Context(), user.ID)
 		if err != nil {
 			c.Logger().Error(err)
 			return c.String(500, "Error getting rooms")
@@ -27,6 +27,7 @@ func HomepageHandler(db *database.Database) echo.HandlerFunc {
 		log.Printf("User: %v", user)
 		log.Printf("Rooms: %v", rooms)
 
-		return RoomList(rooms).Render(c.Request().Context(), c.Response().Writer)
+		return c.JSON(200, rooms)
+		// return RoomList(rooms).Render(c.Request().Context(), c.Response().Writer)
 	}
 }

@@ -93,7 +93,7 @@ clean:
 dev-run:
 	@echo "Building..."
 	@templ generate
-	@sqlc generate
+	# @sqlc generate
 	@go run cmd/api/main.go
 
 install-watchexec:

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 	"os"
 
@@ -39,61 +38,7 @@ func (s *Server) InitSessions(e *echo.Echo) {
 // AuthMiddleware checks for existing user session or creates a new user
 func (s *Server) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-		sess, err := session.Get(sessionName, c)
-		if err != nil {
-			// Clear the potentially corrupted session
-			sess, _ = session.Get(sessionName, c)
-			sess.Options = &sessions.Options{
-				Path:     "/",
-				MaxAge:   -1, // Delete the cookie
-				HttpOnly: true,
-			}
-			sess.Save(c.Request(), c.Response())
+        return next(c)
+    }
 
-			// Create a new session
-			sess, _ = session.Get(sessionName, c)
-		}
-
-		// Check if there's a user ID in the session
-		userIDInterface := sess.Values[sessionUserID]
-		if userIDInterface != nil {
-			// Try to get the user from the database
-			if userID, ok := userIDInterface.(int32); ok {
-				user, err := s.db.Queries.GetUser(ctx, userID)
-				if err == nil {
-					// User found, set in context and proceed
-					c.Set("user", user)
-					return next(c)
-				}
-				// Invalid user ID, will create new user below
-			}
-		}
-		log.Printf("No user found in session")
-
-		// No valid user found, create a new one
-		userID, err := s.db.Queries.CreateUser(ctx)
-		log.Printf("Created new user: %v", userID)
-		if err != nil {
-			c.Logger().Errorf("Error creating user: %v", err)
-			return c.String(http.StatusInternalServerError, "Internal Server Error")
-		}
-
-		// Save the user ID to the session
-		sess.Values[sessionUserID] = userID.ID
-		if err := sess.Save(c.Request(), c.Response()); err != nil {
-			c.Logger().Errorf("Error saving session: %v", err)
-			return c.String(http.StatusInternalServerError, "Internal Server Error")
-		}
-
-		// Get the newly created user and set in context
-		user, err := s.db.Queries.GetUser(ctx, userID.ID)
-		if err != nil {
-			c.Logger().Errorf("Error retrieving new user: %v", err)
-			return c.String(http.StatusInternalServerError, "Internal Server Error")
-		}
-
-		c.Set("user", user)
-		return next(c)
-	}
 }

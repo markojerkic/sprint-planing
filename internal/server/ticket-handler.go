@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -36,24 +37,25 @@ func (r *TicketRouter) estimateTicketHandler(c echo.Context) error {
 }
 
 func (r *TicketRouter) createTicketHandler(c echo.Context) error {
-	var form service.CreateTicketForm
-	if err := c.Bind(&form); err != nil {
-		return c.String(400, "Invalid request")
-	}
-	if err := c.Validate(form); err != nil {
-		c.Logger().Errorf("Error validating form: %v", err)
-		return c.HTML(400, "<div class='error-message'>Form validation failed. Please check your input.</div>")
-	}
-
-	user := c.Get("user").(dbgen.User)
-
-	ticketList, err := r.service.CreateTicket(c.Request().Context(), user.ID, form)
-	if err != nil {
-		c.Logger().Errorf("Error creating ticket: %v", err)
-		return c.String(500, "Error creating ticket")
-	}
-
-	return ticket.TicketList(ticketList, true).Render(c.Request().Context(), c.Response().Writer)
+	return errors.New("not implemented")
+	// var form service.CreateTicketForm
+	// if err := c.Bind(&form); err != nil {
+	// 	return c.String(400, "Invalid request")
+	// }
+	// if err := c.Validate(form); err != nil {
+	// 	c.Logger().Errorf("Error validating form: %v", err)
+	// 	return c.HTML(400, "<div class='error-message'>Form validation failed. Please check your input.</div>")
+	// }
+	//
+	// user := c.Get("user").(dbgen.User)
+	//
+	// ticketList, err := r.service.CreateTicket(c.Request().Context(), user.ID, form)
+	// if err != nil {
+	// 	c.Logger().Errorf("Error creating ticket: %v", err)
+	// 	return c.String(500, "Error creating ticket")
+	// }
+	//
+	// return ticket.TicketList(ticketList, true).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (r *TicketRouter) ticketEstimatesHandler(c echo.Context) error {
