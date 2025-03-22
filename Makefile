@@ -17,6 +17,22 @@ templ-install:
 		fi; \
 	fi
 
+tailwind-install:
+	@if ! command -v ./tailwindcss > /dev/null; then \
+		read -p "Tailwind is not installed on your machine. Do you want to install it? [Y/n] " choice; \
+		if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
+			curl -kL https://github.com/tailwindlabs/tailwindcss/releases/download/v4.0.15/tailwindcss-linux-x64 -o ./tailwindcss; \
+			chmod +x ./tailwindcss; \
+			if [ ! -x "$$(command -v tailwindcss)" ]; then \
+				echo "tailwind installation failed. Exiting..."; \
+				exit 1; \
+			fi; \
+		else \
+			echo "You chose not to install tailwind. Exiting..."; \
+			exit 1; \
+		fi; \
+	fi
+
 sqlc-install:
 	@if ! command -v sqlc > /dev/null; then \
 		read -p "Go's 'sqlc' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
@@ -93,6 +109,7 @@ clean:
 dev-run:
 	@echo "Building..."
 	@templ generate
+	@tailwindcss -i ./input.css -o ./cmd/web/assets/css/output.css
 	@go run cmd/api/main.go
 
 
@@ -116,7 +133,8 @@ db:
 	@sleep 1
 
 # Live Reload
-watch: install-watchexec db
+watch: install-watchexec tailwind-install
+	@echo "Watching..."
 	@watchexec -r -e go,templ,html,css,js,sql -d 1s -- make dev-run
 
 .PHONY: all build run test clean watch templ-install sqlc-install

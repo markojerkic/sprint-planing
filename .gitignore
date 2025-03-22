@@ -38,3 +38,5 @@ dbgen/
 .DS_Store
 
 dump/
+
+tailwindcss
