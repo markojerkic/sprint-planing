@@ -40,8 +40,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	ticketService := service.NewTicketService(s.db)
 	// websocketService := service.NewWebSocketService(ticketService)
 
-	newRoomRouter(roomService, ticketService, e.Group("/room"))
-	newTicketRouter(ticketService, e.Group("/ticket"))
+	newRoomRouter(roomService, ticketService, s.db.DB, e.Group("/room"))
+	newTicketRouter(ticketService, s.db.DB, e.Group("/ticket"))
 	// newWebsocketRouter(websocketService, e.Group("/ws"))
 	e.GET("/", homepage.HomepageHandler(roomService))
 

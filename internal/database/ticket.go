@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
@@ -20,14 +21,37 @@ type Ticket struct {
 	Estimates   []Estimate
 }
 
-func (t *Ticket) ToDetailProp(numUsersInRoom int) ticket.TicketDetailProps {
+type TicketWithEstimateStatistics struct {
+	Ticket
+	AverageEstimate float64
+	MedianEstimate  float64
+	StdDevEstimate  float64
+}
+
+func (t *TicketWithEstimateStatistics) ToDetailProp(numUsersInRoom int) ticket.TicketDetailProps {
+	slog.Info("Ticket statistics",
+		slog.Any("average", t.AverageEstimate),
+		slog.Any("median", t.MedianEstimate),
+		slog.Any("std", t.StdDevEstimate))
+
 	return ticket.TicketDetailProps{
-		ID:          t.ID,
-		Name:        t.Name,
-		RoomID:      t.RoomID,
-		Description: t.Description,
-		EstimatedBy: fmt.Sprintf("%d/%d", len(t.Estimates), numUsersInRoom),
-		IsClosed:    t.ClosedAt != nil,
+		ID:              t.ID,
+		Name:            t.Name,
+		RoomID:          t.RoomID,
+		Description:     t.Description,
+		EstimatedBy:     fmt.Sprintf("%d/%d", len(t.Estimates), numUsersInRoom),
+		IsClosed:        t.ClosedAt != nil,
+		AverageEstimate: prettyPrintEstimate(t.AverageEstimate),
+		MedianEstimate:  prettyPrintEstimate(t.MedianEstimate),
+		StdEstimate:     fmt.Sprintf("%.2fh", t.StdDevEstimate),
 	}
 
+}
+
+func prettyPrintEstimate(estimate float64) string {
+	weeks := int(estimate / 40)
+	days := int((int(estimate) % 40) / 8)
+	hours := int(estimate) % 8
+
+	return fmt.Sprintf("%dw %dd %dh", weeks, days, hours)
 }

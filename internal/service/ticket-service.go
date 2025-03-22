@@ -131,8 +131,29 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 	return estimates, nil
 }
 
-func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.Ticket, int, error) {
-	var tickets []database.Ticket
+func (t *TicketService) GetTicketsOfRoom(ctx context.Context, userID uint, roomID uint) ([]database.TicketWithEstimateStatistics, error) {
+	var tickets []database.TicketWithEstimateStatistics
+
+	if err := t.db.DB.WithContext(ctx).Raw(`
+            SELECT
+                t.*,
+                AVG(e.estimate) AS average_estimate,
+                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY e.estimate) AS median_estimate,
+                STDDEV(e.estimate) AS std_dev_estimate
+            FROM tickets t
+            LEFT JOIN estimates e ON t.id = e.ticket_id
+            WHERE t.room_id = ?
+            GROUP BY t.id
+            ORDER BY t.created_at DESC
+        `, roomID).Scan(&tickets).Error; err != nil {
+		return nil, err
+	}
+
+	return tickets, nil
+}
+
+func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, int, error) {
+	var tickets []database.TicketWithEstimateStatistics
 	var usersInRoom int
 
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -151,11 +172,11 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 			return err
 		}
 
-		if err := tx.Where("room_id = ?", form.RoomID).
-			Order("created_at desc").
-			Find(&tickets).Error; err != nil {
+		roomTickets, err := t.GetTicketsOfRoom(ctx, userID, form.RoomID)
+		if err != nil {
 			return err
 		}
+		tickets = roomTickets
 
 		return nil
 	})

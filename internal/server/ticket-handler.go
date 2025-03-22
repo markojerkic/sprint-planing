@@ -8,10 +8,12 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/service"
+	"gorm.io/gorm"
 )
 
 type TicketRouter struct {
 	service *service.TicketService
+	db      *gorm.DB
 	group   *echo.Group
 }
 
@@ -100,9 +102,12 @@ func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 	return ticket.HideToggle(uint(ticketID), updatedTicket.Hidden).Render(c.Request().Context(), c.Response().Writer)
 }
 
-func newTicketRouter(ticketService *service.TicketService, group *echo.Group) *TicketRouter {
+func newTicketRouter(ticketService *service.TicketService,
+	db *gorm.DB,
+	group *echo.Group) *TicketRouter {
 	r := &TicketRouter{
 		service: ticketService,
+		db:      db,
 		group:   group,
 	}
 	e := r.group

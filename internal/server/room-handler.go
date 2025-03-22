@@ -10,11 +10,13 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/service"
+	"gorm.io/gorm"
 )
 
 type RoomRouter struct {
 	roomService   *service.RoomService
 	ticketService *service.TicketService
+	db            *gorm.DB
 	group         *echo.Group
 }
 
@@ -45,9 +47,14 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		return ctx.String(500, "Error getting room")
 	}
 
-	tickets := make([]ticket.TicketDetailProps, len(roomDetails.Tickets))
-	for i, t := range roomDetails.Tickets {
-		tickets[i] = t.ToDetailProp(len(roomDetails.Users))
+	tickets, err := r.ticketService.GetTicketsOfRoom(ctx.Request().Context(), user.ID, roomDetails.ID)
+	if err != nil {
+		ctx.Logger().Errorf("Error getting tickets: %v", err)
+		return ctx.String(500, "Error getting tickets")
+	}
+	ticketDetails := make([]ticket.TicketDetailProps, len(tickets))
+	for i, t := range tickets {
+		ticketDetails[i] = t.ToDetailProp(len(tickets))
 	}
 
 	isOwner := roomDetails.CreatedBy == user.ID
@@ -56,14 +63,18 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		Name:               roomDetails.Name,
 		CreatedAt:          roomDetails.CreatedAt,
 		IsCurrentUserOwner: isOwner,
-		Tickets:            tickets,
+		Tickets:            ticketDetails,
 	}, isOwner).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
 
-func newRoomRouter(roomService *service.RoomService, ticketService *service.TicketService, group *echo.Group) *RoomRouter {
+func newRoomRouter(roomService *service.RoomService,
+	ticketService *service.TicketService,
+	db *gorm.DB,
+	group *echo.Group) *RoomRouter {
 	r := &RoomRouter{
 		roomService:   roomService,
 		ticketService: ticketService,
+		db:            db,
 		group:         group,
 	}
 	e := r.group
