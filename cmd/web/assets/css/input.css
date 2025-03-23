@@ -18,3 +18,22 @@
 	--color-warning: oklch(0.77 0.173 63.6deg);
 	--color-error: oklch(0.643 0.215 28.0deg);
 }
+
+@keyframes highlightBorder {
+	0% {
+		border: 2px solid var(--color-primary);
+		box-shadow: 0 0 0 0 var(--color-primary-light);
+	}
+	50% {
+		border: 2px solid var(--color-primary-light);
+		box-shadow: 0 0 8px 2px var(--color-primary-light);
+	}
+	100% {
+		border: 2px solid var(--color-primary);
+		box-shadow: 0 0 0 0 var(--color-primary-light);
+	}
+}
+
+.highlight-animation {
+	animation: highlightBorder 1.5s ease-in-out;
+}

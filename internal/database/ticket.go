@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
@@ -32,7 +31,6 @@ type TicketWithEstimateStatistics struct {
 }
 
 func (t *TicketWithEstimateStatistics) ToDetailProp() ticket.TicketDetailProps {
-	slog.Info("Users estimate", slog.Any("ticket", t))
 	return ticket.TicketDetailProps{
 		ID:              t.ID,
 		Name:            t.Name,
