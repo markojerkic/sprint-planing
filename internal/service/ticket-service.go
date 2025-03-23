@@ -71,6 +71,8 @@ func (t *TicketService) HideTicket(ctx context.Context, ticketID uint) (*databas
 		return nil, err
 	}
 
+	t.webSocketService.HideTicket(ticketID, ticket.RoomID, ticket.Hidden)
+
 	return &ticket, nil
 }
 

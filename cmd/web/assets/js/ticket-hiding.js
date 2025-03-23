@@ -12,7 +12,6 @@ document.addEventListener(
 	"htmx:wsBeforeMessage",
 	/** @param {CustomEvent} e */
 	function (e) {
-		console.log("wsBeforeMessage", e);
 		/** @type {string} */
 		const message = e.detail.message;
 		if (!isJson(message)) {
@@ -27,13 +26,22 @@ document.addEventListener(
 			`div[data-ticket-id="${ticketId}"]`,
 		);
 		const isOwner = ticketElement.getAttribute("data-is-owner") === "true";
-		console.log(ticketElement);
-		console.log("isOwner", isOwner);
 
 		if (isHidden && !isOwner) {
 			ticketElement.style.display = "none";
-		} else {
+		} else if (!isOwner) {
+			// Move to top of the list
+			// display flex
+			// add animation and scroll into view
+			const parentElement = ticketElement.parentElement;
+			parentElement.removeChild(ticketElement);
+			parentElement.prepend(ticketElement);
 			ticketElement.style.display = "flex";
+			ticketElement.classList.add("highlight-animation");
+			ticketElement.scrollIntoView({ behavior: "smooth" });
+			setTimeout(() => {
+				ticketElement.classList.remove("highlight-animation");
+			}, 1500);
 		}
 	},
 );
@@ -43,15 +51,13 @@ document.addEventListener(
 	"htmx:oobAfterSwap",
 	/** @param {CustomEvent} event */
 	function (event) {
-		console.log("htmx:oobAfterSwap", event);
 		/* @type {HTMLElement} */
 		const target = event.detail.target.children[0];
 
 		// Only if target contains attribute data-ticket-id
-		if (!target.hasAttribute("data-ticket-id")) {
+		if (!target?.hasAttribute("data-ticket-id")) {
 			return;
 		}
-		console.log(target);
 
 		// Scroll to the new ticket
 		target.scrollIntoView({ behavior: "smooth" });
