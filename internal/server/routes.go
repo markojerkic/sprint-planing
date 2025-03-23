@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/markojerkic/spring-planing/cmd/web"
 	"github.com/markojerkic/spring-planing/cmd/web/homepage"
+	"github.com/markojerkic/spring-planing/internal/server/auth"
 	"github.com/markojerkic/spring-planing/internal/service"
 )
 
@@ -40,6 +41,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	ticketService := service.NewTicketService(s.db)
 	websocketService := service.NewWebSocketService(ticketService)
 
+	auth.NewOAuthRouter(e.Group("/auth/jira"))
 	newRoomRouter(roomService, ticketService, s.db.DB, e.Group("/room"))
 	newTicketRouter(ticketService, s.db.DB, e.Group("/ticket"))
 	newWebsocketRouter(websocketService, e.Group("/ws"))
