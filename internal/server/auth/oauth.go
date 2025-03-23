@@ -2,10 +2,13 @@ package auth
 
 import (
 	"context"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -67,7 +70,7 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save session"})
 	}
 
-	return c.String(200, "Callback")
+	return c.Redirect(http.StatusTemporaryRedirect, "/auth/jira/issues")
 }
 
 func (o *OAuthRouter) GetMyJiraIssues(c echo.Context) error {
@@ -76,22 +79,42 @@ func (o *OAuthRouter) GetMyJiraIssues(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Failed to get session"})
 	}
 	token := session.Values["token"].(*oauth2.Token)
+	if token == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "No token in session"})
+	}
+	if token.Expiry.Before(time.Now()) {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Token expired"})
+	}
 
 	client := o.Config.Client(c.Request().Context(), token)
-	url := fmt.Sprintf("%s/rest/api/3/search?jql=%s", o.BaseURL, "assignee=currentUser()")
+	encodedJql := url.QueryEscape("assignee = currentUser()")
+	url := fmt.Sprintf("%s/rest/api/3/search/jql?jql=%s", o.BaseURL, encodedJql)
 	resp, err := client.Get(url)
 	if err != nil {
 		slog.Error("Failed to get issues", slog.Any("error", err))
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
 	}
 	defer resp.Body.Close()
-	var issues map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
+
+	// Read response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		slog.Error("Failed to read response body", slog.Any("error", err))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to read response"})
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("Failed to get issues", slog.Any("status", resp.StatusCode), slog.String("body", string(bodyBytes)))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
+	}
+
+	var searchResult map[string]any
+	if err := json.Unmarshal(bodyBytes, &searchResult); err != nil {
 		slog.Error("Failed to decode issues", slog.Any("error", err))
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to decode issues"})
 	}
 
-	return c.JSON(http.StatusOK, issues)
+	return c.JSON(http.StatusOK, searchResult)
 }
 
 // ExchangeCodeForToken exchanges an authorization code for an access token
@@ -117,6 +140,7 @@ func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 			Scopes: []string{"read:jira-work", "write:jira-work"},
 		},
 	}
+	gob.Register(&oauth2.Token{})
 
 	slog.Info("NewOAuthRouter",
 		slog.String("BaseURL", router.BaseURL),
@@ -128,6 +152,7 @@ func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 	e := group
 	e.GET("/login", router.Login)
 	e.GET("/response", router.Callback)
+	e.GET("/issues", router.GetMyJiraIssues)
 
 	return &router
 }
