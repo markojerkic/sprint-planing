@@ -35,29 +35,20 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) error {
 		slog.Error("Jira client info not found in context")
 		return ctx.String(http.StatusInternalServerError, "Jira client info not found in context")
 	}
-	slog.Info("Getting tickets from Jira", slog.Any("clientInfo", clientInfo))
-
 	baseUrl := os.Getenv("JIRA_BASE_URL")
-	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/search", baseUrl, clientInfo.ResourceID))
+	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/search?", baseUrl, clientInfo.ResourceID))
 	if err != nil {
 		slog.Error("Error parsing url", slog.Any("error", err))
 		return err
 	}
 	if query != "" {
-		url.Query().Add("jql", query)
+		q := url.Query()
+		q.Set("jql", fmt.Sprintf("summary ~ \"%s\"", query))
+		url.RawQuery = q.Encode()
 	}
+	slog.Info("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
 
-	slog.Info("Jira url", slog.String("url", url.String()))
-	req, err := http.NewRequest("GET", url.String(), nil)
-	if err != nil {
-		slog.Error("Error creating request", slog.Any("error", err))
-		return err
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := clientInfo.HttpClient(ctx.Request().Context()).Get(url.String())
 	if err != nil {
 		slog.Error("Error getting issues", slog.Any("error", err))
 		return err
@@ -74,9 +65,6 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) error {
 		slog.Error("Failed to decode issues", slog.Any("error", err))
 		return err
 	}
-
-	slog.Info("Jira tickets", slog.Any("tickets", searchResult.Issues))
-	slog.Info("Total tickets", slog.Int("total", searchResult.Total))
 
 	return ctx.JSON(http.StatusOK, searchResult)
 }

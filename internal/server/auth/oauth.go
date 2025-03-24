@@ -25,11 +25,31 @@ const (
 	JiraClientInfoKey   = "jira_client_info"
 )
 
+var oauthConf = oauth2.Config{
+	ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
+	ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
+	RedirectURL:  os.Getenv("OAUTH_REDIRECT_URL"),
+	Endpoint: oauth2.Endpoint{
+		AuthURL:  "https://auth.atlassian.com/authorize",
+		TokenURL: "https://auth.atlassian.com/oauth/token",
+	},
+	Scopes: []string{"read:jira-work", "write:jira-work"},
+}
+
 type JiraClientInfo struct {
 	ResourceID   string
 	AccessToken  string
 	RefreshToken string
 	Expiry       time.Time
+}
+
+func (j *JiraClientInfo) HttpClient(ctx context.Context) *http.Client {
+	return oauthConf.Client(ctx, &oauth2.Token{
+		AccessToken:  j.AccessToken,
+		TokenType:    "Bearer",
+		RefreshToken: j.RefreshToken,
+		Expiry:       j.Expiry,
+	})
 }
 
 type JiraResource struct {
@@ -127,79 +147,6 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, "/jira/issues")
 }
 
-// func (o *OAuthRouter) GetMyJiraIssues(c echo.Context) error {
-// 	session, err := session.Get(sessionName, c)
-// 	if err != nil {
-// 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Failed to get session"})
-// 	}
-// 	accessToken := session.Values[sessionAccessToken].(string)
-// 	if accessToken == "" {
-// 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "No token in session"})
-// 	}
-//
-// 	tokenSource := o.Config.TokenSource(c.Request().Context(), &oauth2.Token{AccessToken: accessToken})
-// 	token, err := tokenSource.Token()
-// 	if err != nil {
-// 		slog.Error("Failed to refresh token", slog.Any("error", err))
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to refresh token"})
-// 	}
-//
-// 	baseURL := session.Values[sessionJiraDomain].(string)
-//
-// 	client := o.Config.Client(c.Request().Context(), token)
-// 	// encodedJql := url.QueryEscape("assignee = currentUser()")
-// 	url, err := url.Parse(fmt.Sprintf("%s/rest/api/3/search", baseURL))
-//
-// 	if err != nil {
-// 		slog.Error("Failed to parse URL", slog.Any("error", err))
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to parse URL"})
-// 	}
-//
-// 	query := c.QueryParam("q")
-// 	if query != "" {
-// 		url.Query().Set("jql", query)
-// 	}
-//
-// 	slog.Info("URL", slog.String("url", url.String()))
-// 	// req, err := http.NewRequest("GET", url.String(), nil)
-// 	if err != nil {
-// 		slog.Error("Failed to create request", slog.Any("error", err))
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create request"})
-// 	}
-//
-// 	// req.Header.Set("Accept", "application/json")
-// 	// req.Header.Set("Content-Type", "application/json")
-// 	// req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
-//
-// 	// resp, err := client.Do(req)
-// 	resp, err := client.Get(url.String())
-// 	if err != nil {
-// 		slog.Error("Failed to get issues", slog.Any("error", err))
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
-// 	}
-// 	defer resp.Body.Close()
-//
-// 	// Read response body
-// 	bodyBytes, err := io.ReadAll(resp.Body)
-// 	if err != nil {
-// 		slog.Error("Failed to read response body", slog.Any("error", err))
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to read response"})
-// 	}
-//
-// 	if resp.StatusCode != http.StatusOK {
-// 		slog.Error("Failed to get issues", slog.Any("status", resp.StatusCode), slog.String("body", string(bodyBytes)))
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
-// 	}
-//
-// 	var searchResult map[string]any
-// 	if err := json.Unmarshal(bodyBytes, &searchResult); err != nil {
-// 		slog.Error("Failed to decode issues", slog.Any("error", err))
-// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to decode issues"})
-// 	}
-//
-// 	return c.JSON(http.StatusOK, searchResult)
-// }
-
 // ExchangeCodeForToken exchanges an authorization code for an access token
 func (c *OAuthRouter) ExchangeCodeForToken(ctx context.Context, code string) (*oauth2.Token, error) {
 	token, err := c.Config.Exchange(ctx, code)
@@ -212,16 +159,7 @@ func (c *OAuthRouter) ExchangeCodeForToken(ctx context.Context, code string) (*o
 func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 	router := OAuthRouter{
 		BaseURL: os.Getenv("OAUTH_BASE_URL"),
-		Config: oauth2.Config{
-			ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
-			ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("OAUTH_REDIRECT_URL"),
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  "https://auth.atlassian.com/authorize",
-				TokenURL: "https://auth.atlassian.com/oauth/token",
-			},
-			Scopes: []string{"read:jira-work", "write:jira-work"},
-		},
+		Config:  oauthConf,
 	}
 	gob.Register(oauth2.Token{})
 	gob.Register(JiraClientInfo{})
