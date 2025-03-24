@@ -8,7 +8,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 
@@ -18,7 +17,26 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const sessionName = "user_session"
+const (
+	sessionName         = "user_session"
+	sessionAccessToken  = "jira_access_token"
+	sessionRefreshToken = "jira_refresh_token"
+	sessionJiraDomain   = "jira_domain"
+	JiraClientInfoKey   = "jira_client_info"
+)
+
+type JiraClientInfo struct {
+	ResourceID   string
+	AccessToken  string
+	RefreshToken string
+	Expiry       time.Time
+}
+
+type JiraResource struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
 
 type OAuthRouter struct {
 	BaseURL string
@@ -64,37 +82,14 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Failed to get session"})
 	}
-	session.Values["token"] = token
-	if err := session.Save(c.Request(), c.Response()); err != nil {
-		slog.Error("Failed to save session", slog.Any("error", err))
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save session"})
-	}
 
-	return c.Redirect(http.StatusTemporaryRedirect, "/auth/jira/issues")
-}
-
-func (o *OAuthRouter) GetMyJiraIssues(c echo.Context) error {
-	session, err := session.Get(sessionName, c)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Failed to get session"})
-	}
-	token := session.Values["token"].(*oauth2.Token)
-	if token == nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "No token in session"})
-	}
-	if token.Expiry.Before(time.Now()) {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Token expired"})
-	}
-
+	// Accessable resources
 	client := o.Config.Client(c.Request().Context(), token)
-	encodedJql := url.QueryEscape("assignee = currentUser()")
-	url := fmt.Sprintf("%s/rest/api/3/search/jql?jql=%s", o.BaseURL, encodedJql)
-	resp, err := client.Get(url)
+	resp, err := client.Get("https://api.atlassian.com/oauth/token/accessible-resources")
 	if err != nil {
-		slog.Error("Failed to get issues", slog.Any("error", err))
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
+		slog.Error("Failed to get accessible resources", slog.Any("error", err))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get accessible resources"})
 	}
-	defer resp.Body.Close()
 
 	// Read response body
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -104,18 +99,106 @@ func (o *OAuthRouter) GetMyJiraIssues(c echo.Context) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		slog.Error("Failed to get issues", slog.Any("status", resp.StatusCode), slog.String("body", string(bodyBytes)))
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
+		slog.Error("Failed to get accessible resources", slog.Any("status", resp.StatusCode), slog.String("body", string(bodyBytes)))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get accessible resources"})
 	}
 
-	var searchResult map[string]any
-	if err := json.Unmarshal(bodyBytes, &searchResult); err != nil {
-		slog.Error("Failed to decode issues", slog.Any("error", err))
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to decode issues"})
+	var accessibleResources []JiraResource
+	if err := json.Unmarshal(bodyBytes, &accessibleResources); err != nil {
+		slog.Error("Failed to decode accessible resources", slog.Any("error", err))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to decode accessible resources"})
+	}
+	slog.Info("Accessible resources", slog.Any("resources", accessibleResources))
+
+	session.Values[JiraClientInfoKey] = JiraClientInfo{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		Expiry:       token.Expiry,
+		ResourceID:   accessibleResources[0].ID,
 	}
 
-	return c.JSON(http.StatusOK, searchResult)
+	if err := session.Save(c.Request(), c.Response()); err != nil {
+		slog.Error("Failed to save session", slog.Any("error", err))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save session"})
+	}
+
+	slog.Info("Accessible resources", slog.Any("resources", accessibleResources))
+
+	return c.Redirect(http.StatusTemporaryRedirect, "/jira/issues")
 }
+
+// func (o *OAuthRouter) GetMyJiraIssues(c echo.Context) error {
+// 	session, err := session.Get(sessionName, c)
+// 	if err != nil {
+// 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Failed to get session"})
+// 	}
+// 	accessToken := session.Values[sessionAccessToken].(string)
+// 	if accessToken == "" {
+// 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "No token in session"})
+// 	}
+//
+// 	tokenSource := o.Config.TokenSource(c.Request().Context(), &oauth2.Token{AccessToken: accessToken})
+// 	token, err := tokenSource.Token()
+// 	if err != nil {
+// 		slog.Error("Failed to refresh token", slog.Any("error", err))
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to refresh token"})
+// 	}
+//
+// 	baseURL := session.Values[sessionJiraDomain].(string)
+//
+// 	client := o.Config.Client(c.Request().Context(), token)
+// 	// encodedJql := url.QueryEscape("assignee = currentUser()")
+// 	url, err := url.Parse(fmt.Sprintf("%s/rest/api/3/search", baseURL))
+//
+// 	if err != nil {
+// 		slog.Error("Failed to parse URL", slog.Any("error", err))
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to parse URL"})
+// 	}
+//
+// 	query := c.QueryParam("q")
+// 	if query != "" {
+// 		url.Query().Set("jql", query)
+// 	}
+//
+// 	slog.Info("URL", slog.String("url", url.String()))
+// 	// req, err := http.NewRequest("GET", url.String(), nil)
+// 	if err != nil {
+// 		slog.Error("Failed to create request", slog.Any("error", err))
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create request"})
+// 	}
+//
+// 	// req.Header.Set("Accept", "application/json")
+// 	// req.Header.Set("Content-Type", "application/json")
+// 	// req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+//
+// 	// resp, err := client.Do(req)
+// 	resp, err := client.Get(url.String())
+// 	if err != nil {
+// 		slog.Error("Failed to get issues", slog.Any("error", err))
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
+// 	}
+// 	defer resp.Body.Close()
+//
+// 	// Read response body
+// 	bodyBytes, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		slog.Error("Failed to read response body", slog.Any("error", err))
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to read response"})
+// 	}
+//
+// 	if resp.StatusCode != http.StatusOK {
+// 		slog.Error("Failed to get issues", slog.Any("status", resp.StatusCode), slog.String("body", string(bodyBytes)))
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get issues"})
+// 	}
+//
+// 	var searchResult map[string]any
+// 	if err := json.Unmarshal(bodyBytes, &searchResult); err != nil {
+// 		slog.Error("Failed to decode issues", slog.Any("error", err))
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to decode issues"})
+// 	}
+//
+// 	return c.JSON(http.StatusOK, searchResult)
+// }
 
 // ExchangeCodeForToken exchanges an authorization code for an access token
 func (c *OAuthRouter) ExchangeCodeForToken(ctx context.Context, code string) (*oauth2.Token, error) {
@@ -140,7 +223,8 @@ func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 			Scopes: []string{"read:jira-work", "write:jira-work"},
 		},
 	}
-	gob.Register(&oauth2.Token{})
+	gob.Register(oauth2.Token{})
+	gob.Register(JiraClientInfo{})
 
 	slog.Info("NewOAuthRouter",
 		slog.String("BaseURL", router.BaseURL),
@@ -152,7 +236,7 @@ func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 	e := group
 	e.GET("/login", router.Login)
 	e.GET("/response", router.Callback)
-	e.GET("/issues", router.GetMyJiraIssues)
+	// e.GET("/issues", router.GetMyJiraIssues)
 
 	return &router
 }
