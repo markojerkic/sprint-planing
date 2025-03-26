@@ -21,7 +21,7 @@ const (
 	sessionName         = "user_session"
 	sessionAccessToken  = "jira_access_token"
 	sessionRefreshToken = "jira_refresh_token"
-	sessionJiraDomain   = "jira_domain"
+	sessionResourceID   = "jira_resource_id"
 	JiraClientInfoKey   = "jira_client_info"
 )
 
@@ -33,7 +33,7 @@ var oauthConf = oauth2.Config{
 		AuthURL:  "https://auth.atlassian.com/authorize",
 		TokenURL: "https://auth.atlassian.com/oauth/token",
 	},
-	Scopes: []string{"read:jira-work", "write:jira-work"},
+	Scopes: []string{"read:jira-work", "write:jira-work", "offline_access"},
 }
 
 type JiraClientInfo struct {
@@ -43,15 +43,6 @@ type JiraClientInfo struct {
 	Expiry       time.Time
 }
 
-func (j *JiraClientInfo) HttpClient(ctx context.Context) *http.Client {
-	return oauthConf.Client(ctx, &oauth2.Token{
-		AccessToken:  j.AccessToken,
-		TokenType:    "Bearer",
-		RefreshToken: j.RefreshToken,
-		Expiry:       j.Expiry,
-	})
-}
-
 type JiraResource struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -59,8 +50,21 @@ type JiraResource struct {
 }
 
 type OAuthRouter struct {
-	BaseURL string
-	Config  oauth2.Config
+	Config oauth2.Config
+}
+
+func saveJiraInfoToSession(c echo.Context, jiraClientInfo JiraClientInfo) error {
+	session, err := session.Get(sessionName, c)
+	if err != nil {
+		return err
+	}
+
+	session.Values[sessionAccessToken] = jiraClientInfo.AccessToken
+	session.Values[sessionRefreshToken] = jiraClientInfo.RefreshToken
+	session.Values[sessionResourceID] = jiraClientInfo.ResourceID
+	c.Set(JiraClientInfoKey, jiraClientInfo)
+
+	return session.Save(c.Request(), c.Response())
 }
 
 func (o *OAuthRouter) Login(c echo.Context) error {
@@ -97,12 +101,6 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to exchange code for token"})
 	}
 
-	// Save token to session
-	session, err := session.Get(sessionName, c)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Failed to get session"})
-	}
-
 	// Accessable resources
 	client := o.Config.Client(c.Request().Context(), token)
 	resp, err := client.Get("https://api.atlassian.com/oauth/token/accessible-resources")
@@ -129,15 +127,14 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to decode accessible resources"})
 	}
 	slog.Info("Accessible resources", slog.Any("resources", accessibleResources))
+	slog.Info("Token", slog.Any("token", token), slog.Any("refresh_token", token.RefreshToken))
 
-	session.Values[JiraClientInfoKey] = JiraClientInfo{
+	if err := saveJiraInfoToSession(c, JiraClientInfo{
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 		Expiry:       token.Expiry,
 		ResourceID:   accessibleResources[0].ID,
-	}
-
-	if err := session.Save(c.Request(), c.Response()); err != nil {
+	}); err != nil {
 		slog.Error("Failed to save session", slog.Any("error", err))
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save session"})
 	}
@@ -158,14 +155,12 @@ func (c *OAuthRouter) ExchangeCodeForToken(ctx context.Context, code string) (*o
 
 func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 	router := OAuthRouter{
-		BaseURL: os.Getenv("OAUTH_BASE_URL"),
-		Config:  oauthConf,
+		Config: oauthConf,
 	}
 	gob.Register(oauth2.Token{})
 	gob.Register(JiraClientInfo{})
 
-	slog.Info("NewOAuthRouter",
-		slog.String("BaseURL", router.BaseURL),
+	slog.Debug("NewOAuthRouter",
 		slog.String("ClientID", router.Config.ClientID),
 		slog.String("ClientSecret", router.Config.ClientSecret),
 		slog.String("RedirectURL", router.Config.RedirectURL),
@@ -174,7 +169,6 @@ func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 	e := group
 	e.GET("/login", router.Login)
 	e.GET("/response", router.Callback)
-	// e.GET("/issues", router.GetMyJiraIssues)
 
 	return &router
 }

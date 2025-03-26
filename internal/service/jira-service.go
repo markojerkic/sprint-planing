@@ -48,7 +48,7 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) error {
 	}
 	slog.Info("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
 
-	resp, err := clientInfo.HttpClient(ctx.Request().Context()).Get(url.String())
+	resp, err := clientInfo.HttpClient(ctx).Get(url.String())
 	if err != nil {
 		slog.Error("Error getting issues", slog.Any("error", err))
 		return err
