@@ -17,14 +17,41 @@ type JiraTicketResponse struct {
 	Total  int          `json:"total"`
 }
 
-type JiraTicket struct {
-	ID     string `json:"id"`
-	Key    string `json:"key"`
-	Fields struct {
-		Summary      string `json:"summary"`
-		TimeEstimate int    `json:"timeestimate"`
-		Description  string `json:"description"`
+type JiraTicketParagraph struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type JiraTicketDescriptionContent struct {
+	Type    string                `json:"type"`
+	Content []JiraTicketParagraph `json:"content"`
+}
+
+type JiraTicketDescription struct {
+	Type    string                         `json:"type"`
+	Content []JiraTicketDescriptionContent `json:"content"`
+}
+
+func (j JiraTicketDescription) String() string {
+	var desc string
+	for _, c := range j.Content {
+		for _, p := range c.Content {
+			desc += p.Text
+		}
 	}
+	return desc
+}
+
+type JiraTicketFields struct {
+	Summary      string                `json:"summary"`
+	TimeEstimate int                   `json:"timeestimate"`
+	Description  JiraTicketDescription `json:"description"`
+}
+
+type JiraTicket struct {
+	ID     string           `json:"id"`
+	Key    string           `json:"key"`
+	Fields JiraTicketFields `json:"fields"`
 }
 
 type JiraService struct {

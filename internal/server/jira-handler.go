@@ -24,7 +24,7 @@ func (j *JiraRouter) searchIssuesHandler(ctx echo.Context) error {
 		jiraTickes[i] = ticket.JiraTicket{
 			Key:         t.Key,
 			Summary:     t.Fields.Summary,
-			Description: t.Fields.Description,
+			Description: t.Fields.Description.String(),
 		}
 	}
 

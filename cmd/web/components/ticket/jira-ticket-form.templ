@@ -58,10 +58,10 @@ type JiraTicketListProps struct {
 templ JiraTicketList(tickets JiraTicketListProps) {
 	<div class="grid grid-cols-1 gap-4 text-white">
 		for _, ticket := range tickets.Tickets {
-			<div class="flex gap-2">
+			<div class="grid grid-cols-3 gap-2 border-b border-violet-300">
 				<span class="font-bold">{ ticket.Key }</span>
-				<span>{ ticket.Summary }</span>
-				<span>{ ticket.Description }</span>
+				<span class="col-span-2">{ ticket.Summary }</span>
+				<span class="col-span-3">{ ticket.Description }</span>
 			</div>
 		}
 		if len(tickets.Tickets) == 0 {
