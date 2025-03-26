@@ -37,10 +37,10 @@ document.addEventListener(
 			parentElement.removeChild(ticketElement);
 			parentElement.prepend(ticketElement);
 			ticketElement.style.display = "flex";
-			ticketElement.classList.add("highlight-animation");
+			ticketElement.classList.add("border-red-500");
 			ticketElement.scrollIntoView({ behavior: "smooth" });
 			setTimeout(() => {
-				ticketElement.classList.remove("highlight-animation");
+				ticketElement.classList.remove("border-red-500");
 			}, 1500);
 		}
 	},

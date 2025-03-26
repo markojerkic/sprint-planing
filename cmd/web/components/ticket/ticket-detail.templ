@@ -21,7 +21,7 @@ type TicketDetailProps struct {
 
 templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 	<div
-		class="ticket-detail"
+		class="ticket-detail transition-colors"
 		data-ticket-id={ fmt.Sprintf("%d", props.ID) }
 		data-is-owner={ fmt.Sprintf("%t", isRoomOwner) }
 		style={ fmt.Sprintf("display: %s;", components.Ternary(!isRoomOwner && props.IsHidden, "none", "flex")) }

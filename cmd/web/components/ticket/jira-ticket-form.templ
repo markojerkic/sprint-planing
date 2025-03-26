@@ -68,6 +68,7 @@ templ JiraTicketList(tickets JiraTicketListProps) {
 				<span class="col-span-2">{ ticket.Summary }</span>
 				<span class="col-span-3">{ ticket.Description }</span>
 				<div class="col-span-3 flex justify-start pb-2">
+					<input type="hidden" name="jiraKey" value={ ticket.Key }/>
 					<input type="hidden" name="ticketName" value={ ticket.Summary }/>
 					<input type="hidden" name="ticketDescription" value={ ticket.Description }/>
 					<button type="submit" class="btn-blue-500 btn-sm">Create Ticket</button>
