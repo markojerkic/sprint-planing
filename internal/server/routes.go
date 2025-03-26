@@ -47,11 +47,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	newRoomRouter(roomService, ticketService, s.db.DB, e.Group("/room"))
 	newTicketRouter(ticketService, s.db.DB, e.Group("/ticket"))
 	newWebsocketRouter(websocketService, e.Group("/ws"))
+	newJiraRouter(jiraService, s.db.DB, e.Group("/jira"))
 	e.GET("/", homepage.HomepageHandler(roomService))
-
-	e.GET("/jira/issues", func(c echo.Context) error {
-		return jiraService.GetIssues(c, c.QueryParam("q"))
-	})
 
 	return e
 }

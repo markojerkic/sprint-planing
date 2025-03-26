@@ -21,6 +21,7 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 			Title: room.Name,
 		}) {
 			<script src="/assets/js/ticket-hiding.js" type="module"></script>
+			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=sync"/>
 			<a href="/" class="link mb-4">‹ Back to Homepage</a>
 			<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/%d", room.ID) }>
 				<h2>Room Details</h2>

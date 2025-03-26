@@ -1,17 +1,15 @@
 package ticket
 
-import "fmt"
-
 templ CreateJiraTicket(roomId uint) {
 	<script type="module" src="/assets/js/create-ticket.js"></script>
-	<button type="button" class="btn bg-blue-700" popovertarget="create-ticket-popover" popovertargetaction="show">
+	<button type="button" class="btn btn-blue-700" popovertarget="create-ticket-from-jira-popover" popovertargetaction="show">
 		Create Ticket from Jira
 	</button>
-	<div id="create-ticket-popover" popover="manual" class="popover-container">
+	<div id="create-ticket-from-jira-popover" popover="manual" class="popover-container">
 		<div class="popover-content">
 			<div class="popover-header">
 				<h2>Create Jira</h2>
-				<button class="close-btn" popovertarget="create-ticket-popover" popovertargetaction="hide">
+				<button class="close-btn" popovertarget="create-ticket-from-jira-popover" popovertargetaction="hide">
 					&times;
 				</button>
 			</div>
@@ -23,31 +21,51 @@ templ CreateJiraTicket(roomId uint) {
 }
 
 templ createJiraTicketForm(roomId uint) {
-	<form hx-post="/ticket" hx-target="#ticket-list" hx-swap="outerHTML" id="ticket-form" hx-select="#ticket-list">
-		<input type="hidden" name="roomId" value={ fmt.Sprintf("%d", roomId) }/>
-		<div class="form-group">
-			<label for="ticketName" class="form-label">Ticket name</label>
-			<input
-				type="text"
-				id="ticketName"
-				name="ticketName"
-				class="form-input"
-				placeholder="Enter name of the ticket"
-				required
-			/>
-			<div class="form-help-text">Enter the title of the ticket</div>
-		</div>
-		<div class="form-group">
-			<label for="ticketName" class="form-label">Description</label>
-			<textarea
-				id="ticketDescription"
-				name="ticketDescription"
-				class="form-input"
-				placeholder="Enter description"
-				required
-			></textarea>
-			<div class="form-help-text">Enter the details of the ticket</div>
-		</div>
-		<button type="submit" class="btn btn-primary">Create Ticket</button>
-	</form>
+	<div class="form-group">
+		<label for="ticketName" class="form-label">Search term</label>
+		<input
+			type="text"
+			name="q"
+			class="form-input"
+			placeholder="Enter search term"
+			hx-get="/jira/search"
+			hx-target="#search-result"
+			hx-swap="innerHTML"
+			hx-trigger="keyup changed delay:300ms"
+			hx-indicator="#search-result-spinner"
+			required
+		/>
+		<div class="form-help-text">Enter search term</div>
+	</div>
+	<div class="flex w-full justify-end">
+		<span class="material-symbols-outlined htmx-indicator text-white animate-spin" id="search-result-spinner">
+			sync
+		</span>
+	</div>
+	<div id="search-result"></div>
+}
+
+type JiraTicket struct {
+	Key         string
+	Summary     string
+	Description string
+}
+
+type JiraTicketListProps struct {
+	Tickets []JiraTicket
+}
+
+templ JiraTicketList(tickets JiraTicketListProps) {
+	<div class="grid grid-cols-1 gap-4 text-white">
+		for _, ticket := range tickets.Tickets {
+			<div class="flex gap-2">
+				<span class="font-bold">{ ticket.Key }</span>
+				<span>{ ticket.Summary }</span>
+				<span>{ ticket.Description }</span>
+			</div>
+		}
+		if len(tickets.Tickets) == 0 {
+			<div class="alert alert-info">No tickets found</div>
+		}
+	</div>
 }
