@@ -1,5 +1,7 @@
 package ticket
 
+import "fmt"
+
 templ CreateJiraTicket(roomId uint) {
 	<script type="module" src="/assets/js/create-ticket.js"></script>
 	<button type="button" class="btn btn-blue-700" popovertarget="create-ticket-from-jira-popover" popovertargetaction="show">
@@ -42,7 +44,10 @@ templ createJiraTicketForm(roomId uint) {
 			sync
 		</span>
 	</div>
-	<div id="search-result"></div>
+	<form hx-post="/ticket" hx-target="#ticket-list" hx-swap="outerHTML" id="jira-ticket-form" hx-select="#ticket-list">
+		<input type="hidden" name="roomId" value={ fmt.Sprintf("%d", roomId) }/>
+		<div id="search-result"></div>
+	</form>
 }
 
 type JiraTicket struct {
@@ -62,6 +67,11 @@ templ JiraTicketList(tickets JiraTicketListProps) {
 				<span class="font-bold">{ ticket.Key }</span>
 				<span class="col-span-2">{ ticket.Summary }</span>
 				<span class="col-span-3">{ ticket.Description }</span>
+				<div class="col-span-3 flex justify-start pb-2">
+					<input type="hidden" name="ticketName" value={ ticket.Summary }/>
+					<input type="hidden" name="ticketDescription" value={ ticket.Description }/>
+					<button type="submit" class="btn-blue-500 btn-sm">Create Ticket</button>
+				</div>
 			</div>
 		}
 		if len(tickets.Tickets) == 0 {

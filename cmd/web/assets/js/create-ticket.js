@@ -7,7 +7,7 @@ function createClosePopverEvent() {
 	);
 	popoverButtons.forEach((button) => {
 		button.addEventListener("click", function () {
-			/* @type {HTMLElement | null} */
+			/** @type {HTMLElement | null} **/
 			const popover = document.querySelector(
 				button.getAttribute("popovertarget"),
 			);
@@ -17,9 +17,19 @@ function createClosePopverEvent() {
 }
 
 /** @type {HTMLFormElement | null} */
+// @ts-ignore
 const formElement = document.getElementById("ticket-form");
+/** @type {HTMLFormElement | null} */
+// @ts-ignore
+const jiraFormElement = document.getElementById("jira-ticket-form");
 /** @type {HTMLDivElement | null} */
+// @ts-ignore
 const popoverElement = document.getElementById("create-ticket-popover");
+/** @type {HTMLDivElement | null} */
+// @ts-ignore
+const jiraPopoverElement = document.getElementById(
+	"create-ticket-from-jira-popover",
+);
 
 popoverElement.addEventListener("keydown", function (event) {
 	if (event.key === "Escape") {
@@ -31,6 +41,7 @@ popoverElement.addEventListener("keydown", function (event) {
 popoverElement.addEventListener("toggle", function (event) {
 	if (event.newState === "closed") {
 		formElement.reset();
+		jiraFormElement.reset();
 	}
 	if (event.newState === "open") {
 		formElement.querySelector("input[name='ticketName']").focus();
@@ -38,11 +49,17 @@ popoverElement.addEventListener("toggle", function (event) {
 });
 
 // Close popover when successfully created a ticket
-formElement.addEventListener(
-	"htmx:afterRequest",
-	(event) => resetFormOnSuccess(event.detail),
-	popoverElement.hidePopover(),
-);
+formElement.addEventListener("htmx:afterRequest", (event) => {
+	resetFormOnSuccess(event.detail);
+	popoverElement.hidePopover();
+});
+jiraFormElement.addEventListener("htmx:afterRequest", () => {
+	jiraPopoverElement.hidePopover();
+
+	/** @type {HTMLInputElement | null} **/
+	const search = document.querySelector("input[hx-target='#search-result']");
+	search.value = "";
+});
 
 htmx.on("afterSwap", createClosePopverEvent);
 
@@ -56,5 +73,5 @@ function resetFormOnSuccess(event) {
 	}
 
 	formElement.reset();
-	document.getElementById("create-ticket-popover").hidePopover();
+	jiraFormElement.reset();
 }
