@@ -23,6 +23,7 @@ const (
 // InitSessions configures the session store for the application
 func (s *Server) InitSessions(e *echo.Echo) {
 	store := gormstore.New(s.db.DB, []byte(os.Getenv("SESSION_SECRET")))
+	store.MaxLength(32 * 1024) // 32KB should be plenty
 	store.SessionOpts = &sessions.Options{
 		Path:     "/",
 		MaxAge:   sessionDuration,

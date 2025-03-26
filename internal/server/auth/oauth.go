@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +21,7 @@ const (
 	sessionAccessToken  = "jira_access_token"
 	sessionRefreshToken = "jira_refresh_token"
 	sessionResourceID   = "jira_resource_id"
+	sessionExpiry       = "jira_expiry"
 	JiraClientInfoKey   = "jira_client_info"
 )
 
@@ -62,6 +62,7 @@ func saveJiraInfoToSession(c echo.Context, jiraClientInfo JiraClientInfo) error 
 	session.Values[sessionAccessToken] = jiraClientInfo.AccessToken
 	session.Values[sessionRefreshToken] = jiraClientInfo.RefreshToken
 	session.Values[sessionResourceID] = jiraClientInfo.ResourceID
+	session.Values[sessionExpiry] = jiraClientInfo.Expiry.Unix()
 	c.Set(JiraClientInfoKey, jiraClientInfo)
 
 	return session.Save(c.Request(), c.Response())
@@ -157,8 +158,6 @@ func NewOAuthRouter(group *echo.Group) *OAuthRouter {
 	router := OAuthRouter{
 		Config: oauthConf,
 	}
-	gob.Register(oauth2.Token{})
-	gob.Register(JiraClientInfo{})
 
 	slog.Debug("NewOAuthRouter",
 		slog.String("ClientID", router.Config.ClientID),
