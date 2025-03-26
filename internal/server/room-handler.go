@@ -9,6 +9,7 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/components/room"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
+	"github.com/markojerkic/spring-planing/internal/server/auth"
 	"github.com/markojerkic/spring-planing/internal/service"
 	"gorm.io/gorm"
 )
@@ -53,12 +54,14 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		ticketDetails[i] = t.ToDetailProp()
 	}
 
+	_, isJiraUser := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
 	isOwner := roomDetails.CreatedBy == user.ID
 	return room.RoomPage(room.RoomPageProps{
 		ID:                 roomDetails.ID,
 		Name:               roomDetails.Name,
 		CreatedAt:          roomDetails.CreatedAt,
 		IsCurrentUserOwner: isOwner,
+		IsJiraUser:         isJiraUser,
 		Tickets:            ticketDetails,
 	}, isOwner).Render(ctx.Request().Context(), ctx.Response().Writer)
 }

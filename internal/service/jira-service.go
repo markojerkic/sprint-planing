@@ -30,9 +30,9 @@ type JiraService struct {
 }
 
 func (j *JiraService) GetIssues(ctx echo.Context, query string) error {
-	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(auth.JiraClientInfo)
+	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
 	if !ok || clientInfo.ResourceID == "" {
-		slog.Error("Jira client info not found in context")
+		slog.Error("Jira client info not found in context", slog.Any("clientInfo", clientInfo), slog.Any("ok", ok))
 		return ctx.String(http.StatusInternalServerError, "Jira client info not found in context")
 	}
 	baseUrl := os.Getenv("JIRA_BASE_URL")

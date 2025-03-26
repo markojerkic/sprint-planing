@@ -63,7 +63,7 @@ func saveJiraInfoToSession(c echo.Context, jiraClientInfo JiraClientInfo) error 
 	session.Values[sessionRefreshToken] = jiraClientInfo.RefreshToken
 	session.Values[sessionResourceID] = jiraClientInfo.ResourceID
 	session.Values[sessionExpiry] = jiraClientInfo.Expiry.Unix()
-	c.Set(JiraClientInfoKey, jiraClientInfo)
+	c.Set(JiraClientInfoKey, &jiraClientInfo)
 
 	return session.Save(c.Request(), c.Response())
 }

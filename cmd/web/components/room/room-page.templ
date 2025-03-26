@@ -11,6 +11,7 @@ type RoomPageProps struct {
 	Name               string
 	CreatedAt          time.Time
 	IsCurrentUserOwner bool
+	IsJiraUser         bool
 	Tickets            []ticket.TicketDetailProps
 }
 
@@ -29,9 +30,14 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 						{ room.CreatedAt.Format("2006-01-02 15:04:05") }
 					</time>
 				</p>
-				if room.IsCurrentUserOwner {
-					@ticket.CreateTicket(room.ID)
-				}
+				<div class="flex gap-2">
+					if room.IsCurrentUserOwner {
+						@ticket.CreateTicket(room.ID)
+					}
+					if room.IsJiraUser {
+						@ticket.CreateJiraTicket(room.ID)
+					}
+				</div>
 			</div>
 			@ticket.TicketList(room.Tickets, isRoomOwner)
 		}

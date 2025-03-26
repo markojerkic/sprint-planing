@@ -43,7 +43,7 @@ func (o *OAuthRouter) JiraContextMiddleware(next echo.HandlerFunc) echo.HandlerF
 			Expiry:       time.Unix(expiry, 0),
 		}
 
-		c.Set(JiraClientInfoKey, jiraClientInfo)
+		c.Set(JiraClientInfoKey, &jiraClientInfo)
 		return next(c)
 
 	}
