@@ -18,8 +18,6 @@ type sessionUpdatingTokenSource struct {
 
 func (j *JiraClientInfo) HttpClient(c echo.Context) *http.Client {
 	slog.Info("JiraClientInfo.HttpClient",
-		slog.Any("AccessToken", j.AccessToken),
-		slog.Any("RefreshToken", j.RefreshToken),
 		slog.Any("Expiry", j.Expiry),
 	)
 
