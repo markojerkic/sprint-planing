@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/internal/server/auth"
@@ -57,6 +59,8 @@ type JiraTicket struct {
 type JiraService struct {
 }
 
+var jiraKeyRegex = regexp.MustCompile(`[a-zA-Z]+-\d+`)
+
 func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketResponse, error) {
 	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
 	if !ok || clientInfo.ResourceID == "" {
@@ -69,11 +73,28 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketRespo
 		slog.Error("Error parsing url", slog.Any("error", err))
 		return JiraTicketResponse{}, err
 	}
+
+	q := url.Query()
 	if query != "" {
-		q := url.Query()
-		q.Set("jql", fmt.Sprintf("summary ~ \"%s\"", query))
-		url.RawQuery = q.Encode()
+		// Escape special JQL characters
+		escapedQuery := strings.ReplaceAll(query, "\"", "\\\"")
+
+		isKey := jiraKeyRegex.MatchString(query)
+
+		jqlQuery := fmt.Sprintf("text ~ \"%s\"", escapedQuery)
+
+		if isKey {
+			jqlQuery += fmt.Sprintf(" OR key = \"%s\"", escapedQuery)
+		}
+
+		q.Set("jql", jqlQuery)
+
 	}
+
+	q.Set("maxResults", "50")
+
+	url.RawQuery = q.Encode()
+
 	slog.Info("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
 
 	resp, err := clientInfo.HttpClient(ctx).Get(url.String())
@@ -85,6 +106,13 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketRespo
 
 	if resp.StatusCode != http.StatusOK {
 		slog.Error("Failed to get issues", slog.Any("status", resp.StatusCode))
+		if resp.Header.Get("Content-Type") == "application/json" {
+			var errorResponse map[string]any
+			if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
+				slog.Error("Failed to get issues", slog.Any("error", errorResponse))
+			}
+		}
+
 		return JiraTicketResponse{}, fmt.Errorf("Failed to get issues")
 	}
 
