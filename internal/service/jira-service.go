@@ -125,7 +125,7 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketRespo
 	return searchResult, nil
 }
 
-func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string, estimationSeconds int) error {
+func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string, estimation int) error {
 	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
 	if !ok || clientInfo.ResourceID == "" {
 		slog.Error("Jira client info not found in context", slog.Any("clientInfo", clientInfo), slog.Any("ok", ok))
@@ -140,9 +140,12 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 	}
 
 	// Prepare the request body to update the time estimate
+	slog.Info("Updating ticket estimation", slog.String("ticketKey", ticketKey), slog.String("estimation", fmt.Sprintf("%ds", estimation)))
 	requestBody := map[string]any{
 		"fields": map[string]any{
-			"timeestimate": estimationSeconds,
+			"timetracking": map[string]any{
+				"originalEstimate": estimation,
+			},
 		},
 	}
 
@@ -163,6 +166,11 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 	resp, err := clientInfo.HttpClient(ctx).Do(req)
 	if err != nil {
 		slog.Error("Error updating ticket estimation", slog.Any("error", err))
+		var errorResponse map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
+			slog.Error("Failed to update ticket estimation", slog.Any("error", errorResponse))
+		}
+
 		return err
 	}
 	defer resp.Body.Close()
@@ -171,11 +179,9 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 		slog.Error("Failed to update ticket estimation", slog.Any("status", resp.StatusCode))
 
 		// Try to parse error response if it's JSON
-		if resp.Header.Get("Content-Type") == "application/json" {
-			var errorResponse map[string]any
-			if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
-				slog.Error("Failed to update ticket estimation", slog.Any("error", errorResponse))
-			}
+		var errorResponse map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
+			slog.Error("Failed to update ticket estimation", slog.Any("error", errorResponse))
 		}
 
 		return fmt.Errorf("failed to update ticket estimation: status code %d", resp.StatusCode)
@@ -183,7 +189,7 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 
 	slog.Info("Successfully updated ticket estimation",
 		slog.String("ticketKey", ticketKey),
-		slog.Int("estimationSeconds", estimationSeconds))
+		slog.Int("estimationSeconds", estimation))
 
 	return nil
 }

@@ -91,7 +91,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 			return err
 		}
 
-		updatedTicket, err := t.GetTicket(ctx, tx, userID, form.RoomID, form.TicketID)
+		updatedTicket, err := t.GetTicket(ctx, tx, userID, &form.RoomID, form.TicketID)
 		if err != nil {
 			slog.Error("Error getting ticket", slog.Any("error", err))
 			return err
@@ -151,6 +151,7 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int32) (*datab
 	//     ticket.RoomID,
 	//     prettyPrintEstimate(int(ticket.)),
 	//     )
+	// ticket, err := j.ticketService.GetTicket(ctx.Request().Context(), t.db, user.ID, nil, uint(id))
 
 	return &ticket, nil
 }
@@ -178,17 +179,23 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 	return estimates, nil
 }
 
-func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint, roomID uint, ticketID uint) (*database.TicketWithEstimateStatistics, error) {
+func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint, roomID *uint, ticketID uint) (*database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
-	var room database.Room
+	var foundRoomId *uint
 
-	if err := db.WithContext(ctx).First(&room, roomID).Error; err != nil {
-		slog.Error("Error getting room", slog.Any("error", err))
-		return nil, err
+	if roomID != nil {
+		foundRoomId = roomID
+	} else {
+		var ticket database.Ticket
+		if err := db.WithContext(ctx).Find(&ticket, ticketID).Error; err != nil {
+			slog.Error("Error getting ticket for statistics", slog.Any("id", ticketID), slog.Any("error", err))
+			return nil, err
+		}
+		foundRoomId = &ticket.RoomID
 	}
 
 	if err := db.WithContext(ctx).
-		Raw(ticketQuery, userID, roomID).
+		Raw(ticketQuery, userID, *foundRoomId).
 		Scan(&tickets).Error; err != nil {
 		slog.Error("Error getting ticket", slog.Int("userID", int(userID)),
 			slog.Int("ticketID", int(ticketID)), slog.Any("error", err))
@@ -200,6 +207,11 @@ func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint,
 			return &ticket, nil
 		}
 	}
+
+	slog.Error("Ticket not found",
+		slog.Int("ticketID", int(ticketID)),
+		slog.Int("roomID", int(*foundRoomId)),
+		slog.Any("tickets", tickets))
 
 	return nil, fmt.Errorf("ticket not found")
 }
