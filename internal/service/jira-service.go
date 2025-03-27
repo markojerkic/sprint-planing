@@ -125,6 +125,69 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketRespo
 	return searchResult, nil
 }
 
+func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string, estimationSeconds int) error {
+	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
+	if !ok || clientInfo.ResourceID == "" {
+		slog.Error("Jira client info not found in context", slog.Any("clientInfo", clientInfo), slog.Any("ok", ok))
+		return fmt.Errorf("jira client info not found in context")
+	}
+
+	baseUrl := os.Getenv("JIRA_BASE_URL")
+	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/issue/%s", baseUrl, clientInfo.ResourceID, ticketKey))
+	if err != nil {
+		slog.Error("Error parsing url", slog.Any("error", err))
+		return err
+	}
+
+	// Prepare the request body to update the time estimate
+	requestBody := map[string]interface{}{
+		"fields": map[string]interface{}{
+			"timeestimate": estimationSeconds,
+		},
+	}
+
+	requestJSON, err := json.Marshal(requestBody)
+	if err != nil {
+		slog.Error("Error marshalling request body", slog.Any("error", err))
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, url.String(), strings.NewReader(string(requestJSON)))
+	if err != nil {
+		slog.Error("Error creating request", slog.Any("error", err))
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := clientInfo.HttpClient(ctx).Do(req)
+	if err != nil {
+		slog.Error("Error updating ticket estimation", slog.Any("error", err))
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		slog.Error("Failed to update ticket estimation", slog.Any("status", resp.StatusCode))
+
+		// Try to parse error response if it's JSON
+		if resp.Header.Get("Content-Type") == "application/json" {
+			var errorResponse map[string]any
+			if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
+				slog.Error("Failed to update ticket estimation", slog.Any("error", errorResponse))
+			}
+		}
+
+		return fmt.Errorf("failed to update ticket estimation: status code %d", resp.StatusCode)
+	}
+
+	slog.Info("Successfully updated ticket estimation",
+		slog.String("ticketKey", ticketKey),
+		slog.Int("estimationSeconds", estimationSeconds))
+
+	return nil
+}
+
 func NewJiraService() *JiraService {
 	return &JiraService{}
 }
