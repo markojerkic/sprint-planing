@@ -144,6 +144,14 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int32) (*datab
 		return nil, err
 	}
 
+	// FIXME: Add websocket message for closing
+	// jiraKey = ticket.JiraKey
+	// t.webSocketService.CloseTicket(ticketID,
+	//     jiraKey,
+	//     ticket.RoomID,
+	//     prettyPrintEstimate(int(ticket.)),
+	//     )
+
 	return &ticket, nil
 }
 
@@ -238,7 +246,10 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 		return nil, err
 	}
 
-	t.webSocketService.SendNewTicket(tickets[0].ToDetailProp())
+	savedTicket := tickets[0]
+	isOwner := savedTicket.CreatedBy == userID
+
+	t.webSocketService.SendNewTicket(savedTicket.ToDetailProp(isOwner))
 
 	return tickets, nil
 }

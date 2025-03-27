@@ -57,7 +57,8 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 
 	tickets := make([]ticket.TicketDetailProps, len(allTickets))
 	for i, t := range allTickets {
-		tickets[i] = t.ToDetailProp()
+		isOwner := t.CreatedBy == user.ID
+		tickets[i] = t.ToDetailProp(isOwner)
 	}
 
 	return ticket.TicketList(tickets, true).Render(c.Request().Context(), c.Response().Writer)

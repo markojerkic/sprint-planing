@@ -50,12 +50,12 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 
 	tickets := roomDetails.TicketsWithStatistics
 	ticketDetails := make([]ticket.TicketDetailProps, len(tickets))
+	isOwner := roomDetails.CreatedBy == user.ID
 	for i, t := range tickets {
-		ticketDetails[i] = t.ToDetailProp()
+		ticketDetails[i] = t.ToDetailProp(isOwner)
 	}
 
 	_, isJiraUser := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
-	isOwner := roomDetails.CreatedBy == user.ID
 	return room.RoomPage(room.RoomPageProps{
 		ID:                 roomDetails.ID,
 		Name:               roomDetails.Name,

@@ -31,8 +31,8 @@ type TicketWithEstimateStatistics struct {
 	UserCount       int
 }
 
-func (t *TicketWithEstimateStatistics) ToDetailProp() ticket.TicketDetailProps {
-	return ticket.TicketDetailProps{
+func (t *TicketWithEstimateStatistics) ToDetailProp(isOwner bool) ticket.TicketDetailProps {
+	ticket := &ticket.TicketDetailProps{
 		ID:              t.ID,
 		JiraKey:         t.JiraKey,
 		Name:            t.Name,
@@ -46,6 +46,11 @@ func (t *TicketWithEstimateStatistics) ToDetailProp() ticket.TicketDetailProps {
 		HasEstimate:     t.UsersEstimate != nil,
 	}
 
+	if !isOwner {
+		ticket.JiraKey = nil
+	}
+
+	return *ticket
 }
 
 func prettyPrintEstimate(estimate float64) string {
