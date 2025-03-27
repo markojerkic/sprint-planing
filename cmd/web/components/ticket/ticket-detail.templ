@@ -27,7 +27,7 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 		data-is-owner={ fmt.Sprintf("%t", isRoomOwner) }
 		style={ fmt.Sprintf("display: %s;", components.Ternary(!isRoomOwner && props.IsHidden, "none", "flex")) }
 	>
-		<h3>{ props.Name }</h3>
+		<h3 class="text-2xl font-extrabold py-4">{ props.Name }</h3>
 		<p>{ props.Description }</p>
 		<div data-estimation-ticket-id={ fmt.Sprintf("%d", props.ID) }>
 			if props.HasEstimate {

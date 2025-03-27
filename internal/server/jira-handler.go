@@ -75,7 +75,7 @@ func (j *JiraRouter) writeEstimate(ctx echo.Context) error {
 		return ctx.String(500, "Error updating ticket")
 	}
 
-	return nil
+	return ctx.String(200, "<div>Estimate updated!</div>")
 }
 
 func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Group) *JiraRouter {
