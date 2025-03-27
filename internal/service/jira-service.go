@@ -140,8 +140,8 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 	}
 
 	// Prepare the request body to update the time estimate
-	requestBody := map[string]interface{}{
-		"fields": map[string]interface{}{
+	requestBody := map[string]any{
+		"fields": map[string]any{
 			"timeestimate": estimationSeconds,
 		},
 	}

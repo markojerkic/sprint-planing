@@ -135,10 +135,10 @@ func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool)
 
 }
 
-func (w *WebSocketService) CloseTicket(ticketID uint, roomID uint, averageEstimate string,
+func (w *WebSocketService) CloseTicket(ticketID uint, jiraKey *string, roomID uint, averageEstimate string,
 	medianEstimate string, stdEstimate string, estimatedBy string) {
 	removedTicketForm := new(bytes.Buffer)
-	if err := ticket.ClosedEstimation(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
+	if err := ticket.ClosedEstimation(ticketID, jiraKey, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
 		Render(context.Background(), removedTicketForm); err != nil {
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
@@ -166,8 +166,13 @@ func (w *WebSocketService) CloseTicket(ticketID uint, roomID uint, averageEstima
 	}
 }
 
-func (w *WebSocketService) UpdateEstimate(ticketID uint, roomID uint, averageEstimate string,
-	medianEstimate string, stdEstimate string, estimatedBy string) {
+func (w *WebSocketService) UpdateEstimate(ticketID uint,
+	jiraKey *string,
+	roomID uint,
+	averageEstimate string,
+	medianEstimate string,
+	stdEstimate string,
+	estimatedBy string) {
 	renderedTicket := new(bytes.Buffer)
 	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
 		Render(context.Background(), renderedTicket); err != nil {

@@ -36,6 +36,7 @@ type CreateTicketForm struct {
 	TicketName        string `json:"ticketName" form:"ticketName" validate:"required"`
 	TicketDescription string `json:"ticketDescription" form:"ticketDescription" validate:"required"`
 	RoomID            uint   `json:"roomID" form:"roomID" validate:"required"`
+	JiraKey           string `json:"jiraKey" form:"jiraKey"`
 }
 
 type EstimateTicketForm struct {
@@ -106,6 +107,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 
 		prettyEstimate = prettyPrintEstimate(estimate.Estimate)
 		t.webSocketService.UpdateEstimate(updatedTicket.ID,
+			updatedTicket.JiraKey,
 			updatedTicket.RoomID,
 			prettyPrintEstimate(int(updatedTicket.AverageEstimate)),
 			prettyPrintEstimate(int(updatedTicket.MedianEstimate)),
@@ -213,6 +215,10 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 			Description: form.TicketDescription,
 			RoomID:      uint(form.RoomID),
 			CreatedBy:   uint(userID),
+		}
+
+		if form.JiraKey != "" {
+			ticket.JiraKey = &form.JiraKey
 		}
 
 		if err := tx.Create(&ticket).Error; err != nil {

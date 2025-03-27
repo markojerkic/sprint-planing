@@ -12,6 +12,7 @@ type Ticket struct {
 	gorm.Model
 	Name        string
 	Description string
+	JiraKey     *string
 	ClosedAt    *time.Time
 	Hidden      bool `gorm:"default:false"`
 	RoomID      uint
@@ -33,6 +34,7 @@ type TicketWithEstimateStatistics struct {
 func (t *TicketWithEstimateStatistics) ToDetailProp() ticket.TicketDetailProps {
 	return ticket.TicketDetailProps{
 		ID:              t.ID,
+		JiraKey:         t.JiraKey,
 		Name:            t.Name,
 		RoomID:          t.RoomID,
 		Description:     t.Description,

@@ -2,16 +2,35 @@ package ticket
 
 import "fmt"
 
-templ EstimationDetail(ticketID uint, averateEstimate string, medianEstimate string,
+templ EstimationDetail(ticketID uint, jiraKey *string, averateEstimate string, medianEstimate string,
 	stdEstimate string, estimatedBy string) {
-	<div data-ticket-average-estimation={ fmt.Sprintf("%d", ticketID) }>
+	<div class="flex flex-col gap-2" data-ticket-average-estimation={ fmt.Sprintf("%d", ticketID) }>
 		<hr class="estimate-divider"/>
-		<span>Average estimate: { averateEstimate }</span>
-		<span>Median estimate: { medianEstimate }</span>
+		<span class="flex justify-between items-center gap-2">
+			<span>
+				Average estimate: { averateEstimate }
+			</span>
+			if jiraKey != nil {
+				<button class="btn-blue-700 btn-sm" hx-post="/jira/ticket/average" name="id" value={ fmt.Sprintf("%d", ticketID) }>
+					Write to Jira
+				</button>
+			}
+		</span>
+		<span class="flex justify-between items-center gap-2">
+			<span>
+				Median estimate: { medianEstimate }
+			</span>
+			if jiraKey != nil {
+				<button class="btn-blue-700 btn-sm" hx-post="/jira/ticket/median" name="id" value={ fmt.Sprintf("%d", ticketID) }>
+					Write to Jira
+				</button>
+			}
+		</span>
 		<span>Standard deviation: { stdEstimate }</span>
 		<hr class="estimate-divider"/>
-		@EstimatesPopupButton(ticketID)
-		//	<span data-answered-by={ fmt.Sprintf("%d", ticketID) }>Estimated by: { estimatedBy } users</span>
+		<div class="flex justify-center w-full">
+			@EstimatesPopupButton(ticketID)
+		</div>
 	</div>
 }
 
@@ -23,7 +42,7 @@ templ UsersEstimate(ticketID uint, userEstimate string) {
 templ UpdatedEstimationDetail(ticketID uint, averateEstimate string, medianEstimate string, stdEstimate string,
 	estimatedBy string) {
 	<div hx-swap-oob={ fmt.Sprintf("outerHTML:div[data-ticket-average-estimation='%d' ]", ticketID) }>
-		@EstimationDetail(ticketID, averateEstimate, medianEstimate, stdEstimate, estimatedBy)
+		@EstimationDetail(ticketID, nil, averateEstimate, medianEstimate, stdEstimate, estimatedBy)
 	</div>
 	<div hx-swap-oob={ fmt.Sprintf("outerHTML:span[data-answered-by='%d' ]", ticketID) }>
 		<span data-answered-by={ fmt.Sprintf("%d", ticketID) }>
@@ -32,9 +51,9 @@ templ UpdatedEstimationDetail(ticketID uint, averateEstimate string, medianEstim
 	</div>
 }
 
-templ ClosedEstimation(ticketID uint, averateEstimate string, medianEstimate string,
+templ ClosedEstimation(ticketID uint, jiraKey *string, averateEstimate string, medianEstimate string,
 	stdEstimate string, estimatedBy string) {
 	<div hx-swap-oob={ fmt.Sprintf("outerHTML:form[data-estimation-form='%d' ]", ticketID) }>
-		@EstimationDetail(ticketID, averateEstimate, medianEstimate, stdEstimate, estimatedBy)
+		@EstimationDetail(ticketID, nil, averateEstimate, medianEstimate, stdEstimate, estimatedBy)
 	</div>
 }

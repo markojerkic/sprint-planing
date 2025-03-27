@@ -8,6 +8,7 @@ type TicketDetailProps struct {
 	RoomID          uint
 	Name            string
 	Description     string
+	JiraKey         *string
 	HasEstimate     bool
 	IsClosed        bool
 	IsHidden        bool
@@ -36,7 +37,7 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 			}
 		</div>
 		if props.HasEstimate || props.IsClosed {
-			@EstimationDetail(props.ID, props.AverageEstimate, props.MedianEstimate, props.StdEstimate, props.EstimatedBy)
+			@EstimationDetail(props.ID, props.JiraKey, props.AverageEstimate, props.MedianEstimate, props.StdEstimate, props.EstimatedBy)
 		}
 		<span data-answered-by={ fmt.Sprintf("%d", props.ID) }>Estimated by: { props.EstimatedBy }</span>
 		if isRoomOwner && !props.IsClosed {
