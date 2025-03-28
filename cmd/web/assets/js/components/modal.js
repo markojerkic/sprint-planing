@@ -9,15 +9,48 @@ class ModalElement extends HTMLElement {
 	}
 
 	setupEventListeners() {
+		/** @type {HTMLButtonElement} */
 		const popover = this.shadowRoot.querySelector("[popover]");
-		// Add event listeners for showing/hiding backdrop
-		popover.addEventListener("beforetoggle", (event) => {
-			// @ts-ignore
-			if (event.newState === "open") {
-				this.showBackdrop();
-			} else {
-				this.hideBackdrop();
+
+		popover?.addEventListener(
+			"beforetoggle",
+			/** @param {ToggleEvent} event */
+			(event) => {
+				if (event.newState === "open") {
+					this.showBackdrop();
+					setTimeout(() => {
+						const slottedElements = this.shadowRoot
+							.querySelector("slot")
+							.assignedNodes({ flatten: true });
+						const focusableSelector =
+							'button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+						const firstFocusable =
+							[...slottedElements]
+								// @ts-ignore
+								.find(
+									/** @param {HTMLElement} node */
+									(node) => node.querySelector?.(focusableSelector),
+								)
+								?.querySelector(focusableSelector) ||
+							this.shadowRoot.querySelector("input");
+						firstFocusable?.focus();
+					}, 50);
+				} else {
+					this.hideBackdrop();
+				}
+			},
+		);
+
+		// Escape key to close the modal
+		popover?.addEventListener("keydown", (event) => {
+			if (event.key === "Escape") {
+				popover?.hidePopover();
 			}
+		});
+
+		// Add event listener for closing the modal
+		document.addEventListener("closemodal", () => {
+			popover?.hidePopover();
 		});
 	}
 
@@ -45,23 +78,23 @@ class ModalElement extends HTMLElement {
 		const modalTitle = this.getAttribute("modalTitle") ?? buttonName;
 		const buttonColor =
 			this.getAttribute("buttonColor") ?? "var(--color-primary)";
-		const randomId = `modal-${Math.random().toString(36).substring(7)}`;
+		this._randomId = `modal-${Math.random().toString(36).substring(7)}`;
 		this.shadowRoot.innerHTML = `
         ${this.createStyles(buttonColor).outerHTML}
         <button type="button"
             class="btn"
-            popovertarget="${randomId}"
+            popovertarget="${this._randomId}"
             popovertargetaction="show">
             ${buttonName}
         </button>
-        <div id="${randomId}"
+        <div id="${this._randomId}"
             popover="manual"
             class="popover-container">
             <div class="popover-content">
                 <div class="popover-header">
                     <h2>${modalTitle}</h2>
                     <button class="close-btn"
-                        popovertarget="${randomId}"
+                        popovertarget="${this._randomId}"
                         popovertargetaction="hide">
                         &times;
                     </button>
@@ -188,4 +221,11 @@ class ModalElement extends HTMLElement {
 		return style;
 	}
 }
+
+class CloseModalEvent extends Event {
+	constructor() {
+		super("closemodal", { bubbles: true, composed: true });
+	}
+}
+
 customElements.define("ui-modal", ModalElement);
