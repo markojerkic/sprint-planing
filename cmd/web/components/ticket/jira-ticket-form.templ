@@ -4,6 +4,10 @@ import "fmt"
 
 templ CreateJiraTicket(roomId uint) {
 	<script type="module" src="/assets/js/create-ticket.js"></script>
+	<ui-modal buttonName="Create from Jira issue" modalTitle="Create ticket from Jira">
+		@createJiraTicketForm(roomId)
+	</ui-modal>
+	<!--
 	<button type="button" class="btn btn-blue-700" popovertarget="create-ticket-from-jira-popover" popovertargetaction="show">
 		Create Ticket from Jira
 	</button>
@@ -16,10 +20,10 @@ templ CreateJiraTicket(roomId uint) {
 				</button>
 			</div>
 			<div class="popover-body" id="join-room-form-container">
-				@createJiraTicketForm(roomId)
 			</div>
 		</div>
 	</div>
+    -->
 }
 
 templ createJiraTicketForm(roomId uint) {
@@ -33,7 +37,7 @@ templ createJiraTicketForm(roomId uint) {
 			hx-get="/jira/search"
 			hx-target="#search-result"
 			hx-swap="innerHTML"
-			hx-trigger="load, keyup changed delay:300ms"
+			hx-trigger="intersect, keyup changed delay:300ms"
 			hx-indicator="#search-result-spinner"
 			required
 		/>

@@ -124,7 +124,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 	return prettyEstimate, nil
 }
 
-func (t *TicketService) CloseTicket(ctx context.Context, ticketID int32) (*database.Ticket, error) {
+func (t *TicketService) CloseTicket(ctx context.Context, ticketID uint, userID uint) (*database.Ticket, error) {
 	var ticket database.Ticket
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Find the ticket with preloaded estimates
@@ -144,14 +144,19 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID int32) (*datab
 		return nil, err
 	}
 
-	// FIXME: Add websocket message for closing
-	// jiraKey = ticket.JiraKey
-	// t.webSocketService.CloseTicket(ticketID,
-	//     jiraKey,
-	//     ticket.RoomID,
-	//     prettyPrintEstimate(int(ticket.)),
-	//     )
-	// ticket, err := j.ticketService.GetTicket(ctx.Request().Context(), t.db, user.ID, nil, uint(id))
+	ticketWithStats, err := t.GetTicket(ctx, t.db.DB, userID, nil, ticketID)
+	jiraKey := ticket.JiraKey
+
+	ticketProps := ticketWithStats.ToDetailProp(true)
+
+	t.webSocketService.CloseTicket(ticketID,
+		jiraKey,
+		ticket.RoomID,
+		ticketProps.AverageEstimate,
+		ticketProps.MedianEstimate,
+		ticketProps.StdEstimate,
+		ticketProps.EstimatedBy,
+	)
 
 	return &ticket, nil
 }

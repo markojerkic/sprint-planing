@@ -78,11 +78,13 @@ func (r *TicketRouter) ticketEstimatesHandler(c echo.Context) error {
 }
 
 func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
-	ticketID, err := strconv.ParseInt(c.FormValue("id"), 10, 64)
+	ticketID, err := strconv.Atoi(c.FormValue("id"))
 	if err != nil {
 		return c.String(400, "Invalid ticket id")
 	}
-	if _, err := r.service.CloseTicket(c.Request().Context(), int32(ticketID)); err != nil {
+	user := c.Get("user").(database.User)
+
+	if _, err := r.service.CloseTicket(c.Request().Context(), uint(ticketID), user.ID); err != nil {
 		return c.String(500, "Error closing ticket")
 	}
 

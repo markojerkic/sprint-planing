@@ -160,8 +160,6 @@ func (w *WebSocketService) CloseTicket(ticketID uint, jiraKey *string, roomID ui
 	conns := rooms[roomID]
 	mutex.Unlock()
 	for conn := range conns {
-		// buffer <- message{conn: conn, data: &bytes, roomID: roomID}
-		// buffer <- message{conn: conn, data: &averageEstimateBytes, roomID: roomID}
 		buffer <- message{conn: conn, data: &mergedBytes, roomID: roomID}
 	}
 }
@@ -228,9 +226,6 @@ func NewWebSocketService(ticketService *TicketService) *WebSocketService {
 		TicketService: ticketService,
 	}
 
-	// Start N writePump goroutines
-	// for range 30 {
-	// }
 	for range 30 {
 		go writePump()
 	}
