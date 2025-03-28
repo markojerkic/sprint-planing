@@ -83,6 +83,8 @@ templ HideToggle(ticketID uint, isHidden bool) {
 
 templ CreatedTicketUpdate(props TicketDetailProps) {
 	<div hx-swap-oob="afterbegin:#ticket-list">
-		@TicketDetail(props, false)
+		<ui-flashing-div>
+			@TicketDetail(props, false)
+		</ui-flashing-div>
 	</div>
 }
