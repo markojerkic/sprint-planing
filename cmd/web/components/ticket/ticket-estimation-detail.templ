@@ -12,9 +12,10 @@ templ EstimationDetail(ticketID uint, jiraKey *string, averateEstimate string, m
 			</span>
 			if jiraKey != nil {
 				<button
-					class="btn-blue-700 btn-sm relative"
+					class="btn-blue-700 disabled:bg-blue-900 btn-sm relative"
 					hx-post="/jira/ticket/average"
 					hx-swap="outerHTML"
+					hx-disabled-elt="this"
 					name="id"
 					value={ fmt.Sprintf("%d", ticketID) }
 					hx-indicator="find .htmx-indicator"
@@ -32,9 +33,10 @@ templ EstimationDetail(ticketID uint, jiraKey *string, averateEstimate string, m
 			</span>
 			if jiraKey != nil {
 				<button
-					class="btn-blue-700 btn-sm relative"
+					class="btn-blue-700 disabled:bg-blue-900 btn-sm relative"
 					hx-post="/jira/ticket/median"
 					name="id"
+					hx-disabled-elt="this"
 					value={ fmt.Sprintf("%d", ticketID) }
 					hx-indicator="find .htmx-indicator"
 					hx-swap="outerHTML"
