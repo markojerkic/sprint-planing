@@ -4,23 +4,12 @@ import "fmt"
 
 templ CreateTicket(roomId uint) {
 	<script type="module" src="/assets/js/create-ticket.js"></script>
-	<button type="button" class="btn btn-primary" popovertarget="create-ticket-popover" popovertargetaction="show">
-		Create
-		Ticket
-	</button>
-	<div id="create-ticket-popover" popover="manual" class="popover-container">
-		<div class="popover-content">
-			<div class="popover-header">
-				<h2>Create new ticket</h2>
-				<button class="close-btn" popovertarget="create-ticket-popover" popovertargetaction="hide">
-					&times;
-				</button>
-			</div>
-			<div class="popover-body" id="join-room-form-container">
-				@createTicketForm(roomId)
-			</div>
-		</div>
-	</div>
+	<ui-modal
+		buttonName="Create ticket"
+		modalTitle="Create new ticket"
+	>
+		@createTicketForm(roomId)
+	</ui-modal>
 }
 
 templ createTicketForm(roomId uint) {

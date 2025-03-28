@@ -10,12 +10,15 @@ import (
 templ RoomList(rooms []database.Room) {
 	@components.PageLayout("Homepage") {
 		<div class="container">
-			<h1 class="mb-4">My Rooms</h1>
-			<div class="room-actions-container mb-4">
+			<h1 class="mb-4 text-2xl">My Rooms</h1>
+			<div class="flex gap-2 mb-4 bg-card-bg p-4 rounded-lg shadow-sm items-stretch">
 				<a href="/room" class="btn btn-primary mr-3">Create Room</a>
-				<button class="btn" popovertarget="join-room-popover">
-					Join Existing Room
-				</button>
+				<ui-modal
+					buttonName="Join Existing Room"
+					modalTitle="Join Existing Room"
+				>
+					@joinRoomForm()
+				</ui-modal>
 			</div>
 			if len(rooms) == 0 {
 				@noRooms()
@@ -26,20 +29,6 @@ templ RoomList(rooms []database.Room) {
 					}
 				</div>
 			}
-			<!-- Modern popover for joining a room -->
-			<div id="join-room-popover" popover="manual" class="popover-container">
-				<div class="popover-content">
-					<div class="popover-header">
-						<h2>Join Existing Room</h2>
-						<button class="close-btn" popovertarget="join-room-popover" popovertargetaction="hide">
-							&times;
-						</button>
-					</div>
-					<div class="popover-body" id="join-room-form-container">
-						@joinRoomForm()
-					</div>
-				</div>
-			</div>
 		</div>
 		<script>
     // Initialize popover behavior when the page loads
