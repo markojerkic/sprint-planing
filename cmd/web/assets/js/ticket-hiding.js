@@ -21,27 +21,18 @@ document.addEventListener(
 		const ticketId = json["ticketID"];
 		const isHidden = json["isHidden"];
 
-		/** @type {HTMLElement} */
+		/** @type {import("./components/flashing-div").FlashingDiv} */
 		const ticketElement = document.querySelector(
-			`div[data-ticket-id="${ticketId}"]`,
+			`ui-flashing-div[data-ticket-id="${ticketId}"]`,
 		);
+		console.log(`ui-flashing-div[data-ticket-id="${ticketId}"]`, ticketElement);
 		const isOwner = ticketElement.getAttribute("data-is-owner") === "true";
 
 		if (isHidden && !isOwner) {
 			ticketElement.style.display = "none";
 		} else if (!isOwner) {
-			// Move to top of the list
-			// display flex
-			// add animation and scroll into view
-			const parentElement = ticketElement.parentElement;
-			parentElement.removeChild(ticketElement);
-			parentElement.prepend(ticketElement);
-			ticketElement.style.display = "flex";
-			ticketElement.classList.add("border-red-500");
-			ticketElement.scrollIntoView({ behavior: "smooth" });
-			setTimeout(() => {
-				ticketElement.classList.remove("border-red-500");
-			}, 1500);
+			ticketElement.style.display = "block";
+			ticketElement.flash();
 		}
 	},
 );

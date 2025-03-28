@@ -83,7 +83,11 @@ templ HideToggle(ticketID uint, isHidden bool) {
 
 templ CreatedTicketUpdate(props TicketDetailProps) {
 	<div hx-swap-oob="afterbegin:#ticket-list">
-		<ui-flashing-div>
+		<ui-flashing-div
+			flash
+			data-ticket-id={ fmt.Sprintf("%d", props.ID) }
+			data-is-owner={ fmt.Sprintf("%t", false) }
+		>
 			@TicketDetail(props, false)
 		</ui-flashing-div>
 	</div>

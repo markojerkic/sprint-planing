@@ -61,6 +61,8 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 		tickets[i] = t.ToDetailProp(isOwner)
 	}
 
+	c.Response().Header().Set("Hx-Trigger", "createdTicket")
+
 	return ticket.TicketList(tickets, true).Render(c.Request().Context(), c.Response().Writer)
 }
 
