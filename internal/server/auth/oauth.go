@@ -72,11 +72,23 @@ func (o *OAuthRouter) Login(c echo.Context) error {
 	state := uuid.New().String()
 	authUrl := o.Config.AuthCodeURL(state)
 
+	slog.Info("Oauth config", slog.Any("clientId", o.Config.ClientID), slog.Any("redirectUrl", o.Config.RedirectURL), slog.Any("authUrl", authUrl))
+
 	cookie := new(http.Cookie)
 	cookie.Name = "oauth_state"
 	cookie.Value = state
 	cookie.Expires = time.Now().Add(5 * time.Minute)
 	c.SetCookie(cookie)
+
+	referrer := c.Request().Header.Get("Referer")
+	slog.Info("Referrer", slog.String("referrer", referrer))
+	if referrer != "" {
+		referrerCookie := new(http.Cookie)
+		referrerCookie.Name = "referrer"
+		referrerCookie.Value = referrer
+		referrerCookie.Expires = time.Now().Add(5 * time.Minute)
+		c.SetCookie(referrerCookie)
+	}
 
 	return c.Redirect(302, authUrl)
 }
@@ -142,7 +154,12 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 
 	slog.Info("Accessible resources", slog.Any("resources", accessibleResources))
 
-	return c.Redirect(http.StatusTemporaryRedirect, "/jira/issues")
+	if referrerCookie, err := c.Cookie("referrer"); err == nil {
+		c.SetCookie(&http.Cookie{Name: "referrer", MaxAge: -1})
+		return c.Redirect(http.StatusTemporaryRedirect, referrerCookie.Value)
+	}
+
+	return c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
 // ExchangeCodeForToken exchanges an authorization code for an access token
