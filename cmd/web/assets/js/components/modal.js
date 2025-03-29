@@ -156,6 +156,10 @@ class ModalElement extends HTMLElement {
                 height: 100%;
             }
 
+            .btn:hover {
+                background-color: var(--color-primary-dark, #1a1a1a);
+            }
+
             /* Popover container styles */
             .popover-container {
                 background-color: transparent;

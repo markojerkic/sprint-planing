@@ -116,11 +116,11 @@ templ roomCard(room database.Room, userID uint) {
 			</div>
 		</div>
 		<div class="card-body">
-			<div class="room-actions">
-				<a href={ templ.SafeURL(fmt.Sprintf("/room/%d", room.ID)) } class="btn mr-2">Join Room</a>
+			<div class="flex justify-between items-stretch gap-2">
+				<a href={ templ.SafeURL(fmt.Sprintf("/room/%d", room.ID)) } class="btn hover:bg-primary-dark">Join Room</a>
 				if isOwner {
 					<button
-						class="btn btn-secondary"
+						class="btn btn-error hover:bg-red-700"
 						hx-delete={ fmt.Sprintf("/room/%d", room.ID) }
 						hx-confirm="Are you sure you want to delete this room? This action cannot be undone."
 						hx-target="#room-list-container"
