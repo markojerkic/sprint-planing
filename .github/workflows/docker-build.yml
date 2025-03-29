@@ -1,9 +1,10 @@
-name: Build and Push Docker Image
+name: Build and Deploy Docker Image
 
 on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -37,3 +38,15 @@ jobs:
             markojerkic/sprint-planing:${{ steps.date.outputs.date }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/projects/sprint-planing
+            docker compose pull
+            docker compose up -d --force-recreate
+            docker image prune -f
