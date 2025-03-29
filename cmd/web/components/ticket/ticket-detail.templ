@@ -42,13 +42,12 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 		<span data-answered-by={ fmt.Sprintf("%d", props.ID) }>Estimated by: { props.EstimatedBy }</span>
 		if isRoomOwner && !props.IsClosed {
 			<button
-				style="margin-top: 10px;"
+				class="btn btn-danger mt-4"
+				name="id"
+				value={ fmt.Sprintf("%d", props.ID) }
 				hx-post="/ticket/close"
 				hx-swap="outerHTML"
-				name="id"
-				value={ fmt.Sprintf("%d",
-        props.ID) }
-				class="btn btn-danger"
+				hx-target={ fmt.Sprintf("div[data-ticket-id='%d']", props.ID) }
 			>Close</button>
 		}
 		if isRoomOwner {

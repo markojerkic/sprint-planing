@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -90,7 +90,14 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 		return c.String(500, "Error closing ticket")
 	}
 
-	return c.String(200, fmt.Sprintf("Closed ticket %d", ticketID))
+	ticketDetail, err := r.service.GetTicket(c.Request().Context(), r.db, user.ID, nil, uint(ticketID))
+
+	if err != nil {
+		slog.Error("Error getting ticket detail", slog.Any("error", err))
+		return c.String(500, "Error getting ticket detail")
+	}
+
+	return ticket.TicketDetail(ticketDetail.ToDetailProp(true), true).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
