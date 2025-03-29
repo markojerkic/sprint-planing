@@ -8,6 +8,7 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/service"
+	"github.com/markojerkic/spring-planing/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -74,6 +75,8 @@ func (j *JiraRouter) writeEstimate(ctx echo.Context) error {
 		slog.Error("Error updating ticket", slog.Any("error", err))
 		return ctx.String(500, "Error updating ticket")
 	}
+
+	util.AddTostHeader(ctx, "Estimate successfully written to Jira!")
 
 	return ctx.String(200, "<div>Estimate updated!</div>")
 }

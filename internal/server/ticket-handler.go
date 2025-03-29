@@ -8,6 +8,7 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/service"
+	"github.com/markojerkic/spring-planing/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -33,6 +34,8 @@ func (r *TicketRouter) estimateTicketHandler(c echo.Context) error {
 		c.Logger().Errorf("Error estimating ticket: %v", err)
 		return c.String(500, "Error estimating ticket")
 	}
+
+	util.AddTostHeader(c, "Estimate submitted successfully!")
 
 	return ticket.UsersEstimate(form.TicketID, estimate).Render(c.Request().Context(), c.Response().Writer)
 }
@@ -61,7 +64,9 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 		tickets[i] = t.ToDetailProp(isOwner)
 	}
 
-	c.Response().Header().Set("Hx-Trigger", "createdTicket")
+	c.Response().Header().Add("Hx-Trigger", `{"createdTicket": true}`)
+
+	util.AddTostHeader(c, "Ticket created successfully")
 
 	return ticket.TicketList(tickets, true).Render(c.Request().Context(), c.Response().Writer)
 }
@@ -97,6 +102,8 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 		return c.String(500, "Error getting ticket detail")
 	}
 
+	util.AddTostHeader(c, "Ticket voting closed!")
+
 	return ticket.TicketDetail(ticketDetail.ToDetailProp(true), true).Render(c.Request().Context(), c.Response().Writer)
 }
 
@@ -111,6 +118,11 @@ func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 		return c.String(500, "Error hiding ticket")
 	}
 
+	if updatedTicket.Hidden {
+		util.AddTostHeader(c, "Ticket hidden!")
+	} else {
+		util.AddTostHeader(c, "Ticket revealed!")
+	}
 	return ticket.HideToggle(uint(ticketID), updatedTicket.Hidden).Render(c.Request().Context(), c.Response().Writer)
 }
 
