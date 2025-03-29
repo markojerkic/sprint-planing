@@ -10,8 +10,12 @@ services:
     environment:
       APP_ENV: ${APP_ENV}
       PORT: ${PORT}
-      DB_URL: ${DB_URL}
+      DB_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       SESSION_SECRET: ${SESSION_SECRET}
+      JIRA_BASE_URL: ${JIRA_BASE_URL}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
+      OAUTH_REDIRECT_URL: ${OAUTH_REDIRECT_URL}
     depends_on:
       - db
   db:
