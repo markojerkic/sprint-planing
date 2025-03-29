@@ -6,8 +6,7 @@ FROM oven/bun:1 AS tailwind
 WORKDIR /usr/src/app
 
 # Copy all templ files
-COPY ./**/*.templ ./
-COPY ./cmd/web/assets/css/input.css ./input.css
+COPY . .
 
 # Install Tailwind CSS
 RUN bun init -y
@@ -15,7 +14,7 @@ RUN bun add tailwindcss @tailwindcss/cli@latest
 
 # Run Tailwind CSS
 
-RUN bun x @tailwindcss/cli@latest -i ./input.css -o ./output.css
+RUN bun x @tailwindcss/cli@latest -i cmd/web/assets/css/input.css -o ./output.css
 
 ################
 # Dependencies #
@@ -41,6 +40,9 @@ COPY . .
 # Run templ generation
 RUN templ generate
 
+# Copy static assets and CSS
+COPY --from=tailwind /usr/src/app/output.css /app/cmd/web/assets/css/output.css
+
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o main cmd/api/main.go
 
@@ -57,10 +59,6 @@ WORKDIR /app
 
 # Copy compiled binary
 COPY --from=builder /app/main .
-
-# Copy static assets and CSS
-COPY --from=builder /app/cmd/web/assets /app/cmd/web/assets
-COPY --from=tailwind /usr/src/app/output.css /app/cmd/web/assets/css/output.css
 
 # Expose application port
 EXPOSE 8080
