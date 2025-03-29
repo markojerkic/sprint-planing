@@ -45,7 +45,9 @@ func (r *RoomService) DeleteRoom(ctx context.Context, roomID uint, userID uint) 
 func (r *RoomService) GetUsersRooms(ctx context.Context, userID int32) ([]database.Room, error) {
 	var rooms []database.Room
 	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Preload("Users").Joins("JOIN room_users ON room_users.room_id = rooms.id").
+		if err := tx.Order("created_at desc").
+			Preload("Users").
+			Joins("JOIN room_users ON room_users.room_id = rooms.id").
 			Where("room_users.user_id = ?", userID).
 			Find(&rooms).Error; err != nil {
 			return err
