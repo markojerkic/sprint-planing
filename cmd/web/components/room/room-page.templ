@@ -34,8 +34,8 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 				<div class="flex gap-2">
 					if room.IsCurrentUserOwner {
 						@ticket.CreateTicket(room.ID)
+						@ticket.CreateJiraTicket(room.ID)
 					}
-					@ticket.CreateJiraTicket(room.ID)
 				</div>
 			</div>
 			@ticket.TicketList(room.Tickets, isRoomOwner)
