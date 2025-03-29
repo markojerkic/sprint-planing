@@ -17,12 +17,12 @@ import (
 )
 
 const (
-	sessionName         = "user_session"
-	sessionAccessToken  = "jira_access_token"
-	sessionRefreshToken = "jira_refresh_token"
-	sessionResourceID   = "jira_resource_id"
-	sessionExpiry       = "jira_expiry"
-	JiraClientInfoKey   = "jira_client_info"
+	JiraSessionName         = "user_session"
+	JiraSessionAccessToken  = "jira_access_token"
+	JiraSessionRefreshToken = "jira_refresh_token"
+	JiraSessionResourceID   = "jira_resource_id"
+	JiraSessionExpiry       = "jira_expiry"
+	JiraClientInfoKey       = "jira_client_info"
 )
 
 var oauthConf = oauth2.Config{
@@ -54,15 +54,15 @@ type OAuthRouter struct {
 }
 
 func saveJiraInfoToSession(c echo.Context, jiraClientInfo JiraClientInfo) error {
-	session, err := session.Get(sessionName, c)
+	session, err := session.Get(JiraSessionName, c)
 	if err != nil {
 		return err
 	}
 
-	session.Values[sessionAccessToken] = jiraClientInfo.AccessToken
-	session.Values[sessionRefreshToken] = jiraClientInfo.RefreshToken
-	session.Values[sessionResourceID] = jiraClientInfo.ResourceID
-	session.Values[sessionExpiry] = jiraClientInfo.Expiry.Unix()
+	session.Values[JiraSessionAccessToken] = jiraClientInfo.AccessToken
+	session.Values[JiraSessionRefreshToken] = jiraClientInfo.RefreshToken
+	session.Values[JiraSessionResourceID] = jiraClientInfo.ResourceID
+	session.Values[JiraSessionExpiry] = jiraClientInfo.Expiry.Unix()
 	c.Set(JiraClientInfoKey, &jiraClientInfo)
 
 	return session.Save(c.Request(), c.Response())

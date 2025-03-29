@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
+	"github.com/markojerkic/spring-planing/internal/server/auth"
 	"github.com/markojerkic/spring-planing/internal/service"
 	"github.com/markojerkic/spring-planing/internal/util"
 	"gorm.io/gorm"
@@ -87,6 +88,8 @@ func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Gr
 		db:          db,
 		group:       group,
 	}
+
+	router.group.Use(auth.JiraAuthMiddleware)
 
 	router.group.GET("/search", router.searchIssuesHandler)
 	router.group.POST("/ticket/:type", router.writeEstimate)
