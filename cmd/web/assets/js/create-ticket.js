@@ -3,7 +3,6 @@
 const formElement = document.getElementById("ticket-form");
 
 document.addEventListener("createdTicket", () => {
-	// If swap target is #ticket-list
 	document.dispatchEvent(new CloseModalEvent());
 	formElement.reset();
 	resetJiraSearch();

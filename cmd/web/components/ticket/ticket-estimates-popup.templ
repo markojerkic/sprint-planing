@@ -3,42 +3,22 @@ package ticket
 import "fmt"
 
 templ EstimatesPopupButton(ticketID uint) {
-	<div
-		id={ fmt.Sprintf("estimates-popup-%d", ticketID) }
-		popover="manual"
-		class="popover-container"
+	<ui-modal
+		buttonName="Show Estimates"
+		modalTitle="Estimates"
 	>
-		<div class="popover-content">
-			<div class="popover-header">
-				<h2>Estimates</h2>
-				<button
-					class="close-btn"
-					popovertarget={ fmt.Sprintf("estimates-popup-%d", ticketID) }
-					popovertargetaction="hide"
-				>
-					&times;
-				</button>
-			</div>
-			<blockquote>
-				<p>
-					Estimates are sorted by value.
-				</p>
-			</blockquote>
-			<div
-				class="popover-body"
-				hx-trigger={ fmt.Sprintf("click from:button[popovertarget=estimates-popup-%d]", ticketID) }
-				hx-get={ fmt.Sprintf("/ticket/estimates/%d", ticketID) }
-			>
-				<p>Estimates for ticket { fmt.Sprintf("%d", ticketID) }</p>
-			</div>
+		<blockquote>
+			<p>
+				Estimates are sorted by value.
+			</p>
+		</blockquote>
+		<div
+			hx-trigger="intersect"
+			hx-get={ fmt.Sprintf("/ticket/estimates/%d", ticketID) }
+		>
+			<p>Estimates for ticket { fmt.Sprintf("%d", ticketID) }</p>
 		</div>
-	</div>
-	<button
-		class="btn btn-primary"
-		popovertarget={ fmt.Sprintf("estimates-popup-%d", ticketID) }
-	>
-		Show Estimates
-	</button>
+	</ui-modal>
 }
 
 templ EstimatesPopupContent(estimates []string) {
