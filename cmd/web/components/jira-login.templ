@@ -1,0 +1,12 @@
+package components
+
+// Show user message he is not logged into jira, and that is required for this feature
+templ LoginToJira() {
+	<div
+		class="flex text-text-light flex-col items-center justify-center p-4 border border-blue-500 rounded-md"
+		hx-boost="false"
+	>
+		<p class="text-center">You need to be logged in to Jira to use this feature.</p>
+		<a href="/auth/jira/login" class="btn-blue-700 disabled:bg-blue-900 btn-sm">Login to Jira</a>
+	</div>
+}
