@@ -40,6 +40,7 @@ templ PageLayout(title string) {
 			<script src="/assets/js/htmx.min.js"></script>
 			<script src="/assets/js/htmx.ws.js"></script>
 			<script src="/assets/js/components/modal.js"></script>
+			<script src="/assets/js/components/toast.js"></script>
 			<script src="/assets/js/components/room-id-input.js"></script>
 			<script src="/assets/js/components/flashing-div.js" type="module"></script>
 		</head>
@@ -49,6 +50,14 @@ templ PageLayout(title string) {
 					{ children... }
 				</div>
 			</div>
+			<ui-toast-container>
+				<ui-toast>
+					Bok!
+				</ui-toast>
+				<ui-toast>
+					Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+				</ui-toast>
+			</ui-toast-container>
 		</body>
 	</html>
 }
