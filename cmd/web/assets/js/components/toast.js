@@ -71,14 +71,13 @@ class ToastContainer extends HTMLElement {
 	}
 }
 
+/**
+ * @property {string} message
+ * @property {ToastDetail} detail
+ */
 class ToastEvent extends Event {
 	/**
 	 * @typedef {Object} ToastEventData
-	 * @property {ToastDetail} detail
-	 */
-
-	/**
-	 * @typedef {Object} ToastDetail
 	 * @property {string} message
 	 */
 
@@ -87,7 +86,7 @@ class ToastEvent extends Event {
 	 */
 	constructor(detail) {
 		super("toast");
-		this.message = detail.detail.message;
+		this.message = detail.message;
 		this.detail = detail;
 	}
 }
