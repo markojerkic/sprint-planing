@@ -7,9 +7,9 @@ import (
 	"github.com/markojerkic/spring-planing/internal/database"
 )
 
-templ RoomList(rooms []database.Room) {
+templ RoomList(rooms []database.Room, userID uint) {
 	@components.PageLayout("Homepage") {
-		<div class="container">
+		<div class="container" id="room-list-container">
 			<h1 class="mb-4 text-2xl">My Rooms</h1>
 			<div class="flex gap-2 mb-4 bg-card-bg p-4 rounded-lg shadow-sm items-stretch">
 				<a href="/room" class="btn btn-primary mr-3">Create Room</a>
@@ -25,7 +25,7 @@ templ RoomList(rooms []database.Room) {
 			} else {
 				<div class="room-list pt-4">
 					for _, room := range rooms {
-						@roomCard(room)
+						@roomCard(room, userID)
 					}
 				</div>
 			}
@@ -53,12 +53,6 @@ templ joinRoomForm() {
 		</div>
 		<div class="form-actions">
 			<button type="submit" class="btn btn-primary">Join Room</button>
-			<button
-				type="button"
-				class="btn btn-secondary ml-2"
-				popovertarget="join-room-popover"
-				popovertargetaction="hide"
-			>Cancel</button>
 		</div>
 	</form>
 }
@@ -104,37 +98,8 @@ templ JoinRoomSuccess(roomId string) {
 	</div>
 }
 
-// Error feedback when joining fails
-templ JoinRoomError(errorMsg string) {
-	<div class="alert alert-error">
-		{ errorMsg }
-	</div>
-	<form id="join-room-form" hx-post="/join-room" hx-target="#join-room-form-container">
-		<div class="form-group">
-			<label for="roomId" class="form-label">Room ID</label>
-			<input
-				type="text"
-				id="roomId"
-				name="roomId"
-				class="form-input input-error"
-				placeholder="Enter room ID"
-				required
-			/>
-		</div>
-		<div class="form-actions">
-			<button type="submit" class="btn btn-primary">Try Again</button>
-			<button
-				type="button"
-				class="btn btn-secondary ml-2"
-				popovertarget="join-room-popover"
-				popovertargetaction="hide"
-			>Cancel</button>
-		</div>
-	</form>
-}
-
-templ roomCard(room database.Room) {
-	{{ isOwner := false }}
+templ roomCard(room database.Room, userID uint) {
+	{{ isOwner := room.CreatedBy == userID }}
 	<div class={ fmt.Sprintf("card mb-3 %s", templ.SafeClass(ternary(isOwner, "card-accent", ""))) }>
 		<div class="card-header">
 			<div class="room-header">
@@ -158,7 +123,8 @@ templ roomCard(room database.Room) {
 						class="btn btn-secondary"
 						hx-delete={ fmt.Sprintf("/room/%d", room.ID) }
 						hx-confirm="Are you sure you want to delete this room? This action cannot be undone."
-						hx-target="closest .card"
+						hx-target="#room-list-container"
+						hx-select="#room-list-container"
 						hx-swap="outerHTML"
 					>
 						Delete

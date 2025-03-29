@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/room"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
+	"github.com/markojerkic/spring-planing/cmd/web/homepage"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/server/auth"
 	"github.com/markojerkic/spring-planing/internal/service"
@@ -66,6 +67,21 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 	}, isOwner).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
 
+func (r *RoomRouter) deleteRoomHandler(ctx echo.Context) error {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		return ctx.String(400, "Invalid room id")
+	}
+
+	user := ctx.Get("user").(database.User)
+	rooms, err := r.roomService.DeleteRoom(ctx.Request().Context(), uint(id), user.ID)
+	if err != nil {
+		return ctx.String(500, "Error deleting room")
+	}
+
+	return homepage.RoomList(rooms, user.ID).Render(ctx.Request().Context(), ctx.Response().Writer)
+}
+
 func newRoomRouter(roomService *service.RoomService,
 	ticketService *service.TicketService,
 	db *gorm.DB,
@@ -80,6 +96,7 @@ func newRoomRouter(roomService *service.RoomService,
 	e.GET("", echo.WrapHandler(templ.Handler(room.CreateRoom())))
 	e.POST("", r.createRoomHandler)
 	e.GET("/:id", r.roomDetailsHandler)
+	e.DELETE("/:id", r.deleteRoomHandler)
 
 	return r
 }

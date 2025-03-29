@@ -12,10 +12,41 @@ type RoomService struct {
 	db            *database.Database
 }
 
+func (r *RoomService) DeleteRoom(ctx context.Context, roomID uint, userID uint) ([]database.Room, error) {
+	var rooms []database.Room
+	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var room database.Room
+		if err := tx.First(&room, roomID).Error; err != nil {
+			return err
+		}
+
+		if room.CreatedBy != userID {
+			return gorm.ErrRecordNotFound
+		}
+
+		if err := tx.Delete(&room).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Preload("Users").Joins("JOIN room_users ON room_users.room_id = rooms.id").
+			Find(&rooms).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rooms, nil
+}
+
 func (r *RoomService) GetUsersRooms(ctx context.Context, userID int32) ([]database.Room, error) {
 	var rooms []database.Room
 	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Preload("Users").Where("created_by = ?", userID).Find(&rooms).Error; err != nil {
+		if err := tx.Preload("Users").Joins("JOIN room_users ON room_users.room_id = rooms.id").
+			Find(&rooms).Error; err != nil {
 			return err
 		}
 

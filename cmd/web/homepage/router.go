@@ -27,6 +27,6 @@ func HomepageHandler(roomService *service.RoomService) echo.HandlerFunc {
 		log.Printf("User: %v", user)
 		log.Printf("Rooms: %v", rooms)
 
-		return RoomList(rooms).Render(c.Request().Context(), c.Response().Writer)
+		return RoomList(rooms, user.ID).Render(c.Request().Context(), c.Response().Writer)
 	}
 }
