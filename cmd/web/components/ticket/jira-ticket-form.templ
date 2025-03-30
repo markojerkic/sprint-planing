@@ -24,7 +24,7 @@ templ createJiraTicketForm(roomId uint) {
 			hx-get="/jira/search"
 			hx-target="#search-result"
 			hx-swap="innerHTML"
-			hx-trigger="intersect, keyup changed delay:300ms"
+			hx-trigger="intersect once, keyup changed delay:300ms"
 			hx-indicator="#search-result-spinner"
 			required
 		/>
