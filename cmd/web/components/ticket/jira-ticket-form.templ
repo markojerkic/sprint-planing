@@ -54,7 +54,9 @@ templ JiraTicketList(tickets JiraTicketListProps) {
 			<div class="grid grid-cols-3 gap-2 border-b border-violet-300">
 				<span class="font-bold">{ ticket.Key }</span>
 				<span class="col-span-2">{ ticket.Summary }</span>
-				<span class="col-span-3">{ ticket.Description }</span>
+				<ui-line-clamp class="col-span-3">
+					{ ticket.Description }
+				</ui-line-clamp>
 				<form class="jira-form col-span-3 flex justify-start pb-2" hx-post="/ticket" hx-target="#ticket-list" hx-swap="outerHTML" hx-select="#ticket-list">
 					<room-id-input></room-id-input>
 					<input type="hidden" name="jiraKey" value={ ticket.Key }/>
