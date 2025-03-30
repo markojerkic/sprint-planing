@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"gorm.io/gorm"
 
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/robfig/cron/v3"
@@ -49,8 +50,8 @@ func NewServer() *http.Server {
 func (s *Server) cleanupCRON() {
 	cron := cron.New()
 
-	// Run every 10 days
-	_, err := cron.AddFunc("@every 240h", func() {
+	// Run every 10 hours
+	_, err := cron.AddFunc("@every 10h", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 		defer cancel()
 
@@ -70,35 +71,50 @@ func (s *Server) cleanupCRON() {
 }
 
 func (s *Server) cleanup(ctx context.Context) error {
-	slog.Warn("cleanup function not implemented")
-	// tx, err := s.db.DB.BeginTx(ctx, pgx.TxOptions{})
-	// if err != nil {
-	// 	log.Printf("Failed to begin transaction: %v", err)
-	// 	return err
-	// }
-	// defer tx.Rollback(ctx)
-	// qtx := s.db.Queries.WithTx(tx)
-	//
-	// if err := qtx.CleanupOldTickets(ctx); err != nil {
-	// 	return fmt.Errorf("failed to cleanup ticket estimates: %w", err)
-	// }
-	//
-	// if err := qtx.CleanupClosedTickets(ctx); err != nil {
-	// 	return fmt.Errorf("failed to cleanup closed tickets: %w", err)
-	// }
-	//
-	// if err := qtx.CleanupUnusedRooms(ctx); err != nil {
-	// 	return fmt.Errorf("failed to cleanup unused rooms: %w", err)
-	// }
-	//
-	// if err := qtx.CleanupUnusedUsers(ctx); err != nil {
-	// 	return fmt.Errorf("failed to cleanup unused users: %w", err)
-	// }
-	//
-	// if err := tx.Commit(ctx); err != nil {
-	// 	log.Printf("Failed to commit transaction: %v", err)
-	// 	return err
-	// }
-	// return nil
+	slog.Info("Cleanup job started")
+	if err := s.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(`
+            DELETE FROM tickets
+            WHERE created_at < NOW() - INTERVAL '10 days';
+        `).Error; err != nil {
+			slog.Error("Failed to delete tickets", slog.Any("error", err))
+			return err
+		}
+		// Delete rooms which have no tickets and are older than 10 days
+		if err := tx.Exec(`
+            DELETE FROM rooms
+            WHERE id NOT IN (
+                SELECT room_id FROM tickets WHERE room_id IS NOT NULL
+            ) AND created_at < NOW() - INTERVAL '10 days';
+        `).Error; err != nil {
+			slog.Error("Failed to delete rooms", slog.Any("error", err))
+			return err
+		}
+		// Delete room_users entries for users not in any rooms
+		if err := tx.Exec(`
+            DELETE FROM room_users
+            WHERE user_id NOT IN (
+                SELECT DISTINCT user_id FROM room_users ru
+                JOIN rooms r ON ru.room_id = r.id
+            );
+            `).Error; err != nil {
+			slog.Error("Failed to delete room_users", slog.Any("error", err))
+			return err
+		}
+		// Delete users which have no rooms and are older than 10 days
+		if err := tx.Exec(`
+            DELETE FROM users
+            WHERE id NOT IN (
+                SELECT user_id FROM room_users
+            ) AND created_at < NOW() - INTERVAL '10 days';
+        `).Error; err != nil {
+			slog.Error("Failed to delete users", slog.Any("error", err))
+			return err
+		}
+		return nil
+	}); err != nil {
+		slog.Error("Failed to run cleanup transaction", slog.Any("error", err))
+		return err // Added to properly return the error
+	}
 	return nil
 }
