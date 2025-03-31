@@ -1,0 +1,170 @@
+package privacy
+
+import "github.com/markojerkic/spring-planing/cmd/web/components"
+
+templ TermsPage() {
+	@components.PageLayout("Terms of Service") {
+		<div class="container">
+			<header class="mb-8">
+				<h1 class="title">Terms of Service</h1>
+				<div class="h-1 w-24 bg-primary mb-4"></div>
+			</header>
+			<section class="card mb-8">
+				<h2 class="subtitle">1. Introduction</h2>
+				<p class="mb-4">
+					Welcome to Spring Planning. These Terms of Service ("Terms") govern your use of our web application
+					and services (the "Service"). By accessing or using the Service, you agree to be bound by these
+					Terms and our Privacy Policy.
+				</p>
+				<p class="mb-4">
+					Please read these Terms carefully before using the Service. If you disagree with any part of these
+					Terms, you may not access the Service.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">2. Description of Service</h2>
+				<p class="mb-4">
+					Spring Planning is a planning tool that integrates with Atlassian Jira to facilitate sprint planning,
+					ticket estimation, and team collaboration.
+				</p>
+				<p class="mb-4">
+					Our Service allows users to:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li>Connect to their Jira account through OAuth authentication</li>
+					<li>Create planning rooms for sprint planning sessions</li>
+					<li>Share those rooms with team members</li>
+					<li>Estimate and manage Jira tickets</li>
+					<li>Collaborate with team members in real-time</li>
+				</ul>
+			</section>
+			<section class="card mb-8 card-accent">
+				<h2 class="subtitle">3. Room Sharing and Security</h2>
+				<p class="mb-4">
+					The Service provides collaborative planning rooms with the following characteristics:
+				</p>
+				<div class="p-4 mb-6" style="background-color: var(--color-input-bg); border-radius: 8px;">
+					<ul class="list-disc pl-8 mb-4 space-y-2">
+						<li><span class="font-medium">Public Access:</span> Planning rooms can be accessed by anyone who has the room link. There is no password protection for rooms.</li>
+						<li><span class="font-medium">Access Control:</span> While anyone with the room link can view the room's content, only the room creator (authenticated with Jira) can write changes back to Jira.</li>
+						<li><span class="font-medium">Room Expiration:</span> All rooms and their associated data are automatically deleted after 10 days of inactivity.</li>
+						<li><span class="font-medium">User Responsibility:</span> You are responsible for managing access to your planning rooms by controlling who you share room links with.</li>
+					</ul>
+					<p class="italic text-warning">
+						By using our Service, you acknowledge these room sharing characteristics and agree to use the Service responsibly.
+					</p>
+				</div>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">4. Jira Integration</h2>
+				<p class="mb-4">
+					Our Service integrates with Atlassian Jira using OAuth authentication. By using the Service, you:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li>Authorize Spring Planning to access your Jira account within the scope of permissions requested</li>
+					<li>Acknowledge that actions taken through our Service may affect your Jira data</li>
+					<li>Understand that you are subject to both these Terms and Atlassian's Terms of Service</li>
+					<li>Accept responsibility for all activities that occur under your authenticated session</li>
+				</ul>
+				<p class="mb-4">
+					You may revoke Spring Planning's access to your Jira account at any time through your Atlassian account settings.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">5. User Responsibilities</h2>
+				<p class="mb-4">
+					When using our Service, you agree to:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li>Provide accurate information when creating rooms or estimating tickets</li>
+					<li>Protect the confidentiality of your room links if they contain sensitive information</li>
+					<li>Use the Service in compliance with all applicable laws and regulations</li>
+					<li>Not use the Service in any way that could harm, disable, or impair the Service</li>
+					<li>Not attempt to gain unauthorized access to any part of the Service</li>
+					<li>Not use the Service for any illegal or unauthorized purpose</li>
+				</ul>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">6. Intellectual Property</h2>
+				<p class="mb-4">
+					The Service and its original content, features, and functionality are and will remain the exclusive
+					property of Spring Planning and its licensors. The Service is protected by copyright, trademark,
+					and other laws.
+				</p>
+				<p class="mb-4">
+					Our trademarks and trade dress may not be used in connection with any product or service without
+					the prior written consent of Spring Planning.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">7. User Content</h2>
+				<p class="mb-4">
+					Any data, text, or other content you submit to planning rooms ("User Content") remains your property.
+					However, by submitting User Content to the Service, you grant us the right to use, modify, perform,
+					display, reproduce, and distribute such content solely for the purpose of providing the Service.
+				</p>
+				<p class="mb-4">
+					You represent and warrant that:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li>You own or have the necessary licenses, rights, consents, and permissions to use and authorize us to use all User Content</li>
+					<li>Your User Content does not violate any third party's intellectual property or privacy rights</li>
+				</ul>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">8. Limitation of Liability</h2>
+				<p class="mb-4">
+					In no event shall Spring Planning, its directors, employees, partners, agents, suppliers, or affiliates,
+					be liable for any indirect, incidental, special, consequential or punitive damages, including without
+					limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li>Your use or inability to use the Service</li>
+					<li>Any unauthorized access to or use of our servers and/or any personal information stored therein</li>
+					<li>Any interruption or cessation of transmission to or from the Service</li>
+					<li>Any bugs, viruses, trojan horses, or the like that may be transmitted through the Service</li>
+					<li>Any errors or omissions in any content or for any loss or damage of any kind incurred as a result of the use of any content posted, transmitted, or otherwise made available via the Service</li>
+				</ul>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">9. Disclaimer</h2>
+				<p class="mb-4">
+					Your use of the Service is at your sole risk. The Service is provided on an "AS IS" and "AS AVAILABLE" basis.
+					The Service is provided without warranties of any kind, whether express or implied, including, but not limited to,
+					implied warranties of merchantability, fitness for a particular purpose, non-infringement or course of performance.
+				</p>
+				<p class="mb-4">
+					Spring Planning does not warrant that:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li>The Service will function uninterrupted, secure, or available at any particular time or location</li>
+					<li>Any errors or defects will be corrected</li>
+					<li>The Service is free of viruses or other harmful components</li>
+					<li>The results of using the Service will meet your requirements</li>
+				</ul>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">10. Changes to Terms</h2>
+				<p class="mb-4">
+					We reserve the right to modify or replace these Terms at any time. Material changes to these Terms
+					will be notified to you either through the email address you have provided or by placing a prominent
+					notice on our Service.
+				</p>
+				<p class="mb-4">
+					By continuing to access or use our Service after those revisions become effective, you agree to be
+					bound by the revised Terms. If you do not agree to the new Terms, please stop using the Service.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">11. Contact Information</h2>
+				<p class="mb-4">
+					If you have any questions about these Terms, please contact us at:
+				</p>
+				<p class="font-medium">markojerkic266@gmail.com</p>
+			</section>
+			<footer class="mt-12 pt-8 border-t border-border-color text-sm opacity-80">
+				<p>Last updated: 31.03.2025.</p>
+			</footer>
+		</div>
+	}
+}

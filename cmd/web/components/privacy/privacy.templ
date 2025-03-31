@@ -1,0 +1,162 @@
+package privacy
+
+import "github.com/markojerkic/spring-planing/cmd/web/components"
+
+templ PrivacyPage() {
+	@components.PageLayout("Privacy") {
+		<div class="container">
+			<header class="mb-8">
+				<h1 class="title">Privacy Policy</h1>
+				<a href="/" class="link mb-4">‹ Back to Homepage</a>
+				<div class="h-1 w-24 bg-primary mb-4"></div>
+			</header>
+			<section class="card mb-8">
+				<h2 class="subtitle">Introduction</h2>
+				<p class="mb-4">
+					Welcome to Spring Planning. We respect your privacy and are committed to protecting your personal data.
+					This privacy policy will inform you about how we look after your personal data when you use our service
+					and tell you about your privacy rights.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Data Controller</h2>
+				<p class="mb-4">
+					Spring Planning ("we", "us", "our") is the controller and responsible for your personal data
+					collected through our application.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Data We Collect</h2>
+				<p class="mb-4">
+					When you use our application, we collect and process the following information:
+				</p>
+				<div class="mb-6">
+					<h3 class="text-primary-light font-semibold mb-2">Authentication Data</h3>
+					<ul class="list-disc pl-8 mb-4 space-y-1">
+						<li>Jira OAuth tokens (access and refresh tokens)</li>
+						<li>Session data to maintain your login state</li>
+						<li>Your Jira resource ID</li>
+					</ul>
+				</div>
+				<div class="mb-6">
+					<h3 class="text-primary-light font-semibold mb-2">Application Usage Data</h3>
+					<ul class="list-disc pl-8 mb-4 space-y-1">
+						<li>Jira ticket information you access through our application</li>
+						<li>Ticket estimations and modifications you make</li>
+						<li>Planning room data and content</li>
+					</ul>
+				</div>
+				<div class="mb-6">
+					<h3 class="text-primary-light font-semibold mb-2">Room Information</h3>
+					<ul class="list-disc pl-8 mb-4 space-y-1">
+						<li>Room content is potentially accessible to anyone with the room link</li>
+						<li>Rooms and all associated data are automatically deleted after 10 days</li>
+					</ul>
+				</div>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">How We Use Your Data</h2>
+				<p class="mb-4">
+					We use your data for the following purposes:
+				</p>
+				<ol class="list-decimal pl-8 mb-4 space-y-2">
+					<li><span class="font-medium">Authentication:</span> To verify your identity and maintain your session with our application.</li>
+					<li><span class="font-medium">Service Provision:</span> To provide our core service of Jira ticket management and sprint planning.</li>
+					<li><span class="font-medium">Application Functionality:</span> To allow you to search, view, and modify Jira tickets.</li>
+					<li><span class="font-medium">Room Management:</span> To create and maintain planning rooms that facilitate collaboration.</li>
+				</ol>
+			</section>
+			<section class="card mb-8 card-accent">
+				<h2 class="subtitle">Room Access and Permissions</h2>
+				<p class="mb-4">
+					Please be aware of the following important aspects of our service:
+				</p>
+				<div class="p-4 mb-6" style="background-color: var(--color-input-bg); border-radius: 8px;">
+					<ol class="list-decimal pl-8 mb-4 space-y-2">
+						<li><span class="font-medium">Room Visibility:</span> Planning rooms can be accessed by anyone who has the room link. There is no password protection for rooms.</li>
+						<li><span class="font-medium">Room Access:</span> Anyone with a room link can enter and view the room's content, including any Jira tickets and planning information displayed there.</li>
+						<li>
+							<span class="font-medium">Room Permissions:</span> Only the room creator (who holds the Jira OAuth credentials) can:
+							<ul class="list-disc pl-8 mt-2 space-y-1">
+								<li>Write changes back to Jira</li>
+								<li>Create new tickets in Jira</li>
+								<li>Modify ticket information in Jira</li>
+							</ul>
+						</li>
+						<li><span class="font-medium">Room Lifecycle:</span> All rooms and their associated data are automatically deleted after 10 days of inactivity.</li>
+					</ol>
+					<p class="italic text-warning">
+						We recommend being cautious about sharing room links if they contain sensitive planning information.
+					</p>
+				</div>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Data Sharing and Disclosure</h2>
+				<p class="mb-4">
+					We share your data with the following third parties:
+				</p>
+				<ol class="list-decimal pl-8 mb-4 space-y-2">
+					<li><span class="font-medium">Atlassian (Jira):</span> We exchange authentication information with Atlassian and retrieve/modify your Jira data using the credentials you authorize us to use.</li>
+				</ol>
+				<p class="mb-4">
+					We do not sell your personal information to any third parties.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Data Retention</h2>
+				<p class="mb-4">
+					We store your authentication tokens only for as long as necessary to provide you with our service:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li>Access tokens are temporary and expire according to Atlassian's token lifetimes</li>
+					<li>Refresh tokens are stored to maintain your session until you explicitly log out</li>
+					<li>Session data is removed when you log out or when sessions expire</li>
+					<li>Planning rooms and all their content are automatically deleted after 10 days of inactivity, regardless of their visibility or access status</li>
+				</ul>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Your Rights</h2>
+				<p class="mb-4">
+					Depending on your location, you may have the following rights regarding your data:
+				</p>
+				<ul class="list-disc pl-8 mb-4 space-y-1">
+					<li><span class="font-medium">Access:</span> You can request access to your personal data.</li>
+					<li><span class="font-medium">Correction:</span> You can request that we correct any information you believe is inaccurate.</li>
+					<li><span class="font-medium">Deletion:</span> You can request that we delete your personal information.</li>
+					<li><span class="font-medium">Withdrawal of Consent:</span> You can withdraw your consent at any time by logging out.</li>
+				</ul>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Data Security</h2>
+				<p class="mb-4">
+					We have implemented appropriate security measures to protect your personal data from being accidentally lost, used, or accessed in an unauthorized way. Access to your Jira data is only possible with valid authentication tokens that you authorize.
+				</p>
+				<blockquote>
+					Please note that planning rooms are designed for collaboration and are accessible to anyone with the room link. While only authenticated users with valid Jira OAuth tokens can modify Jira tickets or create new ones, room content itself is visible to anyone who has the room URL. Consider this when sharing sensitive planning information in rooms.
+				</blockquote>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Third-Party Links</h2>
+				<p class="mb-4">
+					Our application integrates directly with Jira. Your use of Jira is subject to Atlassian's own privacy policy and terms.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Changes to This Privacy Policy</h2>
+				<p class="mb-4">
+					We may update our privacy policy from time to time. We will notify you of any changes by posting the new privacy policy on this page and, where appropriate, notifying you when you next log in.
+				</p>
+			</section>
+			<section class="card mb-8">
+				<h2 class="subtitle">Contact Us</h2>
+				<p class="mb-4">
+					If you have any questions about this privacy policy or our data practices, please contact us at:
+				</p>
+				<p class="font-medium">markojerkic266@gmail.com</p>
+			</section>
+			<footer class="mt-12 pt-8 border-t border-border-color text-sm opacity-80">
+				<p>Last updated: 31.03.2025.</p>
+			</footer>
+		</div>
+	}
+}

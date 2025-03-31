@@ -3,10 +3,12 @@ package server
 import (
 	"net/http"
 
+	"github.com/a-h/templ"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/markojerkic/spring-planing/cmd/web"
+	"github.com/markojerkic/spring-planing/cmd/web/components/privacy"
 	"github.com/markojerkic/spring-planing/cmd/web/homepage"
 	"github.com/markojerkic/spring-planing/internal/server/auth"
 	"github.com/markojerkic/spring-planing/internal/service"
@@ -48,6 +50,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	newWebsocketRouter(websocketService, e.Group("/ws"))
 	newJiraRouter(jiraService, s.db.DB, e.Group("/jira"))
 	e.GET("/", homepage.HomepageHandler(roomService))
+	e.GET("/privacy", echo.WrapHandler(templ.Handler(privacy.PrivacyPage())))
+	e.GET("/terms-of-service", echo.WrapHandler(templ.Handler(privacy.TermsPage())))
 
 	return e
 }
