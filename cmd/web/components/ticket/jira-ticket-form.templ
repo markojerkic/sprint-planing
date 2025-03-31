@@ -60,8 +60,8 @@ templ JiraTicketList(tickets JiraTicketListProps) {
 				<form class="jira-form col-span-3 flex justify-start pb-2" hx-post="/ticket" hx-target="#ticket-list" hx-swap="outerHTML" hx-select="#ticket-list">
 					<room-id-input></room-id-input>
 					<input type="hidden" name="jiraKey" value={ ticket.Key }/>
-					<input type="hidden" name="ticketName" value={ ticket.Summary }/>
-					<input type="hidden" name="ticketDescription" value={ ticket.Description }/>
+					<input type="hidden" name="ticketName" value={ ticket.Key }/>
+					<input type="hidden" name="ticketDescription" value={ ticket.Summary }/>
 					<button type="submit" class="btn-blue-500 btn-sm">Create Ticket</button>
 				</form>
 			</div>
