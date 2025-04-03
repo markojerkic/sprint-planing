@@ -40,6 +40,7 @@ func (t *TicketWithEstimateStatistics) ToDetailProp(isOwner bool) ticket.TicketD
 		Description:     t.Description,
 		EstimatedBy:     fmt.Sprintf("%d/%d", t.EstimateCount, t.UserCount),
 		IsClosed:        t.ClosedAt != nil,
+		IsHidden:        t.Hidden,
 		AverageEstimate: prettyPrintEstimate(t.AverageEstimate),
 		MedianEstimate:  prettyPrintEstimate(t.MedianEstimate),
 		StdEstimate:     fmt.Sprintf("%.2fh", t.StdDevEstimate),
