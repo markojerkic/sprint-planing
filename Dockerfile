@@ -1,3 +1,14 @@
+#######################
+#   Bun dependencies   #
+#######################
+FROM oven/bun:1 AS bun-deps
+
+WORKDIR /usr/src/app
+
+COPY package.json bun.lock ./
+
+RUN bun install
+
 ################
 #   Tailwind   #
 ################
@@ -5,16 +16,14 @@ FROM oven/bun:1 AS tailwind
 
 WORKDIR /usr/src/app
 
+# Copy dependencies
+COPY --from=bun-deps /usr/src/app/node_modules ./node_modules
+
 # Copy all templ files
 COPY . .
 
-# Install Tailwind CSS
-RUN bun init -y
-RUN bun add tailwindcss @tailwindcss/cli@latest
-
-# Run Tailwind CSS
-
-RUN bun x @tailwindcss/cli@latest -i cmd/web/assets/css/input.css -o ./output.css
+# Build Tailwind CSS
+RUN bun build:tailwind
 
 ################
 # Dependencies #
