@@ -7,10 +7,11 @@ templ EstimatesPopupButton(ticketID uint) {
 		buttonName="Show Estimates"
 		modalTitle="Estimates"
 	>
-		<blockquote>
+		<blockquote class="text-start">
 			<p>
-				Estimates are sorted by value.
+				Estimates are sorted by value and are not updated automatically.
 			</p>
+			<spall class="text-sm">To update the estimates, close the popup and re-open it.</spall>
 		</blockquote>
 		<div
 			hx-trigger="intersect"

@@ -166,7 +166,7 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var dbEstimates []database.Estimate
-		if err := tx.Where("ticket_id = ?", ticketID).Find(&dbEstimates).Error; err != nil {
+		if err := tx.Where("ticket_id = ?", ticketID).Order("estimate ASC").Find(&dbEstimates).Error; err != nil {
 			return err
 		}
 
