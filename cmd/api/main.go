@@ -44,7 +44,7 @@ func main() {
 	done := make(chan bool, 1)
 
 	// Run graceful shutdown in a separate goroutine
-	go gracefulShutdown(server, done)
+	// go gracefulShutdown(server, done)
 
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {

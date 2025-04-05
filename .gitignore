@@ -1,3 +1,9 @@
+# Project build
+main
+*templ.go
+*.sql.go
+node_modules/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -24,13 +30,6 @@ tmp/
 
 # .env file
 .env
-
-# Project build
-main
-*templ.go
-*templ.go
-*.sql.go
-dbgen/
 
 *.db
 
