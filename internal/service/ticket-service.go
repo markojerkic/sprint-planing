@@ -53,6 +53,21 @@ type HideTicketDto struct {
 	IsHidden bool `json:"isHidden" form:"isHidden"`
 }
 
+func (t *TicketService) HideAllTickets(ctx context.Context, roomID uint) error {
+	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&database.Ticket{}).Where("room_id = ?", roomID).Update("hidden", true).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	t.webSocketService.HideTicketsOfRoom(roomID, true)
+
+	return nil
+}
+
 func (t *TicketService) HideTicket(ctx context.Context, ticketID uint) (*database.Ticket, error) {
 	var ticket database.Ticket
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {

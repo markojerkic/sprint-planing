@@ -10,6 +10,9 @@ templ TicketList(tickets []TicketDetailProps, isRoomOwner bool) {
 				<ui-flashing-div
 					data-ticket-id={ fmt.Sprintf("%d", ticket.ID) }
 					data-is-owner={ fmt.Sprintf("%t", isRoomOwner) }
+					if !isRoomOwner {
+						data-is-hidden={ fmt.Sprintf("%t", ticket.IsHidden) }
+					}
 				>
 					@TicketDetail(ticket, isRoomOwner)
 				</ui-flashing-div>

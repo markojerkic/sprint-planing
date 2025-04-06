@@ -107,6 +107,21 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 	return ticket.TicketDetail(ticketDetail.ToDetailProp(true), true).Render(c.Request().Context(), c.Response().Writer)
 }
 
+func (r *TicketRouter) hideAllTicketsHandler(c echo.Context) error {
+	sRoomId := c.FormValue("roomId")
+	roomID, err := strconv.Atoi(sRoomId)
+	if err != nil {
+		return c.String(400, "Invalid room id")
+	}
+
+	err = r.service.HideAllTickets(c.Request().Context(), uint(roomID))
+	if err != nil {
+		return c.String(500, "Error hiding ticket")
+	}
+
+	return c.NoContent(204)
+}
+
 func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 	c.Logger().Info("Hiding ticket")
 	ticketID, err := strconv.Atoi(c.FormValue("id"))
@@ -138,6 +153,7 @@ func newTicketRouter(ticketService *service.TicketService,
 
 	e.POST("", r.createTicketHandler)
 	e.POST("/hide", r.hideTicketHandler)
+	e.POST("/hide-all", r.hideAllTicketsHandler)
 	e.POST("/estimate", r.estimateTicketHandler)
 	e.POST("/close", r.closeTicketHandler)
 	e.GET("/estimates/:id", r.ticketEstimatesHandler)

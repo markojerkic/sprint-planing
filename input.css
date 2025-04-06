@@ -49,6 +49,10 @@
     }
   }
 
+  [data-is-hidden="true"] {
+    display: none;
+  }
+
   .highlight-animation {
     animation: highlightBorder 1.5s ease-in-out;
   }

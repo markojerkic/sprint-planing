@@ -1,7 +1,6 @@
 package ticket
 
 import "fmt"
-import "github.com/markojerkic/spring-planing/cmd/web/components"
 
 type TicketDetailProps struct {
 	ID              uint
@@ -25,7 +24,6 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 		class="ticket-detail transition-colors"
 		data-ticket-id={ fmt.Sprintf("%d", props.ID) }
 		data-is-owner={ fmt.Sprintf("%t", isRoomOwner) }
-		style={ fmt.Sprintf("display: %s;", components.Ternary(!isRoomOwner && props.IsHidden, "none", "flex")) }
 	>
 		<h3 class="text-2xl font-extrabold py-4">{ props.Name }</h3>
 		<ui-line-clamp>

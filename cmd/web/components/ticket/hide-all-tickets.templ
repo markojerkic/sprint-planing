@@ -5,12 +5,15 @@ import "fmt"
 templ HideAllTickets(roomId uint) {
 	<button
 		class="btn-sm-warning hover:btn-sm-warning-dark p-1"
-		hx-post="/ticket/hide"
-		hx-target="none"
-		hx-trigger="click"
+		hx-post="/ticket/hide-all"
 		name="roomId"
+		hx-confirm="Are you sure you want to hide all tickets?"
+		hx-indicator="find .htmx-indicator"
 		value={ fmt.Sprintf("%d", roomId) }
 	>
 		Hide all tickets
+		<span class="material-symbols-outlined absolute htmx-indicator text-sm top-0 right-0 text-white animate-spin">
+			sync
+		</span>
 	</button>
 }

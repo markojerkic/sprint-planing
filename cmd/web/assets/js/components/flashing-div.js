@@ -18,7 +18,6 @@ export class FlashingDiv extends HTMLElement {
 	flash() {
 		const color = this.getAttribute("color") || "var(--color-primary-light)";
 		const div = this.#firstElement();
-		div.style.display = "";
 		div.scrollIntoView({
 			behavior: "smooth",
 			block: "start",

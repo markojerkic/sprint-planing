@@ -116,6 +116,24 @@ func (w *WebSocketService) CleanupInactiveConnections() {
 	}
 }
 
+func (w *WebSocketService) HideTicketsOfRoom(roomID uint, isHidden bool) {
+	dto := HideTicketDto{
+		IsHidden: isHidden,
+	}
+	jsonDto, err := json.Marshal(dto)
+	if err != nil {
+		log.Printf("Error marshalling dto: %v", err)
+		return
+	}
+
+	mutex.RLock()
+	conns := rooms[roomID]
+	mutex.RUnlock()
+	for conn := range conns {
+		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
+	}
+}
+
 func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool) {
 	dto := HideTicketDto{
 		TicketID: ticketID,
