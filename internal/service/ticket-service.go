@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"gorm.io/gorm"
 )
@@ -229,6 +230,57 @@ func (t *TicketService) GetTicketsOfRoom(ctx context.Context, db *gorm.DB, userI
 		return nil, err
 	}
 	return tickets, nil
+}
+
+func (t *TicketService) BulkImportTickets(ctx context.Context, userID uint, roomID uint, tickets []CreateTicketForm) ([]ticket.TicketDetailProps, error) {
+	databaseTickets := make([]database.Ticket, len(tickets))
+	for i, ticket := range tickets {
+		databaseTickets[i] = database.Ticket{
+			Name:        ticket.TicketName,
+			Description: ticket.TicketDescription,
+			RoomID:      uint(ticket.RoomID),
+			CreatedBy:   uint(userID),
+		}
+
+		if ticket.JiraKey != "" {
+			databaseTickets[i].JiraKey = &ticket.JiraKey
+		}
+	}
+
+	var ticketsWithStats []ticket.TicketDetailProps
+
+	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&databaseTickets).Error; err != nil {
+			return err
+		}
+
+		roomTickets, err := t.GetTicketsOfRoom(ctx, tx, userID, roomID)
+		if err != nil {
+			return err
+		}
+
+		ticketsWithStats = make([]ticket.TicketDetailProps, len(roomTickets))
+		for i, ticket := range roomTickets {
+			ticketWithStats, err := t.GetTicket(ctx, tx, userID, nil, uint(ticket.ID))
+			if err != nil {
+				return err
+			}
+
+			isOwner := ticketWithStats.CreatedBy == userID
+			ticketDetails := ticketWithStats.ToDetailProp(isOwner)
+			ticketsWithStats[i] = ticketDetails
+		}
+
+		return nil
+	})
+	if err != nil {
+		slog.Error("Error bulk importing tickets", slog.Any("error", err))
+		return nil, err
+	}
+
+	t.webSocketService.BulkImportTickets(ticketsWithStats)
+
+	return ticketsWithStats, nil
 }
 
 func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, error) {

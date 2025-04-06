@@ -63,9 +63,36 @@ type JiraTicket struct {
 }
 
 type JiraService struct {
+	ticketService *TicketService
 }
 
 var jiraKeyRegex = regexp.MustCompile(`[a-zA-Z]+-\d+`)
+
+// Batch import tickets from Jira
+func (j *JiraService) BulkImportTickets(ctx echo.Context, userID uint, roomID uint, filter JiraIssueFilter) ([]ticket.TicketDetailProps, error) {
+	issues, err := j.GetIssues(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	tickets := make([]CreateTicketForm, len(issues.Issues))
+	for i, t := range issues.Issues {
+		tickets[i] = CreateTicketForm{
+			TicketName:        t.Fields.Summary,
+			TicketDescription: t.Fields.Description.String(),
+			RoomID:            roomID,
+			JiraKey:           t.Key,
+		}
+	}
+
+	ticketDetails, err := j.ticketService.BulkImportTickets(ctx.Request().Context(), userID, roomID, tickets)
+	if err != nil {
+		slog.Error("Error bulk importing tickets", slog.Any("error", err))
+		return nil, err
+	}
+
+	return ticketDetails, nil
+}
 
 func (j *JiraService) GetProjectStories(ctx echo.Context, projectID string) (JiraTicketResponse, error) {
 	return j.GetIssues(ctx, JiraIssueFilter{
@@ -290,6 +317,11 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 	return nil
 }
 
-func NewJiraService() *JiraService {
-	return &JiraService{}
+func NewJiraService(ticketService *TicketService) *JiraService {
+	if ticketService == nil {
+		panic("ticketService cannot be nil")
+	}
+	return &JiraService{
+		ticketService: ticketService,
+	}
 }

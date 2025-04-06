@@ -280,6 +280,21 @@
   font-size: 0.875rem;
 }
 
+@utility btn-sm-* {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: --value(--color- *);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  text-decoration: none;
+}
+
 @utility btn-* {
   display: inline-block;
   padding: 0.875rem 1.5rem;

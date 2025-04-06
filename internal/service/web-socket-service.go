@@ -13,7 +13,7 @@ import (
 )
 
 var rooms = make(map[uint]map[*websocket.Conn]bool)
-var mutex = sync.Mutex{}
+var mutex = sync.RWMutex{}
 
 type message struct {
 	conn   *websocket.Conn
@@ -126,9 +126,9 @@ func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool)
 		return
 	}
 
-	mutex.Lock()
+	mutex.RLock()
 	conns := rooms[roomID]
-	mutex.Unlock()
+	mutex.RUnlock()
 	for conn := range conns {
 		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
 	}
@@ -156,9 +156,9 @@ func (w *WebSocketService) CloseTicket(ticketID uint, jiraKey *string, roomID ui
 	bytes := removedTicketForm.Bytes()
 	mergedBytes := append(bytes, averageEstimateBytes...)
 
-	mutex.Lock()
+	mutex.RLock()
 	conns := rooms[roomID]
-	mutex.Unlock()
+	mutex.RUnlock()
 	for conn := range conns {
 		buffer <- message{conn: conn, data: &mergedBytes, roomID: roomID}
 	}
@@ -178,9 +178,9 @@ func (w *WebSocketService) UpdateEstimate(ticketID uint,
 		return
 	}
 	bytes := renderedTicket.Bytes()
-	mutex.Lock()
+	mutex.RLock()
 	conns := rooms[roomID]
-	mutex.Unlock()
+	mutex.RUnlock()
 	for conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: roomID}
 	}
@@ -188,17 +188,39 @@ func (w *WebSocketService) UpdateEstimate(ticketID uint,
 
 func (w *WebSocketService) SendNewTicket(tticket ticket.TicketDetailProps) {
 	renderedTicket := new(bytes.Buffer)
-	if err := ticket.CreatedTicketUpdate(tticket).
+	if err := ticket.CreatedTicketUpdate(tticket, true).
 		Render(context.Background(), renderedTicket); err != nil {
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
 	}
 	bytes := renderedTicket.Bytes()
-	mutex.Lock()
+	mutex.RLock()
 	conns := rooms[tticket.RoomID]
-	mutex.Unlock()
+	mutex.RUnlock()
 	for conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
+	}
+}
+
+func (w *WebSocketService) BulkImportTickets(tickets []ticket.TicketDetailProps) {
+	aggregatedRenderedTickets := new(bytes.Buffer)
+	for i, tticket := range tickets {
+		renderedTicket := new(bytes.Buffer)
+		if err := ticket.CreatedTicketUpdate(tticket, i == 0).
+			Render(context.Background(), renderedTicket); err != nil {
+			log.Printf("Error rendering ticket thumbnail: %v", err)
+			return
+		}
+		bytes := renderedTicket.Bytes()
+		aggregatedRenderedTickets.Write(bytes)
+	}
+	mutex.RLock()
+	conns := rooms[tickets[0].RoomID]
+	mutex.RUnlock()
+	bytes := aggregatedRenderedTickets.Bytes()
+
+	for conn := range conns {
+		buffer <- message{conn: conn, data: &bytes, roomID: tickets[0].RoomID}
 	}
 }
 

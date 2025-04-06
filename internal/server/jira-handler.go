@@ -20,6 +20,35 @@ type JiraRouter struct {
 	group         *echo.Group
 }
 
+func (j *JiraRouter) bulkImportJiraTicketsHandler(ctx echo.Context) error {
+	var filter service.JiraIssueFilter
+	if err := ctx.Bind(&filter); err != nil {
+		return ctx.String(400, "Invalid filter")
+	}
+
+	if err := ctx.Validate(filter); err != nil {
+		return ctx.String(400, "Invalid filter")
+	}
+
+	user := ctx.Get("user").(database.User)
+	sroomId := ctx.FormValue("roomId")
+	roomID, err := strconv.Atoi(sroomId)
+	if err != nil {
+		return ctx.String(400, "Invalid room id")
+	}
+
+	tickets, err := j.jiraService.BulkImportTickets(ctx, user.ID, uint(roomID), filter)
+	if err != nil {
+		return ctx.String(500, "Error bulk importing tickets")
+	}
+
+	ctx.Response().Header().Add("Hx-Trigger", `{"createdTicket": true}`)
+
+	util.AddTostHeader(ctx, "Ticket created successfully")
+
+	return ticket.TicketList(tickets, true).Render(ctx.Request().Context(), ctx.Response().Writer)
+}
+
 func (j *JiraRouter) getBulkImportSearchResultsHandler(ctx echo.Context) error {
 	var filter service.JiraIssueFilter
 	if err := ctx.Bind(&filter); err != nil {
@@ -170,6 +199,7 @@ func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Gr
 	router.group.GET("/projects-form", router.getProjectsHandler)
 	router.group.GET("/project-stories", router.getProjectStoriesHandler)
 	router.group.GET("/bulk/search-results", router.getBulkImportSearchResultsHandler)
+	router.group.POST("/bulk/import", router.bulkImportJiraTicketsHandler)
 
 	return router
 }

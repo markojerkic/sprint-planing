@@ -42,7 +42,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	roomService := service.NewRoomService(s.db)
 	ticketService := service.NewTicketService(s.db)
 	websocketService := service.NewWebSocketService(ticketService)
-	jiraService := service.NewJiraService()
+	jiraService := service.NewJiraService(ticketService)
 
 	auth.NewOAuthRouter(e.Group("/auth/jira"))
 	newRoomRouter(roomService, ticketService, s.db.DB, e.Group("/room"))
