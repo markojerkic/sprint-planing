@@ -17,7 +17,7 @@ type sessionUpdatingTokenSource struct {
 }
 
 func (j *JiraClientInfo) HttpClient(c echo.Context) *http.Client {
-	slog.Info("JiraClientInfo.HttpClient",
+	slog.Debug("JiraClientInfo.HttpClient",
 		slog.Any("Expiry", j.Expiry),
 	)
 
@@ -53,7 +53,7 @@ func (s *sessionUpdatingTokenSource) Token() (*oauth2.Token, error) {
 
 	// If token changed (refreshed), update the session
 	if newToken.AccessToken != s.original.AccessToken {
-		slog.Info("Token refreshed, updating session",
+		slog.Debug("Token refreshed, updating session",
 			slog.String("old_token", s.original.AccessToken[:10]+"..."),
 			slog.String("new_token", newToken.AccessToken[:10]+"..."))
 

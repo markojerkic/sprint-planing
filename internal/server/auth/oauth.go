@@ -72,7 +72,7 @@ func (o *OAuthRouter) Login(c echo.Context) error {
 	state := uuid.New().String()
 	authUrl := o.Config.AuthCodeURL(state)
 
-	slog.Info("Oauth config", slog.Any("clientId", o.Config.ClientID), slog.Any("redirectUrl", o.Config.RedirectURL), slog.Any("authUrl", authUrl))
+	slog.Debug("Oauth config", slog.Any("clientId", o.Config.ClientID), slog.Any("redirectUrl", o.Config.RedirectURL), slog.Any("authUrl", authUrl))
 
 	cookie := new(http.Cookie)
 	cookie.Name = "oauth_state"
@@ -81,7 +81,7 @@ func (o *OAuthRouter) Login(c echo.Context) error {
 	c.SetCookie(cookie)
 
 	referrer := c.Request().Header.Get("Referer")
-	slog.Info("Referrer", slog.String("referrer", referrer))
+	slog.Debug("Referrer", slog.String("referrer", referrer))
 	if referrer != "" {
 		referrerCookie := new(http.Cookie)
 		referrerCookie.Name = "referrer"
@@ -139,8 +139,8 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 		slog.Error("Failed to decode accessible resources", slog.Any("error", err))
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to decode accessible resources"})
 	}
-	slog.Info("Accessible resources", slog.Any("resources", accessibleResources))
-	slog.Info("Token", slog.Any("token", token), slog.Any("refresh_token", token.RefreshToken))
+	slog.Debug("Accessible resources", slog.Any("resources", accessibleResources))
+	slog.Debug("Token", slog.Any("token", token), slog.Any("refresh_token", token.RefreshToken))
 
 	if err := saveJiraInfoToSession(c, JiraClientInfo{
 		AccessToken:  token.AccessToken,
@@ -152,7 +152,7 @@ func (o *OAuthRouter) Callback(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save session"})
 	}
 
-	slog.Info("Accessible resources", slog.Any("resources", accessibleResources))
+	slog.Debug("Accessible resources", slog.Any("resources", accessibleResources))
 
 	if referrerCookie, err := c.Cookie("referrer"); err == nil {
 		c.SetCookie(&http.Cookie{Name: "referrer", MaxAge: -1})

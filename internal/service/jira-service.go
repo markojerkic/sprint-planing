@@ -92,7 +92,7 @@ func (j *JiraService) GetProjects(ctx echo.Context) ([]ticket.JiraProject, error
 
 	url.RawQuery = q.Encode()
 
-	slog.Info("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
+	slog.Debug("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
 
 	resp, err := clientInfo.HttpClient(ctx).Get(url.String())
 	if err != nil {
@@ -181,7 +181,7 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 
 	url.RawQuery = q.Encode()
 
-	slog.Info("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
+	slog.Debug("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
 
 	resp, err := clientInfo.HttpClient(ctx).Get(url.String())
 	if err != nil {
@@ -226,7 +226,7 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 	}
 
 	// Prepare the request body to update the time estimate
-	slog.Info("Updating ticket estimation", slog.String("ticketKey", ticketKey), slog.String("estimation", fmt.Sprintf("%ds", estimation)))
+	slog.Debug("Updating ticket estimation", slog.String("ticketKey", ticketKey), slog.String("estimation", fmt.Sprintf("%ds", estimation)))
 	requestBody := map[string]any{
 		"fields": map[string]any{
 			"timetracking": map[string]any{
@@ -273,7 +273,7 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 		return fmt.Errorf("failed to update ticket estimation: status code %d", resp.StatusCode)
 	}
 
-	slog.Info("Successfully updated ticket estimation",
+	slog.Debug("Successfully updated ticket estimation",
 		slog.String("ticketKey", ticketKey),
 		slog.Int("estimationSeconds", estimation))
 

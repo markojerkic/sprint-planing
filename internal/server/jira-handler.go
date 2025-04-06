@@ -113,7 +113,7 @@ func (j *JiraRouter) writeEstimate(ctx echo.Context) error {
 		return ctx.String(400, "Invalid estimate type")
 	}
 
-	slog.Info("Updating ticket", slog.Any("estimateHours", estimateHours), slog.Int("estimateSeconds", estimateHours*60))
+	slog.Debug("Updating ticket", slog.Any("estimateHours", estimateHours), slog.Int("estimateSeconds", estimateHours*60))
 	if err := j.jiraService.UpdateTicketEstimation(ctx, *ticket.JiraKey, estimateHours*60); err != nil {
 		slog.Error("Error updating ticket", slog.Any("error", err))
 		return ctx.String(500, "Error updating ticket")

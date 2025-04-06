@@ -103,7 +103,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 			slog.Error("Error getting users in room", slog.Any("error", err))
 			return err
 		}
-		slog.Info("Estimate ticket", slog.Any("users", usersInRoom))
+		slog.Debug("Estimate ticket", slog.Any("users", usersInRoom))
 
 		prettyEstimate = prettyPrintEstimate(estimate.Estimate)
 		t.webSocketService.UpdateEstimate(updatedTicket.ID,
