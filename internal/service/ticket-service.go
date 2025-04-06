@@ -241,46 +241,65 @@ func (t *TicketService) BulkImportTickets(ctx context.Context, userID uint, room
 			RoomID:      uint(ticket.RoomID),
 			CreatedBy:   uint(userID),
 		}
-
 		if ticket.JiraKey != "" {
 			databaseTickets[i].JiraKey = &ticket.JiraKey
 		}
 	}
 
-	var ticketsWithStats []ticket.TicketDetailProps
+	var allRoomTickets []ticket.TicketDetailProps
+	var importedTickets []ticket.TicketDetailProps
 
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Create tickets in the database
 		if err := tx.Create(&databaseTickets).Error; err != nil {
 			return err
 		}
 
+		// Now databaseTickets have their IDs set by GORM
+
+		// Create a map of the newly imported ticket IDs
+		databaseTicketsMap := make(map[uint]bool)
+		for _, ticket := range databaseTickets {
+			databaseTicketsMap[ticket.ID] = true
+		}
+
+		// Get all tickets in the room
 		roomTickets, err := t.GetTicketsOfRoom(ctx, tx, userID, roomID)
 		if err != nil {
 			return err
 		}
 
-		ticketsWithStats = make([]ticket.TicketDetailProps, len(roomTickets))
+		// Collect imported tickets by checking IDs against our map
+		importedTickets = make([]ticket.TicketDetailProps, 0, len(databaseTickets))
+		for _, ticket := range roomTickets {
+			if databaseTicketsMap[ticket.ID] {
+				importedTickets = append(importedTickets, ticket.ToDetailProp(false))
+				slog.Debug("Ticket imported", slog.Any("ticket", ticket))
+			}
+		}
+
+		// Process all room tickets
+		allRoomTickets = make([]ticket.TicketDetailProps, len(roomTickets))
 		for i, ticket := range roomTickets {
 			ticketWithStats, err := t.GetTicket(ctx, tx, userID, nil, uint(ticket.ID))
 			if err != nil {
 				return err
 			}
-
 			isOwner := ticketWithStats.CreatedBy == userID
 			ticketDetails := ticketWithStats.ToDetailProp(isOwner)
-			ticketsWithStats[i] = ticketDetails
+			allRoomTickets[i] = ticketDetails
 		}
 
 		return nil
 	})
+
 	if err != nil {
 		slog.Error("Error bulk importing tickets", slog.Any("error", err))
 		return nil, err
 	}
 
-	t.webSocketService.BulkImportTickets(ticketsWithStats)
-
-	return ticketsWithStats, nil
+	t.webSocketService.BulkImportTickets(importedTickets)
+	return allRoomTickets, nil
 }
 
 func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, error) {

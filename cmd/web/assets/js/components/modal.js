@@ -76,11 +76,12 @@ class ModalElement extends HTMLElement {
 	render() {
 		const buttonName = this.getAttribute("buttonName");
 		const modalTitle = this.getAttribute("modalTitle") ?? buttonName;
+		const isSmall = this.getAttribute("small") !== null;
 		const buttonColor =
 			this.getAttribute("buttonColor") ?? "var(--color-primary)";
 		this._randomId = `modal-${Math.random().toString(36).substring(7)}`;
 		this.shadowRoot.innerHTML = `
-        ${this.createStyles(buttonColor).outerHTML}
+        ${this.createStyles(buttonColor, isSmall).outerHTML}
         <button type="button"
             class="btn"
             popovertarget="${this._randomId}"
@@ -107,8 +108,12 @@ class ModalElement extends HTMLElement {
         `;
 	}
 
-	/** @param {string} buttonColor */
-	createStyles(buttonColor) {
+	/**
+	 * @param {string} buttonColor
+	 * @param {boolean} isSmall
+	 *
+	 * */
+	createStyles(buttonColor, isSmall) {
 		const style = document.createElement("style");
 		style.textContent = `
             /* Global styles for backdrop */
@@ -142,13 +147,13 @@ class ModalElement extends HTMLElement {
             /* Button styles */
             .btn {
                 display: inline-block;
-                padding: 0.875rem 1.5rem;
+                padding: ${isSmall ? "0.5rem 1rem" : "0.875rem 1.5rem"};
                 background-color: ${buttonColor};
                 color: white;
                 border: none;
                 border-radius: 8px;
-                font-size: 1rem;
-                font-weight: 600;
+                font-size: ${isSmall ? "0.875rem" : "1rem"};
+                font-weight: ${isSmall ? "500" : "600"};
                 cursor: pointer;
                 transition: all 0.3s ease;
                 text-align: center;

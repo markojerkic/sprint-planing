@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -204,8 +205,10 @@ func (w *WebSocketService) SendNewTicket(tticket ticket.TicketDetailProps) {
 
 func (w *WebSocketService) BulkImportTickets(tickets []ticket.TicketDetailProps) {
 	aggregatedRenderedTickets := new(bytes.Buffer)
-	for i, tticket := range tickets {
+	slog.Debug("Bulk importing tickets", slog.Any("ticket num", len(tickets)))
+	for i := len(tickets) - 1; i >= 0; i-- {
 		renderedTicket := new(bytes.Buffer)
+		tticket := tickets[i]
 		if err := ticket.CreatedTicketUpdate(tticket, i == 0).
 			Render(context.Background(), renderedTicket); err != nil {
 			log.Printf("Error rendering ticket thumbnail: %v", err)

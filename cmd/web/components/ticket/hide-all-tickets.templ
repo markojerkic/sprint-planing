@@ -1,0 +1,16 @@
+package ticket
+
+import "fmt"
+
+templ HideAllTickets(roomId uint) {
+	<button
+		class="btn-sm-warning hover:btn-sm-warning-dark p-1"
+		hx-post="/ticket/hide"
+		hx-target="none"
+		hx-trigger="click"
+		name="roomId"
+		value={ fmt.Sprintf("%d", roomId) }
+	>
+		Hide all tickets
+	</button>
+}

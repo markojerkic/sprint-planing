@@ -3,48 +3,50 @@
  * @class FlashingDiv
  */
 export class FlashingDiv extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
+	constructor() {
+		super();
+		this.attachShadow({ mode: "open" });
+	}
 
-  connectedCallback() {
-    this.render();
-    if (this.hasAttribute("flash")) {
-      this.flash();
-    }
-  }
+	connectedCallback() {
+		this.render();
+		if (this.hasAttribute("flash")) {
+			this.flash();
+		}
+	}
 
-  flash() {
-    const color = this.getAttribute("color") || "var(--color-primary-light)";
-    const div = this.#firstElement();
-    div.style.display = "";
-    div.scrollIntoView({ behavior: "smooth" });
-    const previousBorder = div.style.border;
-    div.style.border = `2px solid ${color}`;
-    setTimeout(() => {
-      div.style.border = previousBorder;
-    }, 3_000);
-  }
+	flash() {
+		const color = this.getAttribute("color") || "var(--color-primary-light)";
+		const div = this.#firstElement();
+		div.style.display = "";
+		div.scrollIntoView({
+			behavior: "smooth",
+			block: "start",
+		});
 
-  render() {
-    this.shadowRoot.innerHTML = `
+		const previousBorder = div.style.border;
+		div.style.border = `2px solid ${color}`;
+		setTimeout(() => {
+			div.style.border = previousBorder;
+		}, 3_000);
+	}
+
+	render() {
+		this.shadowRoot.innerHTML = `
                 <slot></slot>
         `;
-  }
+	}
 
-  /** @returns {HTMLElement} */
-  #firstElement() {
-    const slottedElements = this.shadowRoot
-      .querySelector("slot")
-      .assignedNodes({ flatten: true });
-
-    if (slottedElements[0] instanceof HTMLElement) {
-      return slottedElements[0];
-    }
-
-    throw new Error("No slotted elements found");
-  }
+	/** @returns {HTMLElement} */
+	#firstElement() {
+		const slottedElements = this.shadowRoot
+			.querySelector("slot")
+			.assignedNodes({ flatten: true });
+		if (slottedElements[0] instanceof HTMLElement) {
+			return slottedElements[0];
+		}
+		throw new Error("No slotted elements found");
+	}
 }
 
 customElements.define("ui-flashing-div", FlashingDiv);
