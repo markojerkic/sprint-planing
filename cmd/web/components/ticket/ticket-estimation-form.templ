@@ -7,25 +7,54 @@ templ estimationForm(ticketID uint, roomID uint) {
 		class="estimation"
 		hx-post="/ticket/estimate"
 		hx-swap="outerHTML"
-		data-estimation-form={ fmt.Sprintf("%d",
-    ticketID) }
+		id={ fmt.Sprintf("estimation-form-%d", ticketID) }
+		data-estimation-form={ fmt.Sprintf("%d", ticketID) }
+		onsubmit="return validateEstimation(this)"
 	>
 		<input type="hidden" name="ticketID" value={ fmt.Sprintf("%d", ticketID) }/>
 		<input type="hidden" name="roomID" value={ fmt.Sprintf("%d", roomID) }/>
 		<div class="estimation-form">
 			<div class="estimation-form-group">
 				<label for="weekEstimate" class="form-label">Weeks</label>
-				<input type="number" name="weekEstimate" class="form-input" placeholder="W" min="0"/>
+				<input
+					type="number"
+					name="weekEstimate"
+					class="form-input"
+					placeholder="W"
+					min="0"
+				/>
 			</div>
 			<div class="estimation-form-group">
 				<label for="dayEstimate" class="form-label">Days</label>
-				<input type="number" name="dayEstimate" class="form-input" placeholder="D" min="0"/>
+				<input
+					type="number"
+					name="dayEstimate"
+					class="form-input"
+					placeholder="D"
+					min="0"
+				/>
 			</div>
 			<div class="estimation-form-group">
 				<label for="hourEstimate" class="form-label">Hours</label>
-				<input type="number" name="hourEstimate" class="form-input" placeholder="H" min="0"/>
+				<input
+					type="number"
+					name="hourEstimate"
+					class="form-input"
+					placeholder="H"
+					min="0"
+				/>
 			</div>
 		</div>
-		<button type="submit" class="btn btn-primary">Estimate</button>
+		<button
+			type="submit"
+			class="btn-primary"
+		>
+			Estimate
+		</button>
 	</form>
+}
+
+// This script should be included once on the page
+
+script estimationValidationScript(form any) {
 }
