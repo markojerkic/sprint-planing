@@ -29,6 +29,7 @@ func (r *RoomService) DeleteRoom(ctx context.Context, roomID uint, userID uint) 
 		}
 
 		if err := tx.Preload("Users").Joins("JOIN room_users ON room_users.room_id = rooms.id").
+			Where("room_users.user_id = ?", userID).
 			Find(&rooms).Error; err != nil {
 			return err
 		}
