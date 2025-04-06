@@ -20,6 +20,23 @@ type JiraRouter struct {
 	group         *echo.Group
 }
 
+func (j *JiraRouter) getProjectsHandler(ctx echo.Context) error {
+	roomID, err := strconv.Atoi(ctx.QueryParam("roomId"))
+	if err != nil {
+		return ctx.String(400, "Invalid room id")
+	}
+
+	projects, err := j.jiraService.GetProjects(ctx)
+	if err != nil {
+		return ctx.String(500, "Error getting projects")
+	}
+
+	return ticket.BulkImportJiraTicketsForm(ticket.BulkImportJiraTicketsProps{
+		RoomId:       uint(roomID),
+		JiraProjects: projects,
+	}).Render(ctx.Request().Context(), ctx.Response().Writer)
+}
+
 func (j *JiraRouter) searchIssuesHandler(ctx echo.Context) error {
 	issues, err := j.jiraService.GetIssues(ctx, ctx.QueryParam("q"))
 	if err != nil {
@@ -93,6 +110,7 @@ func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Gr
 
 	router.group.GET("/search", router.searchIssuesHandler)
 	router.group.POST("/ticket/:type", router.writeEstimate)
+	router.group.GET("/projects-form", router.getProjectsHandler)
 
 	return router
 }

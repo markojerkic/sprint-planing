@@ -1,0 +1,63 @@
+package ticket
+
+import "fmt"
+
+templ BulkImportJiraTicketsModal(roomId uint) {
+	<ui-modal
+		buttonName="Bulk import from Jira"
+		modalTitle="Bulk import from Jira"
+		buttonColor="var(--color-blue-700)"
+	>
+		@bulkImportJiraTicketsForm(roomId)
+	</ui-modal>
+}
+
+templ bulkImportJiraTicketsForm(roomId uint) {
+	<div
+		hx-get={ fmt.Sprintf("/jira/projects-form?roomId=%d", roomId) }
+		hx-swap="outerHTML"
+		hx-trigger="intersect once"
+	></div>
+}
+
+type JiraProject struct {
+	ID   string `json:"id"`
+	Key  string `json:"key"`
+	Name string `json:"name"`
+}
+type BulkImportJiraTicketsProps struct {
+	RoomId       uint
+	JiraProjects []JiraProject
+}
+
+templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
+	<div class="form-group" data-room-id={ fmt.Sprintf("%d", props.RoomId) }>
+		<label for="jira-project" class="form-label">Project</label>
+		<select name="jira-project" id="jira-project" class="form-select">
+			<option class="form-option" value="">-- Select a project --</option>
+			for _, project := range props.JiraProjects {
+				<option class="form-option" value={ project.ID }>{ project.Name }</option>
+			}
+		</select>
+		<div class="border border-border-color rounded-md p-4">
+			<label for="jira-issue-type" class="form-label">Issue type</label>
+			<div class="form-radio-group">
+				<input type="radio" name="jira-issue-type" id="jira-issue-type-both" value="both" checked/>
+				<label for="jira-issue-type-both" class="form-radio-label">Both</label>
+				<input type="radio" name="jira-issue-type" id="jira-issue-type-story" value="story"/>
+				<label for="jira-issue-type-story" class="form-radio-label">Story</label>
+				<input type="radio" name="jira-issue-type" id="jira-issue-type-task" value="task"/>
+				<label for="jira-issue-type-task" class="form-radio-label">Task</label>
+			</div>
+		</div>
+		<div class="border border-border-color rounded-md p-4">
+			<label for="has-estimate" class="form-label">Has estimate</label>
+			<div class="form-radio-group">
+				<input type="radio" name="has-estimate" id="has-estimate-yes" value="yes"/>
+				<label for="has-estimate-yes" class="form-radio-label">Yes</label>
+				<input type="radio" name="has-estimate" id="has-estimate-no" value="no" checked/>
+				<label for="has-estimate-no" class="form-radio-label">No</label>
+			</div>
+		</div>
+	</div>
+}

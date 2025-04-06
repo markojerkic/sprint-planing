@@ -163,6 +163,9 @@
 /* Form components */
 @utility form-group {
   margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 @utility form-label {
@@ -176,6 +179,41 @@
 @utility text-required {
   color: var(--color-error);
   font-weight: bold;
+}
+
+@utility form-select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--color-border-color);
+  background-color: var(--color-input-bg);
+  color: var(--color-text-light);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px rgba(158, 92, 193, 0.5);
+}
+
+@utility form-option {
+  background-color: var(--color-input-bg);
+  padding: 0.5rem;
+}
+
+@utility form-radio-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@utility form-radio-label {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-light);
+  gap: 0.75rem;
 }
 
 @utility form-input {
@@ -630,13 +668,12 @@ form.estimation {
 
 /* Add this to your global stylesheet */
 .modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: none;
 }
-

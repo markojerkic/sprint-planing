@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/server/auth"
 )
 
@@ -44,6 +45,11 @@ func (j JiraTicketDescription) String() string {
 	return desc
 }
 
+type JiraProjectSearchResult struct {
+	Values []ticket.JiraProject `json:"values"`
+	Total  int                  `json:"total"`
+}
+
 type JiraTicketFields struct {
 	Summary      string                `json:"summary"`
 	TimeEstimate int                   `json:"timeestimate"`
@@ -60,6 +66,54 @@ type JiraService struct {
 }
 
 var jiraKeyRegex = regexp.MustCompile(`[a-zA-Z]+-\d+`)
+
+func (j *JiraService) GetProjects(ctx echo.Context) ([]ticket.JiraProject, error) {
+	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
+	if !ok || clientInfo.ResourceID == "" {
+		slog.Error("Jira client info not found in context", slog.Any("clientInfo", clientInfo), slog.Any("ok", ok))
+		return nil, ctx.String(http.StatusInternalServerError, "Jira client info not found in context")
+	}
+	baseUrl := os.Getenv("JIRA_BASE_URL")
+	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/project", baseUrl, clientInfo.ResourceID))
+	if err != nil {
+		slog.Error("Error parsing url", slog.Any("error", err))
+		return nil, err
+	}
+
+	q := url.Query()
+	q.Set("maxResults", "50")
+
+	url.RawQuery = q.Encode()
+
+	slog.Info("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
+
+	resp, err := clientInfo.HttpClient(ctx).Get(url.String())
+	if err != nil {
+		slog.Error("Error getting issues", slog.Any("error", err))
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("Failed to get issues", slog.Any("status", resp.StatusCode))
+		if resp.Header.Get("Content-Type") == "application/json" {
+			var errorResponse map[string]any
+			if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
+				slog.Error("Failed to get issues", slog.Any("error", errorResponse))
+			}
+		}
+
+		return nil, fmt.Errorf("Failed to get issues")
+	}
+
+	var projects []ticket.JiraProject
+	if err := json.NewDecoder(resp.Body).Decode(&projects); err != nil {
+		slog.Error("Failed to decode issues", slog.Any("error", err))
+		return nil, err
+	}
+
+	return projects, nil
+}
 
 func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketResponse, error) {
 	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)

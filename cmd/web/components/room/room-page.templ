@@ -35,6 +35,7 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 					if room.IsCurrentUserOwner {
 						@ticket.CreateTicket(room.ID)
 						@ticket.CreateJiraTicket(room.ID)
+						@ticket.BulkImportJiraTicketsModal(room.ID)
 					}
 				</div>
 			</div>
