@@ -2,8 +2,8 @@
 	"name": "sprint-planing",
 	"private": true,
 	"scripts": {
-		"build:tailwind": "tailwindcss -i ./cmd/web/assets/css/input.css -o ./output.css",
-		"dev:tailwind": "tailwindcss -w -i ./cmd/web/assets/css/input.css -o ./cmd/web/assets/css/output.css",
+		"build:tailwind": "tailwindcss -i ./input.css -o ./output.css",
+		"dev:tailwind": "tailwindcss -w -i ./input.css -o ./cmd/web/assets/css/output.css",
 		"dev:templ": "templ generate -watch",
 		"dev:go": "bash ./run-go.sh",
 		"dev": "run-p -c --print-label dev:*"
