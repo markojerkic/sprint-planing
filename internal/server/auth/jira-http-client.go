@@ -17,10 +17,6 @@ type sessionUpdatingTokenSource struct {
 }
 
 func (j *JiraClientInfo) HttpClient(c echo.Context) *http.Client {
-	slog.Debug("JiraClientInfo.HttpClient",
-		slog.Any("Expiry", j.Expiry),
-	)
-
 	originalToken := &oauth2.Token{
 		AccessToken:  j.AccessToken,
 		TokenType:    "Bearer",

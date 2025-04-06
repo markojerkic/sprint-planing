@@ -126,7 +126,8 @@ type JiraIssueFilter struct {
 	IssueType   string `json:"issueType" form:"jira-issue-type" query:"jira-issue-type"`
 	HasEstimate string `json:"hasEstimate" form:"has-estimate" query:"has-estimate"`
 	Query       string `json:"query" form:"q" query:"q"`
-	ProjectID   string `json:"projectId" form:"project-id" query:"project-id"`
+	ProjectID   string `json:"projectId" form:"jira-project-id" query:"jira-project-id"`
+	StoryKey    string `json:"jiraStory" form:"jira-story" query:"jira-story"`
 }
 
 func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraTicketResponse, error) {
@@ -156,9 +157,7 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 			jqlQuery += fmt.Sprintf(" OR key = \"%s\"", escapedQuery)
 		}
 
-		jqlQueries = append(jqlQueries, jqlQuery)
-
-		// q.Set("jql", jqlQuery)
+		jqlQueries = append(jqlQueries, fmt.Sprintf("(%s)", jqlQuery))
 	}
 
 	if filter.ProjectID != "" {
@@ -166,15 +165,26 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 	}
 
 	if filter.IssueType != "" {
-		jqlQueries = append(jqlQueries, fmt.Sprintf("type = %s", filter.IssueType))
+		if filter.IssueType == "all" {
+			jqlQueries = append(jqlQueries, "type IN (story, task, subtask, bug)")
+		} else if filter.IssueType == "task" {
+			jqlQueries = append(jqlQueries, "type IN (task, subtask)")
+		} else {
+			jqlQueries = append(jqlQueries, fmt.Sprintf("type = %s", filter.IssueType))
+		}
 	}
 
 	if filter.HasEstimate == "yes" {
-		jqlQueries = append(jqlQueries, fmt.Sprintf("timeestimate != 0"))
+		jqlQueries = append(jqlQueries, fmt.Sprintf("originalEstimate != 0"))
 	} else if filter.HasEstimate == "no" {
-		jqlQueries = append(jqlQueries, fmt.Sprintf("timeestimate = 0"))
+		jqlQueries = append(jqlQueries, "(originalEstimate = 0 OR originalEstimate IS EMPTY)")
 	}
 
+	if filter.StoryKey != "" {
+		jqlQueries = append(jqlQueries, fmt.Sprintf("(parent = \"%s\" OR key = \"%s\")", filter.StoryKey, filter.StoryKey))
+	}
+
+	slog.Debug("JQL", slog.String("jql", strings.Join(jqlQueries, " AND ")))
 	q.Set("jql", strings.Join(jqlQueries, " AND "))
 
 	q.Set("maxResults", "75")

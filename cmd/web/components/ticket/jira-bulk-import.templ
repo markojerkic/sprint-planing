@@ -31,14 +31,22 @@ type BulkImportJiraTicketsProps struct {
 }
 
 templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
-	<div class="form-group" data-room-id={ fmt.Sprintf("%d", props.RoomId) }>
+	<form
+		class="form-group"
+		data-room-id={ fmt.Sprintf("%d", props.RoomId) }
+		hx-get="/jira/bulk/search-results"
+		hx-trigger="change"
+		hx-target="#jira-bulk-search-results"
+		hx-indicator="#bulk-search-result-spinner"
+	>
 		<label for="jira-project" class="form-label">Project</label>
 		<select
-			name="jira-project"
+			name="jira-project-id"
 			id="jira-project"
 			class="form-select"
+			hx-trigger="change, change from:[name='jira-issue-type']"
+			hx-include="[name='jira-issue-type']"
 			hx-get="/jira/project-stories"
-			hx-swap="outerHTML"
 			hx-target="#jira-story-select"
 		>
 			<option class="form-option" value="">-- Select a project --</option>
@@ -49,12 +57,14 @@ templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
 		<div class="border border-border-color rounded-md p-4">
 			<label for="jira-issue-type" class="form-label">Issue type</label>
 			<div class="form-radio-group">
-				<input type="radio" name="jira-issue-type" id="jira-issue-type-both" value="both" checked/>
-				<label for="jira-issue-type-both" class="form-radio-label">Both</label>
+				<input type="radio" name="jira-issue-type" id="jira-issue-type-all" value="all" checked/>
+				<label for="jira-issue-type-both" class="form-radio-label">All</label>
 				<input type="radio" name="jira-issue-type" id="jira-issue-type-story" value="story"/>
 				<label for="jira-issue-type-story" class="form-radio-label">Story</label>
 				<input type="radio" name="jira-issue-type" id="jira-issue-type-task" value="task"/>
 				<label for="jira-issue-type-task" class="form-radio-label">Task</label>
+				<input type="radio" name="jira-issue-type" id="jira-issue-type-bug" value="bug"/>
+				<label for="jira-issue-type-bug" class="form-radio-label">Bug</label>
 			</div>
 		</div>
 		<div class="border border-border-color rounded-md p-4">
@@ -66,8 +76,14 @@ templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
 				<label for="has-estimate-no" class="form-radio-label">No</label>
 			</div>
 		</div>
-		<div id="jira-story-select" class="hidden"></div>
+		<div id="jira-story-select"></div>
+	</form>
+	<div class="flex w-full justify-end">
+		<span class="material-symbols-outlined htmx-indicator text-white animate-spin" id="bulk-search-result-spinner">
+			sync
+		</span>
 	</div>
+	<div id="jira-bulk-search-results"></div>
 }
 
 templ JiraStorySelect(stories []JiraTicket) {
@@ -76,8 +92,28 @@ templ JiraStorySelect(stories []JiraTicket) {
 		<select name="jira-story" id="jira-story" class="form-select">
 			<option class="form-option" value="">-- Select a story --</option>
 			for _, story := range stories {
-				<option class="form-option" value={ story.Key }>{ story.Key }</option>
+				<option class="form-option" value={ story.Key }>{ fmt.Sprintf("%s - %s", story.Key, story.Summary) }</option>
 			}
 		</select>
+	</div>
+}
+
+templ JiraSearchTicketList(tickets JiraTicketListProps) {
+	<div class="grid grid-cols-1 gap-4 text-white">
+		<span class="text-white px-4 py-2 bg-violet-700 rounded-md">
+			Tickets found: { fmt.Sprintf("%d", len(tickets.Tickets)) }
+		</span>
+		for _, ticket := range tickets.Tickets {
+			<div class="grid grid-cols-3 gap-2 border-b border-violet-300">
+				<span class="font-bold">{ ticket.Key }</span>
+				<span class="col-span-2">{ ticket.Summary }</span>
+				<ui-line-clamp class="col-span-3">
+					{ ticket.Description }
+				</ui-line-clamp>
+			</div>
+		}
+		if len(tickets.Tickets) == 0 {
+			<div class="alert alert-info">No tickets found</div>
+		}
 	</div>
 }

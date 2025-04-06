@@ -20,12 +20,44 @@ type JiraRouter struct {
 	group         *echo.Group
 }
 
+func (j *JiraRouter) getBulkImportSearchResultsHandler(ctx echo.Context) error {
+	var filter service.JiraIssueFilter
+	if err := ctx.Bind(&filter); err != nil {
+		return ctx.String(400, "Invalid filter")
+	}
+
+	slog.Debug("Getting search results", slog.Any("filter", filter))
+	issues, err := j.jiraService.GetIssues(ctx, filter)
+	if err != nil {
+		return ctx.String(500, "Error getting issues")
+	}
+
+	jiraTickes := make([]ticket.JiraTicket, len(issues.Issues))
+	for i, t := range issues.Issues {
+		jiraTickes[i] = ticket.JiraTicket{
+			Key:         t.Key,
+			Summary:     t.Fields.Summary,
+			Description: t.Fields.Description.String(),
+		}
+	}
+
+	return ticket.JiraSearchTicketList(ticket.JiraTicketListProps{
+		Tickets: jiraTickes,
+	}).Render(ctx.Request().Context(), ctx.Response().Writer)
+}
+
 func (j *JiraRouter) getProjectStoriesHandler(ctx echo.Context) error {
 	projectID := ctx.QueryParam("jira-project")
 
 	result, err := j.jiraService.GetProjectStories(ctx, projectID)
 	if err != nil {
 		return ctx.String(500, "Error getting stories")
+	}
+	issueType := ctx.QueryParam("jira-issue-type")
+
+	if issueType != "all" && issueType != "task" {
+		// Retun empty string
+		return ctx.String(200, "")
 	}
 
 	stories := make([]ticket.JiraTicket, len(result.Issues))
@@ -137,6 +169,7 @@ func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Gr
 	router.group.POST("/ticket/:type", router.writeEstimate)
 	router.group.GET("/projects-form", router.getProjectsHandler)
 	router.group.GET("/project-stories", router.getProjectStoriesHandler)
+	router.group.GET("/bulk/search-results", router.getBulkImportSearchResultsHandler)
 
 	return router
 }
