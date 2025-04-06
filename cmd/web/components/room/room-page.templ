@@ -39,7 +39,7 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 				<!-- Sticky actions bar -->
 				if room.IsCurrentUserOwner {
 					<div
-						class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap"
+						class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap z-10"
 						id="room-actions-bar"
 					>
 						@ticket.CreateTicket(room.ID)
