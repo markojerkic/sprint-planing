@@ -33,7 +33,14 @@ type BulkImportJiraTicketsProps struct {
 templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
 	<div class="form-group" data-room-id={ fmt.Sprintf("%d", props.RoomId) }>
 		<label for="jira-project" class="form-label">Project</label>
-		<select name="jira-project" id="jira-project" class="form-select">
+		<select
+			name="jira-project"
+			id="jira-project"
+			class="form-select"
+			hx-get="/jira/project-stories"
+			hx-swap="outerHTML"
+			hx-target="#jira-story-select"
+		>
 			<option class="form-option" value="">-- Select a project --</option>
 			for _, project := range props.JiraProjects {
 				<option class="form-option" value={ project.ID }>{ project.Name }</option>
@@ -59,5 +66,18 @@ templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
 				<label for="has-estimate-no" class="form-radio-label">No</label>
 			</div>
 		</div>
+		<div id="jira-story-select" class="hidden"></div>
+	</div>
+}
+
+templ JiraStorySelect(stories []JiraTicket) {
+	<div class="form-group">
+		<label for="jira-story" class="form-label">Story</label>
+		<select name="jira-story" id="jira-story" class="form-select">
+			<option class="form-option" value="">-- Select a story --</option>
+			for _, story := range stories {
+				<option class="form-option" value={ story.Key }>{ story.Key }</option>
+			}
+		</select>
 	</div>
 }

@@ -20,6 +20,26 @@ type JiraRouter struct {
 	group         *echo.Group
 }
 
+func (j *JiraRouter) getProjectStoriesHandler(ctx echo.Context) error {
+	projectID := ctx.QueryParam("jira-project")
+
+	result, err := j.jiraService.GetProjectStories(ctx, projectID)
+	if err != nil {
+		return ctx.String(500, "Error getting stories")
+	}
+
+	stories := make([]ticket.JiraTicket, len(result.Issues))
+	for i, t := range result.Issues {
+		stories[i] = ticket.JiraTicket{
+			Key:         t.Key,
+			Summary:     t.Fields.Summary,
+			Description: t.Fields.Description.String(),
+		}
+	}
+
+	return ticket.JiraStorySelect(stories).Render(ctx.Request().Context(), ctx.Response().Writer)
+}
+
 func (j *JiraRouter) getProjectsHandler(ctx echo.Context) error {
 	roomID, err := strconv.Atoi(ctx.QueryParam("roomId"))
 	if err != nil {
@@ -38,7 +58,12 @@ func (j *JiraRouter) getProjectsHandler(ctx echo.Context) error {
 }
 
 func (j *JiraRouter) searchIssuesHandler(ctx echo.Context) error {
-	issues, err := j.jiraService.GetIssues(ctx, ctx.QueryParam("q"))
+	var filter service.JiraIssueFilter
+	if err := ctx.Bind(&filter); err != nil {
+		return ctx.String(400, "Invalid filter")
+	}
+
+	issues, err := j.jiraService.GetIssues(ctx, filter)
 	if err != nil {
 		return ctx.String(500, "Error getting issues")
 	}
@@ -111,6 +136,7 @@ func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Gr
 	router.group.GET("/search", router.searchIssuesHandler)
 	router.group.POST("/ticket/:type", router.writeEstimate)
 	router.group.GET("/projects-form", router.getProjectsHandler)
+	router.group.GET("/project-stories", router.getProjectStoriesHandler)
 
 	return router
 }

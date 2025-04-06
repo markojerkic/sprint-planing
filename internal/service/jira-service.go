@@ -67,6 +67,13 @@ type JiraService struct {
 
 var jiraKeyRegex = regexp.MustCompile(`[a-zA-Z]+-\d+`)
 
+func (j *JiraService) GetProjectStories(ctx echo.Context, projectID string) (JiraTicketResponse, error) {
+	return j.GetIssues(ctx, JiraIssueFilter{
+		ProjectID: projectID,
+		IssueType: "story",
+	})
+}
+
 func (j *JiraService) GetProjects(ctx echo.Context) ([]ticket.JiraProject, error) {
 	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
 	if !ok || clientInfo.ResourceID == "" {
@@ -115,7 +122,14 @@ func (j *JiraService) GetProjects(ctx echo.Context) ([]ticket.JiraProject, error
 	return projects, nil
 }
 
-func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketResponse, error) {
+type JiraIssueFilter struct {
+	IssueType   string `json:"issueType" form:"jira-issue-type" query:"jira-issue-type"`
+	HasEstimate string `json:"hasEstimate" form:"has-estimate" query:"has-estimate"`
+	Query       string `json:"query" form:"q" query:"q"`
+	ProjectID   string `json:"projectId" form:"project-id" query:"project-id"`
+}
+
+func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraTicketResponse, error) {
 	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
 	if !ok || clientInfo.ResourceID == "" {
 		slog.Error("Jira client info not found in context", slog.Any("clientInfo", clientInfo), slog.Any("ok", ok))
@@ -129,11 +143,12 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketRespo
 	}
 
 	q := url.Query()
-	if query != "" {
+	jqlQueries := make([]string, 0)
+	if filter.Query != "" {
 		// Escape special JQL characters
-		escapedQuery := strings.ReplaceAll(query, "\"", "\\\"")
+		escapedQuery := strings.ReplaceAll(filter.Query, "\"", "\\\"")
 
-		isKey := jiraKeyRegex.MatchString(query)
+		isKey := jiraKeyRegex.MatchString(filter.Query)
 
 		jqlQuery := fmt.Sprintf("text ~ \"%s\"", escapedQuery)
 
@@ -141,11 +156,28 @@ func (j *JiraService) GetIssues(ctx echo.Context, query string) (JiraTicketRespo
 			jqlQuery += fmt.Sprintf(" OR key = \"%s\"", escapedQuery)
 		}
 
-		q.Set("jql", jqlQuery)
+		jqlQueries = append(jqlQueries, jqlQuery)
 
+		// q.Set("jql", jqlQuery)
 	}
 
-	q.Set("maxResults", "50")
+	if filter.ProjectID != "" {
+		jqlQueries = append(jqlQueries, fmt.Sprintf("project = %s", filter.ProjectID))
+	}
+
+	if filter.IssueType != "" {
+		jqlQueries = append(jqlQueries, fmt.Sprintf("type = %s", filter.IssueType))
+	}
+
+	if filter.HasEstimate == "yes" {
+		jqlQueries = append(jqlQueries, fmt.Sprintf("timeestimate != 0"))
+	} else if filter.HasEstimate == "no" {
+		jqlQueries = append(jqlQueries, fmt.Sprintf("timeestimate = 0"))
+	}
+
+	q.Set("jql", strings.Join(jqlQueries, " AND "))
+
+	q.Set("maxResults", "75")
 
 	url.RawQuery = q.Encode()
 
