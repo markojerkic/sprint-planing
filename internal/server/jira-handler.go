@@ -76,7 +76,7 @@ func (j *JiraRouter) getBulkImportSearchResultsHandler(ctx echo.Context) error {
 }
 
 func (j *JiraRouter) getProjectStoriesHandler(ctx echo.Context) error {
-	projectID := ctx.QueryParam("jira-project")
+	projectID := ctx.QueryParam("jira-project-id")
 
 	result, err := j.jiraService.GetProjectStories(ctx, projectID)
 	if err != nil {
