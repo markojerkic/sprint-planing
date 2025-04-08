@@ -89,7 +89,6 @@ templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
 				<label for="has-assignee-no" class="form-radio-label">No</label>
 			</div>
 		</div>
-		<!-- created witin days -->
 		<div class="border border-border-color rounded-md flex gap-2 p-4 justify-start items-center">
 			<label for="created-within-days" class="form-label">Created within days</label>
 			<input
@@ -97,6 +96,7 @@ templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
 				type="number"
 				name="created-within-days"
 				id="created-within-days"
+				placeholder="d"
 				min="1"
 				max="30"
 			/>

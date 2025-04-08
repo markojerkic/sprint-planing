@@ -34,6 +34,24 @@ document.addEventListener(
 					}
 				},
 			);
+
+			const isOwner =
+				document
+					.querySelector("ui-flashing-div")
+					.getAttribute("data-is-owner") === "true";
+			if (isOwner) {
+				// Find all buttons with hx-post="/ticket/hide", switch classs btn-warn to btn-success
+				// and change text to "Reveal"
+				document.querySelectorAll("button[hx-post='/ticket/hide']").forEach(
+					/** @param {HTMLButtonElement} element */
+					(element) => {
+						element.classList.remove("btn-warn");
+						element.classList.add("btn-success");
+						element.innerText = "Reveal";
+					},
+				);
+			}
+
 			return;
 		}
 
