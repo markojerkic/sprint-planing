@@ -150,11 +150,13 @@ func (j *JiraService) GetProjects(ctx echo.Context) ([]ticket.JiraProject, error
 }
 
 type JiraIssueFilter struct {
-	IssueType   string `json:"issueType" form:"jira-issue-type" query:"jira-issue-type"`
-	HasEstimate string `json:"hasEstimate" form:"has-estimate" query:"has-estimate"`
-	Query       string `json:"query" form:"q" query:"q"`
-	ProjectID   string `json:"projectId" form:"jira-project-id" query:"jira-project-id"`
-	StoryKey    string `json:"jiraStory" form:"jira-story" query:"jira-story"`
+	IssueType         string `json:"issueType" form:"jira-issue-type" query:"jira-issue-type"`
+	HasEstimate       string `json:"hasEstimate" form:"has-estimate" query:"has-estimate"`
+	Query             string `json:"query" form:"q" query:"q"`
+	ProjectID         string `json:"projectId" form:"jira-project-id" query:"jira-project-id"`
+	StoryKey          string `json:"jiraStory" form:"jira-story" query:"jira-story"`
+	CreatedWithinDays string `json:"createdWithinDays" form:"created-within-days" query:"created-within-days"`
+	HasAssignee       string `json:"hasAssignee" form:"has-assignee" query:"has-assignee"`
 }
 
 func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraTicketResponse, error) {
@@ -209,6 +211,16 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 
 	if filter.StoryKey != "" {
 		jqlQueries = append(jqlQueries, fmt.Sprintf("(parent = \"%s\" OR key = \"%s\")", filter.StoryKey, filter.StoryKey))
+	}
+
+	if filter.CreatedWithinDays != "" {
+		jqlQueries = append(jqlQueries, fmt.Sprintf("created >= -%sd", filter.CreatedWithinDays))
+	}
+
+	if filter.HasAssignee == "yes" {
+		jqlQueries = append(jqlQueries, "assignee IS NOT EMPTY")
+	} else if filter.HasAssignee == "no" {
+		jqlQueries = append(jqlQueries, "assignee IS EMPTY")
 	}
 
 	slog.Debug("JQL", slog.String("jql", strings.Join(jqlQueries, " AND ")))

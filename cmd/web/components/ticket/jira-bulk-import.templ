@@ -78,6 +78,29 @@ templ BulkImportJiraTicketsForm(props BulkImportJiraTicketsProps) {
 				<label for="has-estimate-no" class="form-radio-label">No</label>
 			</div>
 		</div>
+		<div class="border border-border-color rounded-md p-4">
+			<label for="has-assignee" class="form-label">Has assignee</label>
+			<div class="form-radio-group">
+				<input type="radio" name="has-assignee" id="has-assignee-both" value="both" checked/>
+				<label for="has-assignee-both" class="form-radio-label">Both</label>
+				<input type="radio" name="has-assignee" id="has-assignee-yes" value="yes"/>
+				<label for="has-assignee-yes" class="form-radio-label">Yes</label>
+				<input type="radio" name="has-assignee" id="has-assignee-no" value="no"/>
+				<label for="has-assignee-no" class="form-radio-label">No</label>
+			</div>
+		</div>
+		<!-- created witin days -->
+		<div class="border border-border-color rounded-md flex gap-2 p-4 justify-start items-center">
+			<label for="created-within-days" class="form-label">Created within days</label>
+			<input
+				class="form-input w-20"
+				type="number"
+				name="created-within-days"
+				id="created-within-days"
+				min="1"
+				max="30"
+			/>
+		</div>
 		<div id="jira-story-select"></div>
 	</form>
 	<div class="flex w-full justify-end">
