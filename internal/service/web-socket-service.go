@@ -94,7 +94,7 @@ func (w *WebSocketService) CleanupInactiveConnections() {
 		<-ticker.C
 		mutex.Lock()
 		// Log current state
-		log.Printf("Checking for inactive connections. Current rooms: %d", len(rooms))
+		slog.Debug("Checking for inactive connections. Current rooms", slog.Int("rooms", len(rooms)))
 
 		// For each room, ping each connection
 		for roomID, conns := range rooms {
