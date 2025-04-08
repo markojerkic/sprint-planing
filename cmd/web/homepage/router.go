@@ -2,7 +2,7 @@ package homepage
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/internal/database"
@@ -24,8 +24,8 @@ func HomepageHandler(roomService *service.RoomService) echo.HandlerFunc {
 			c.Logger().Error(err)
 			return c.String(500, "Error getting rooms")
 		}
-		log.Printf("User: %v", user)
-		log.Printf("Rooms: %v", rooms)
+		slog.Debug("Rooms", slog.Any("rooms", rooms))
+		slog.Debug("User", slog.Any("user", user))
 
 		return RoomList(rooms, user.ID).Render(c.Request().Context(), c.Response().Writer)
 	}
