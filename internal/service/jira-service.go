@@ -78,8 +78,8 @@ func (j *JiraService) BulkImportTickets(ctx echo.Context, userID uint, roomID ui
 	tickets := make([]CreateTicketForm, len(issues.Issues))
 	for i, t := range issues.Issues {
 		tickets[i] = CreateTicketForm{
-			TicketName:        t.Fields.Summary,
-			TicketDescription: t.Fields.Description.String(),
+			TicketName:        t.Key,
+			TicketDescription: t.Fields.Summary,
 			RoomID:            roomID,
 			JiraKey:           t.Key,
 		}
