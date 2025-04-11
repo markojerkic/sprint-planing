@@ -107,9 +107,9 @@ func (s *Server) cleanup(ctx context.Context) error {
 			return err
 		}
 
-		// Delete users which have no tickets and are older than 10 days
+		// Delete users which have no rooms or estimates
 		if err := tx.Model(&database.User{}).
-			Where("id NOT IN (SELECT user_id FROM tickets WHERE user_id IS NOT NULL)").
+			Where("id NOT IN (SELECT user_id FROM estimates WHERE user_id IS NOT NULL) OR id NOT IN (SELECT user_id FROM room_users WHERE user_id IS NOT NULL)").
 			Where("created_at < NOW() - INTERVAL '10 days'").
 			Delete(&database.User{}).Error; err != nil {
 			slog.Error("Failed to delete users", slog.Any("error", err))
