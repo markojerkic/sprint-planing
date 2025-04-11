@@ -48,6 +48,16 @@ func NewServer() *http.Server {
 }
 
 func (s *Server) cleanupCRON() {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cancel()
+
+		err := s.cleanup(ctx)
+		if err != nil {
+			log.Printf("Failed to cleanup: %v", err)
+		}
+	}()
+
 	cron := cron.New()
 
 	// Run every 10 hours
@@ -73,44 +83,39 @@ func (s *Server) cleanupCRON() {
 func (s *Server) cleanup(ctx context.Context) error {
 	slog.Info("Cleanup job started")
 	if err := s.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(`
-            DELETE FROM tickets
-            WHERE created_at < NOW() - INTERVAL '10 days';
-        `).Error; err != nil {
+		// Delete estimates
+		if err := tx.Model(&database.Estimate{}).
+			Where("created_at < NOW() - INTERVAL '10 days'").
+			Delete(&database.Estimate{}).Error; err != nil {
+			slog.Error("Failed to delete estimates", slog.Any("error", err))
+			return err
+		}
+
+		// Delete tickets which are older than 10 days
+		if err := tx.Model(&database.Ticket{}).
+			Where("created_at < NOW() - INTERVAL '10 days'").
+			Delete(&database.Ticket{}).Error; err != nil {
 			slog.Error("Failed to delete tickets", slog.Any("error", err))
 			return err
 		}
 		// Delete rooms which have no tickets and are older than 10 days
-		if err := tx.Exec(`
-            DELETE FROM rooms
-            WHERE id NOT IN (
-                SELECT room_id FROM tickets WHERE room_id IS NOT NULL
-            ) AND created_at < NOW() - INTERVAL '10 days';
-        `).Error; err != nil {
+		if err := tx.Model(&database.Room{}).
+			Where("id NOT IN (SELECT room_id FROM tickets WHERE room_id IS NOT NULL)").
+			Where("created_at < NOW() - INTERVAL '10 days'").
+			Delete(&database.Room{}).Error; err != nil {
 			slog.Error("Failed to delete rooms", slog.Any("error", err))
 			return err
 		}
-		// Delete room_users entries for users not in any rooms
-		if err := tx.Exec(`
-            DELETE FROM room_users
-            WHERE user_id NOT IN (
-                SELECT DISTINCT user_id FROM room_users ru
-                JOIN rooms r ON ru.room_id = r.id
-            );
-            `).Error; err != nil {
-			slog.Error("Failed to delete room_users", slog.Any("error", err))
-			return err
-		}
-		// Delete users which have no rooms and are older than 10 days
-		if err := tx.Exec(`
-            DELETE FROM users
-            WHERE id NOT IN (
-                SELECT user_id FROM room_users
-            ) AND created_at < NOW() - INTERVAL '10 days';
-        `).Error; err != nil {
+
+		// Delete users which have no tickets and are older than 10 days
+		if err := tx.Model(&database.User{}).
+			Where("id NOT IN (SELECT user_id FROM tickets WHERE user_id IS NOT NULL)").
+			Where("created_at < NOW() - INTERVAL '10 days'").
+			Delete(&database.User{}).Error; err != nil {
 			slog.Error("Failed to delete users", slog.Any("error", err))
 			return err
 		}
+
 		return nil
 	}); err != nil {
 		slog.Error("Failed to run cleanup transaction", slog.Any("error", err))
