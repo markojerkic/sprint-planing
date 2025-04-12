@@ -110,7 +110,7 @@ func (s *Server) cleanup(ctx context.Context) error {
 		// Delete users which have no rooms or estimates
 		if err := tx.Model(&database.User{}).
 			Where("id NOT IN (SELECT user_id FROM estimates WHERE user_id IS NOT NULL) OR id NOT IN (SELECT user_id FROM room_users WHERE user_id IS NOT NULL)").
-			Where("created_at < NOW() - INTERVAL '10 days'").
+			Where("created_at < NOW() - INTERVAL '35 days'").
 			Delete(&database.User{}).Error; err != nil {
 			slog.Error("Failed to delete users", slog.Any("error", err))
 			return err
