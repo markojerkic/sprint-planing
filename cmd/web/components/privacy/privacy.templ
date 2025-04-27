@@ -3,7 +3,7 @@ package privacy
 import "github.com/markojerkic/spring-planing/cmd/web/components"
 
 templ PrivacyPage() {
-	@components.PageLayout("Privacy") {
+	@components.PageLayoutWithPath("Privacy", "/privacy") {
 		<div class="container">
 			<header class="mb-8">
 				<h1 class="title">Privacy Policy</h1>

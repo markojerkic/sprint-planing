@@ -27,18 +27,20 @@ templ Card(props CardProps) {
 	</div>
 }
 
-// Page layout component
-templ PageLayout(title string) {
-	@PageLayoutWithPath(title, "")
-}
-
 templ PageLayoutWithPath(title string, currentPath string) {
 	<!DOCTYPE html>
 	<html lang="en" hx-boost="true">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>{ title } - Sprint Poker</title>
+			<meta name="description" content="Sprint Gauge - A collaborative tool for agile teams to estimate tasks together in real-time. Create a room, invite your team, and estimate tasks efficiently."/>
+			<meta name="keywords" content="agile estimation, sprint planning, story points, task sizing, scrum, team estimation, planning poker alternative"/>
+			<meta name="author" content="Sprint Gauge"/>
+			<meta property="og:title" content="Sprint Gauge - Collaborative Task Estimation Tool"/>
+			<meta property="og:description" content="A collaborative tool for agile teams to estimate tasks together in real-time."/>
+			<meta property="og:type" content="website"/>
+			<meta property="og:image" content="/assets/img/favicon.svg"/>
+			<title>{ title } - Sprint Gauge</title>
 			<link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg"/>
 			<link href="/assets/css/output.css" rel="stylesheet"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>

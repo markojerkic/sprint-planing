@@ -3,11 +3,11 @@ package room
 import "github.com/markojerkic/spring-planing/cmd/web/components"
 
 templ CreateRoom() {
-	@components.PageLayout("Create Room") {
+	@components.PageLayoutWithPath("Create Room", "/room") {
 		<div style="max-width: 500px; margin: 0 auto;">
 			@components.Card(components.CardProps{
 				HasAccent: true,
-				Title:     "Create a Sprint Poker Room",
+				Title:     "Create a Sprint Gauge Room",
 			}) {
 				<form action="/room" method="POST">
 					<div class="form-group">

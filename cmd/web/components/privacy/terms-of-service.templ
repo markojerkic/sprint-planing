@@ -3,7 +3,7 @@ package privacy
 import "github.com/markojerkic/spring-planing/cmd/web/components"
 
 templ TermsPage() {
-	@components.PageLayout("Terms of Service") {
+	@components.PageLayoutWithPath("Terms of Service", "/terms-of-service") {
 		<div class="container">
 			<header class="mb-8">
 				<h1 class="title">Terms of Service</h1>
