@@ -29,6 +29,10 @@ templ Card(props CardProps) {
 
 // Page layout component
 templ PageLayout(title string) {
+	@PageLayoutWithPath(title, "")
+}
+
+templ PageLayoutWithPath(title string, currentPath string) {
 	<!DOCTYPE html>
 	<html lang="en" hx-boost="true">
 		<head>
@@ -50,7 +54,7 @@ templ PageLayout(title string) {
 			<script src="/assets/js/components/flashing-div.js" type="module"></script>
 		</head>
 		<body>
-			@Header()
+			@HeaderWithActive(currentPath)
 			<div class="flex justify-center items-center p-2 min-h-screen">
 				<div class="w-full mx-auto max-w-2xl">
 					{ children... }

@@ -8,7 +8,7 @@ import (
 )
 
 templ RoomsPage(rooms []database.Room, userID uint) {
-	@components.PageLayout("My Rooms - Sprint Poker") {
+	@components.PageLayoutWithPath("My Rooms - Sprint Poker", "/rooms") {
 		<div class="container" id="room-list-container">
 			<h1 class="text-3xl font-bold mb-6 text-primary">My Rooms</h1>
 			

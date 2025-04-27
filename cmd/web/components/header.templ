@@ -18,7 +18,7 @@ templ HeaderWithActive(currentPath string) {
 					</div>
 				</div>
 				<div class="flex items-center space-x-4">
-					<a href="/room" class="btn btn-sm btn-primary">Create Room</a>
+					<a href="/room" class="btn-sm btn-primary">Create Room</a>
 				</div>
 			</nav>
 		</div>
@@ -31,13 +31,14 @@ func getNavLinkClass(currentPath, linkPath string) string {
 		// Default styling when path is not provided
 		return baseClass + " hover:text-primary"
 	}
-	
-	if (linkPath == "/" && currentPath == "/") || 
-	   (linkPath != "/" && strings.HasPrefix(currentPath, linkPath)) {
+
+	if (linkPath == "/" && currentPath == "/") ||
+		(linkPath != "/" && strings.HasPrefix(currentPath, linkPath)) {
 		// Active state
 		return baseClass + " text-primary font-medium border-b-2 border-primary"
 	}
-	
+
 	// Inactive state
 	return baseClass + " hover:text-primary"
 }
+
