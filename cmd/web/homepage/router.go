@@ -11,13 +11,22 @@ import (
 
 func HomepageHandler(roomService *service.RoomService) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user := c.Get("user").(database.User)
+		// Get user for authentication, but we don't need it for the homepage
+		_ = c.Get("user").(database.User)
 
 		roomId := c.QueryParam("roomId")
 
 		if roomId != "" {
 			return c.Redirect(302, fmt.Sprintf("/room/%s", roomId))
 		}
+
+		return Homepage().Render(c.Request().Context(), c.Response().Writer)
+	}
+}
+
+func RoomsHandler(roomService *service.RoomService) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := c.Get("user").(database.User)
 
 		rooms, err := roomService.GetUsersRooms(c.Request().Context(), int32(user.ID))
 		if err != nil {
@@ -27,6 +36,6 @@ func HomepageHandler(roomService *service.RoomService) echo.HandlerFunc {
 		slog.Debug("Rooms", slog.Any("rooms", rooms))
 		slog.Debug("User", slog.Any("user", user))
 
-		return RoomList(rooms, user.ID).Render(c.Request().Context(), c.Response().Writer)
+		return RoomsPage(rooms, user.ID).Render(c.Request().Context(), c.Response().Writer)
 	}
 }

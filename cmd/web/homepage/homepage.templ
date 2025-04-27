@@ -3,13 +3,11 @@ package homepage
 import (
 	"fmt"
 	"github.com/markojerkic/spring-planing/cmd/web/components"
-	"time"
-	"github.com/markojerkic/spring-planing/internal/database"
 )
 
-templ RoomList(rooms []database.Room, userID uint) {
+templ Homepage() {
 	@components.PageLayout("Sprint Poker - Group Task Estimation") {
-		<div class="container" id="room-list-container">
+		<div class="container" id="homepage-container">
 			<div class="mb-8 text-center">
 				<h1 class="text-3xl font-bold mb-4 text-primary">Sprint Poker</h1>
 				<p class="text-lg mb-6 max-w-xl mx-auto">
@@ -57,27 +55,16 @@ templ RoomList(rooms []database.Room, userID uint) {
 						<li>Export final estimates back to Jira or copy in Jira format</li>
 					</ol>
 				</div>
-			</div>
-			
-			<h2 class="mb-4 text-2xl font-semibold">My Rooms</h2>
-			<div class="flex gap-2 mb-4 bg-card-bg p-4 rounded-lg shadow-sm items-stretch">
-				<a href="/room" class="btn btn-primary mr-3">Create Room</a>
-				<ui-modal
-					buttonName="Join Existing Room"
-					modalTitle="Join Existing Room"
-				>
-					@joinRoomForm()
-				</ui-modal>
-			</div>
-			if len(rooms) == 0 {
-				@noRooms()
-			} else {
-				<div class="room-list pt-4">
-					for _, room := range rooms {
-						@roomCard(room, userID)
-					}
+				<div class="flex justify-center gap-4">
+					<a href="/room" class="btn btn-primary">Create Room</a>
+					<ui-modal
+						buttonName="Join Existing Room"
+						modalTitle="Join Existing Room"
+					>
+						@joinRoomForm()
+					</ui-modal>
 				</div>
-			}
+			</div>
 		</div>
 		<script>
     // Initialize popover behavior when the page loads
@@ -106,31 +93,6 @@ templ joinRoomForm() {
 	</form>
 }
 
-templ noRooms() {
-	<div class="rounded-lg p-4 shadow-sm bg-card-bg max-w-[500px] mx-auto text-center">
-		<div class="mb-4 text-primary flex justify-center">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="48"
-				height="48"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-				<path d="M16 2v5"></path>
-				<path d="M8 2v5"></path>
-				<path d="M3 10h18"></path>
-			</svg>
-		</div>
-		<h3 class="text-2xl text-primary mb-4">No Rooms Found</h3>
-		<p class="text-text-light mb-8">You haven't created or joined any rooms yet</p>
-	</div>
-}
-
 // Success feedback after joining a room
 templ JoinRoomSuccess(roomId string) {
 	<div class="alert alert-success">
@@ -145,56 +107,4 @@ templ JoinRoomSuccess(roomId string) {
 			popovertargetaction="hide"
 		>Close</button>
 	</div>
-}
-
-templ roomCard(room database.Room, userID uint) {
-	{{ isOwner := room.CreatedBy == userID }}
-	<div class={ fmt.Sprintf("card mb-3 %s", templ.SafeClass(ternary(isOwner, "card-accent", ""))) }>
-		<div class="card-header">
-			<div class="room-header">
-				<h3 class="title mb-0">{ room.Name }</h3>
-				if isRecent(room.CreatedAt) {
-					<span class="badge badge-primary">New</span>
-				}
-			</div>
-			<div class="room-meta">
-				<span class="room-date">Created { formatCreatedAt(room.CreatedAt) }</span>
-				if isOwner {
-					<span class="badge badge-owner">Owner</span>
-				}
-			</div>
-		</div>
-		<div class="card-body">
-			<div class="flex justify-between items-stretch gap-2">
-				<a href={ templ.SafeURL(fmt.Sprintf("/room/%d", room.ID)) } class="btn hover:bg-primary-dark">Join Room</a>
-				if isOwner {
-					<button
-						class="btn btn-error hover:bg-red-700"
-						hx-delete={ fmt.Sprintf("/room/%d", room.ID) }
-						hx-confirm="Are you sure you want to delete this room? This action cannot be undone."
-						hx-target="#room-list-container"
-						hx-select="#room-list-container"
-						hx-swap="outerHTML"
-					>
-						Delete
-					</button>
-				}
-			</div>
-		</div>
-	</div>
-}
-
-func ternary(condition bool, trueVal, falseVal string) string {
-	if condition {
-		return trueVal
-	}
-	return falseVal
-}
-
-func formatCreatedAt(createdAt time.Time) string {
-	return createdAt.Format("Jan 2, 2006")
-}
-
-func isRecent(createdAt time.Time) bool {
-	return createdAt.After(time.Now().Add(-24 * time.Hour))
 }

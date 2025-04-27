@@ -1,0 +1,43 @@
+package components
+
+import "strings"
+
+templ Header() {
+	@HeaderWithActive("")
+}
+
+templ HeaderWithActive(currentPath string) {
+	<header class="bg-card-bg shadow-sm mb-6">
+		<div class="container mx-auto px-4 py-3">
+			<nav class="flex justify-between items-center">
+				<div class="flex items-center">
+					<a href="/" class="text-xl font-bold text-primary mr-8">Sprint Poker</a>
+					<div class="hidden md:flex space-x-4">
+						<a href="/" class={ getNavLinkClass(currentPath, "/") }>Home</a>
+						<a href="/rooms" class={ getNavLinkClass(currentPath, "/rooms") }>My Rooms</a>
+					</div>
+				</div>
+				<div class="flex items-center space-x-4">
+					<a href="/room" class="btn btn-sm btn-primary">Create Room</a>
+				</div>
+			</nav>
+		</div>
+	</header>
+}
+
+func getNavLinkClass(currentPath, linkPath string) string {
+	baseClass := "nav-link transition-colors"
+	if currentPath == "" {
+		// Default styling when path is not provided
+		return baseClass + " hover:text-primary"
+	}
+	
+	if (linkPath == "/" && currentPath == "/") || 
+	   (linkPath != "/" && strings.HasPrefix(currentPath, linkPath)) {
+		// Active state
+		return baseClass + " text-primary font-medium border-b-2 border-primary"
+	}
+	
+	// Inactive state
+	return baseClass + " hover:text-primary"
+}

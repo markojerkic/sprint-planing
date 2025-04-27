@@ -2,6 +2,9 @@ package components
 
 import "fmt"
 
+// Import the Header component
+//go:generate templ generate
+
 // Card component
 templ Card(props CardProps) {
 	<div
@@ -47,6 +50,7 @@ templ PageLayout(title string) {
 			<script src="/assets/js/components/flashing-div.js" type="module"></script>
 		</head>
 		<body>
+			@Header()
 			<div class="flex justify-center items-center p-2 min-h-screen">
 				<div class="w-full mx-auto max-w-2xl">
 					{ children... }

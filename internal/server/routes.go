@@ -50,6 +50,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	newWebsocketRouter(websocketService, e.Group("/ws"))
 	newJiraRouter(jiraService, s.db.DB, e.Group("/jira"))
 	e.GET("/", homepage.HomepageHandler(roomService))
+	e.GET("/rooms", homepage.RoomsHandler(roomService))
 	e.GET("/privacy", echo.WrapHandler(templ.Handler(privacy.PrivacyPage())))
 	e.GET("/terms-of-service", echo.WrapHandler(templ.Handler(privacy.TermsPage())))
 

@@ -79,7 +79,7 @@ func (r *RoomRouter) deleteRoomHandler(ctx echo.Context) error {
 		return ctx.String(500, "Error deleting room")
 	}
 
-	return homepage.RoomList(rooms, user.ID).Render(ctx.Request().Context(), ctx.Response().Writer)
+	return homepage.RoomsPage(rooms, user.ID).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
 
 func newRoomRouter(roomService *service.RoomService,
