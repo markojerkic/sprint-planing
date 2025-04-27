@@ -8,9 +8,58 @@ import (
 )
 
 templ RoomList(rooms []database.Room, userID uint) {
-	@components.PageLayout("Homepage") {
+	@components.PageLayout("Sprint Poker - Group Task Estimation") {
 		<div class="container" id="room-list-container">
-			<h1 class="mb-4 text-2xl">My Rooms</h1>
+			<div class="mb-8 text-center">
+				<h1 class="text-3xl font-bold mb-4 text-primary">Sprint Poker</h1>
+				<p class="text-lg mb-6 max-w-xl mx-auto">
+					A collaborative tool for agile teams to estimate tasks together in real-time.
+					Create a room, invite your colleagues, and estimate tasks efficiently.
+				</p>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-xl mx-auto">
+					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-primary">
+							<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+							<circle cx="9" cy="7" r="4"></circle>
+							<path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+							<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+						</svg>
+						<h3 class="font-semibold">Collaborative</h3>
+						<p class="text-sm">Real-time updates for all team members</p>
+					</div>
+					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-primary">
+							<path d="M12 20V10"></path>
+							<path d="M18 20V4"></path>
+							<path d="M6 20v-6"></path>
+						</svg>
+						<h3 class="font-semibold">Jira Integration</h3>
+						<p class="text-sm">Import and export estimates to Jira</p>
+					</div>
+					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-primary">
+							<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+							<path d="M16 2v5"></path>
+							<path d="M8 2v5"></path>
+							<path d="M3 10h18"></path>
+						</svg>
+						<h3 class="font-semibold">Flexible</h3>
+						<p class="text-sm">Create tasks manually or import from Jira</p>
+					</div>
+				</div>
+				<div class="how-it-works bg-card-bg p-4 rounded-lg shadow-sm max-w-xl mx-auto mb-8">
+					<h2 class="text-xl font-semibold mb-3">How It Works</h2>
+					<ol class="text-left list-decimal list-inside space-y-2">
+						<li>Create a room and share the link with your team</li>
+						<li>Add tasks manually or import from Jira</li>
+						<li>Everyone estimates tasks in real-time</li>
+						<li>Reveal estimates and discuss differences</li>
+						<li>Export final estimates back to Jira or copy in Jira format</li>
+					</ol>
+				</div>
+			</div>
+			
+			<h2 class="mb-4 text-2xl font-semibold">My Rooms</h2>
 			<div class="flex gap-2 mb-4 bg-card-bg p-4 rounded-lg shadow-sm items-stretch">
 				<a href="/room" class="btn btn-primary mr-3">Create Room</a>
 				<ui-modal
