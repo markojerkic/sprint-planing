@@ -12,6 +12,7 @@ import (
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/server/auth"
 	"github.com/markojerkic/spring-planing/internal/service"
+	"github.com/markojerkic/spring-planing/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -40,12 +41,14 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 	roomID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Logger().Errorf("Error parsing room id: %v", err)
+		util.AddToastHeader(ctx, "Invalid room id")
 		return ctx.String(400, "Invalid room id")
 	}
 
 	roomDetails, err := r.roomService.GetRoom(ctx.Request().Context(), uint(roomID), user.ID)
 	if err != nil {
 		ctx.Logger().Errorf("Error getting room: %v", err)
+		util.AddToastHeader(ctx, "Room not found")
 		return ctx.String(500, "Error getting room")
 	}
 

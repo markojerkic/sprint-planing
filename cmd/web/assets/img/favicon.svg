@@ -1,24 +1,23 @@
 <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
   <!-- Background Square with Rounded Corners -->
-  <rect x="0" y="0" width="128" height="128" rx="16" fill="#9370DB" />
+  <rect x="0" y="0" width="128" height="128" rx="16" fill="#8952CF" />
   
-  <!-- Gauge Circle -->
-  <circle cx="64" cy="64" r="45" fill="none" stroke="white" stroke-width="8" stroke-opacity="0.9" />
+  <!-- Speedometer/Gauge Arc -->
+  <path d="M 24,88 A 50,50 0 0 1 104,88" fill="none" stroke="white" stroke-width="10" stroke-opacity="0.9" stroke-linecap="round" />
   
-  <!-- Gauge Markings -->
-  <line x1="64" y1="25" x2="64" y2="35" stroke="white" stroke-width="4" stroke-linecap="round" />
-  <line x1="36" y1="36" x2="43" y2="43" stroke="white" stroke-width="4" stroke-linecap="round" />
-  <line x1="25" y1="64" x2="35" y2="64" stroke="white" stroke-width="4" stroke-linecap="round" />
-  <line x1="36" y1="92" x2="43" y2="85" stroke="white" stroke-width="4" stroke-linecap="round" />
-  <line x1="92" y1="36" x2="85" y2="43" stroke="white" stroke-width="4" stroke-linecap="round" />
-  <line x1="103" y1="64" x2="93" y2="64" stroke="white" stroke-width="4" stroke-linecap="round" />
+  <!-- Tick Marks on Gauge -->
+  <line x1="24" y1="88" x2="32" y2="88" stroke="white" stroke-width="4" stroke-linecap="round" />
+  <line x1="44" y1="64" x2="50" y2="68" stroke="white" stroke-width="4" stroke-linecap="round" />
+  <line x1="84" y1="68" x2="90" y2="64" stroke="white" stroke-width="4" stroke-linecap="round" />
+  <line x1="104" y1="88" x2="96" y2="88" stroke="white" stroke-width="4" stroke-linecap="round" />
   
   <!-- Gauge Needle -->
-  <path d="M64,64 L64,30" stroke="#FF5733" stroke-width="6" stroke-linecap="round" />
+  <path d="M64,88 L64,48" stroke="#FF3A5E" stroke-width="6" stroke-linecap="round" />
+  <circle cx="64" cy="88" r="8" fill="white" />
   
-  <!-- Center Cap -->
-  <circle cx="64" cy="64" r="12" fill="white" />
+  <!-- "S" Letter -->
+  <text x="44" y="52" font-family="Arial, sans-serif" font-weight="bold" font-size="36" fill="white">S</text>
   
-  <!-- "SG" Text -->
-  <text x="49" y="70" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="#9370DB">SG</text>
+  <!-- "G" Letter -->
+  <text x="68" y="52" font-family="Arial, sans-serif" font-weight="bold" font-size="36" fill="white">G</text>
 </svg>

@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func AddTostHeader(c echo.Context, text string) error {
+func AddToastHeader(c echo.Context, text string) error {
 	// Get the current HX-Trigger header, if any
 	var triggers map[string]any
 	currentTrigger := c.Response().Header().Get("HX-Trigger")
