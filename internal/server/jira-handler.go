@@ -1,7 +1,9 @@
 package server
 
 import (
+	"fmt"
 	"log/slog"
+	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -185,6 +187,18 @@ func (j *JiraRouter) writeEstimate(ctx echo.Context) error {
 	return ctx.String(200, "<div>Estimate updated!</div>")
 }
 
+func (j *JiraRouter) redirectToJiraIssueHandler(ctx echo.Context) error {
+	issueKey := ctx.Param("issueKey")
+	resourceBseUrl, err := j.jiraService.GetResourceServerBaseUrl(ctx)
+	if err != nil {
+		return ctx.String(500, "Error getting resource ID")
+	}
+
+	slog.Debug("Redirecting to Jira issue", slog.String("issueKey", issueKey), slog.String("resourceBseUrl", resourceBseUrl))
+	return ctx.Redirect(http.StatusFound, fmt.Sprintf("%s/browse/%s", resourceBseUrl, issueKey))
+
+}
+
 func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Group) *JiraRouter {
 	router := &JiraRouter{
 		jiraService: jiraService,
@@ -194,6 +208,7 @@ func newJiraRouter(jiraService *service.JiraService, db *gorm.DB, group *echo.Gr
 
 	router.group.Use(auth.JiraAuthMiddleware)
 
+	router.group.GET("/:issueKey", router.redirectToJiraIssueHandler)
 	router.group.GET("/search", router.searchIssuesHandler)
 	router.group.POST("/ticket/:type", router.writeEstimate)
 	router.group.GET("/projects-form", router.getProjectsHandler)

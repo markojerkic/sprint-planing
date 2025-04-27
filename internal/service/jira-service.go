@@ -68,6 +68,57 @@ type JiraService struct {
 
 var jiraKeyRegex = regexp.MustCompile(`[a-zA-Z]+-\d+`)
 
+// cal /rest/api/3/serverInfo and get field baseUrl
+func (j *JiraService) GetResourceServerBaseUrl(ctx echo.Context) (string, error) {
+
+	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
+	if !ok || clientInfo.ResourceID == "" {
+		slog.Error("Jira client info not found in context", slog.Any("clientInfo", clientInfo), slog.Any("ok", ok))
+		return "", ctx.String(http.StatusInternalServerError, "Jira client info not found in context")
+	}
+	baseUrl := os.Getenv("JIRA_BASE_URL")
+	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/serverInfo", baseUrl, clientInfo.ResourceID))
+	if err != nil {
+		slog.Error("Error parsing url", slog.Any("error", err))
+		return "", err
+	}
+
+	q := url.Query()
+	q.Set("maxResults", "50")
+
+	url.RawQuery = q.Encode()
+
+	slog.Debug("URL", slog.Any("url", url.String()), slog.Any("query", url.Query().Encode()))
+
+	resp, err := clientInfo.HttpClient(ctx).Get(url.String())
+	if err != nil {
+		slog.Error("Error getting issues", slog.Any("error", err))
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("Failed to get issues", slog.Any("status", resp.StatusCode))
+		if resp.Header.Get("Content-Type") == "application/json" {
+			var errorResponse map[string]any
+			if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
+				slog.Error("Failed to get issues", slog.Any("error", errorResponse))
+			}
+		}
+
+		return "", fmt.Errorf("Failed to get issues")
+	}
+
+	var result map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		slog.Error("Failed to decode issues", slog.Any("error", err))
+		return "", err
+	}
+
+	return result["baseUrl"].(string), nil
+
+}
+
 // Batch import tickets from Jira
 func (j *JiraService) BulkImportTickets(ctx echo.Context, userID uint, roomID uint, filter JiraIssueFilter) ([]ticket.TicketDetailProps, error) {
 	issues, err := j.GetIssues(ctx, filter)

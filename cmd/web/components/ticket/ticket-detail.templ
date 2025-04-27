@@ -25,7 +25,20 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 		data-ticket-id={ fmt.Sprintf("%d", props.ID) }
 		data-is-owner={ fmt.Sprintf("%t", isRoomOwner) }
 	>
-		<h3 class="text-2xl font-extrabold py-4">{ props.Name }</h3>
+		<h3 class="text-2xl font-extrabold py-4">
+			if props.JiraKey != nil {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/jira/%s", *props.JiraKey)) }
+					target="_blank"
+					class="ml-2 underline underline-offset-4 hover:text-blue-500"
+				>
+					{ props.Name }
+					<span class="material-symbols-outlined text-sm align-middle">open_in_new</span>
+				</a>
+			} else {
+				{ props.Name }
+			}
+		</h3>
 		<ui-line-clamp>
 			{ props.Description }
 		</ui-line-clamp>
