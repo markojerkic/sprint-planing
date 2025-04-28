@@ -20,6 +20,7 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 		<div class="bg-card-bg rounded-lg shadow-lg p-8 relative">
 			<!-- Scripts and styles -->
 			<script src="/assets/js/ticket-hiding.js" type="module"></script>
+			<script src="/assets/js/toggle-closed-tickets.js"></script>
 			<script src="/assets/js/estimate-validation.js"></script>
 			<h2 class="text-2xl font-bold mb-4">{ room.Name }</h2>
 			<a href="/" class="link mb-4">‹ Back to Homepage</a>
@@ -36,17 +37,20 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 					</p>
 				</div>
 				<!-- Sticky actions bar -->
-				if room.IsCurrentUserOwner {
-					<div
-						class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap z-10"
-						id="room-actions-bar"
-					>
+				<div
+					class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap z-10"
+					id="room-actions-bar"
+				>
+					if room.IsCurrentUserOwner {
 						@ticket.CreateTicket(room.ID)
 						@ticket.CreateJiraTicket(room.ID)
 						@ticket.BulkImportJiraTicketsModal(room.ID)
 						@ticket.HideAllTickets(room.ID)
-					</div>
-				}
+					}
+					<button class="btn-sm-warning p-1" onclick="toggleClosedTickets()" id="toggle-hidden-tickets">
+						Hide Closed Tickets
+					</button>
+				</div>
 				<!-- Ticket list -->
 				@ticket.TicketList(room.Tickets, isRoomOwner)
 			</div>

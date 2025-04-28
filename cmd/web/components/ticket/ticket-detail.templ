@@ -102,6 +102,7 @@ templ CreatedTicketUpdate(props TicketDetailProps, flash bool) {
 			}
 			data-ticket-id={ fmt.Sprintf("%d", props.ID) }
 			data-is-owner={ fmt.Sprintf("%t", false) }
+			data-closed={ fmt.Sprintf("%t", props.IsClosed) }
 		>
 			@TicketDetail(props, false)
 		</ui-flashing-div>

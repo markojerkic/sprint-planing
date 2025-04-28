@@ -34,6 +34,11 @@
     color: var(--color-text-light);
     line-height: 2;
   }
+
+    .hide-closed-tickets [data-closed="true"] {
+        display: none;
+    }
+
   @keyframes highlightBorder {
     0% {
       border: 2px solid var(--color-color-primary);
