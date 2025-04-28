@@ -94,6 +94,21 @@ templ HideToggle(ticketID uint, isHidden bool) {
 	}
 }
 
+templ ClosedTicketUpdate(props TicketDetailProps, flash bool) {
+	<div hx-swap-oob={ fmt.Sprintf("outer-html:ui-flashing-div[data-ticket-id='%d']", props.ID) }>
+		<ui-flashing-div
+			if flash {
+				flash
+			}
+			data-ticket-id={ fmt.Sprintf("%d", props.ID) }
+			data-is-owner={ fmt.Sprintf("%t", false) }
+			data-closed={ fmt.Sprintf("%t", props.IsClosed) }
+		>
+			@TicketDetail(props, false)
+		</ui-flashing-div>
+	</div>
+}
+
 templ CreatedTicketUpdate(props TicketDetailProps, flash bool) {
 	<div hx-swap-oob="afterbegin:#ticket-list">
 		<ui-flashing-div

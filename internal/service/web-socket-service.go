@@ -154,32 +154,22 @@ func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool)
 
 }
 
-func (w *WebSocketService) CloseTicket(ticketID uint, jiraKey *string, roomID uint, averageEstimate string,
-	medianEstimate string, stdEstimate string, estimatedBy string) {
-	removedTicketForm := new(bytes.Buffer)
-	if err := ticket.ClosedEstimation(ticketID, jiraKey, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
-		Render(context.Background(), removedTicketForm); err != nil {
+func (w *WebSocketService) CloseTicket(tticket ticket.TicketDetailProps) {
+	renderedTicket := new(bytes.Buffer)
+	if err := ticket.ClosedTicketUpdate(tticket, false).
+		Render(context.Background(), renderedTicket); err != nil {
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
 	}
-	log.Printf("Closing ticket and sending render %d for roomID %d", ticketID, roomID)
+	log.Printf("Closing ticket and sending render %d for roomID %d", tticket.ID, tticket.RoomID)
 
-	averageEstimateRendered := new(bytes.Buffer)
-	if err := ticket.UpdatedEstimationDetail(ticketID, averageEstimate, medianEstimate, stdEstimate, estimatedBy).
-		Render(context.Background(), averageEstimateRendered); err != nil {
-		log.Printf("Error rendering ticket thumbnail: %v", err)
-		return
-	}
-	averageEstimateBytes := averageEstimateRendered.Bytes()
-
-	bytes := removedTicketForm.Bytes()
-	mergedBytes := append(bytes, averageEstimateBytes...)
+	bytes := renderedTicket.Bytes()
 
 	mutex.RLock()
-	conns := rooms[roomID]
+	conns := rooms[tticket.RoomID]
 	mutex.RUnlock()
 	for conn := range conns {
-		buffer <- message{conn: conn, data: &mergedBytes, roomID: roomID}
+		buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 	}
 }
 

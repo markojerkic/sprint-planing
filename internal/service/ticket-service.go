@@ -161,18 +161,11 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID uint, userID u
 	}
 
 	ticketWithStats, err := t.GetTicket(ctx, t.db.DB, userID, nil, ticketID)
-	jiraKey := ticket.JiraKey
 
 	ticketProps := ticketWithStats.ToDetailProp(true)
+	ticketProps.IsClosed = true
 
-	t.webSocketService.CloseTicket(ticketID,
-		jiraKey,
-		ticket.RoomID,
-		ticketProps.AverageEstimate,
-		ticketProps.MedianEstimate,
-		ticketProps.StdEstimate,
-		ticketProps.EstimatedBy,
-	)
+	t.webSocketService.CloseTicket(ticketProps)
 
 	return &ticket, nil
 }
