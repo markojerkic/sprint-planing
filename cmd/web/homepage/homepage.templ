@@ -14,21 +14,21 @@ templ Homepage() {
 					Create a room, invite your colleagues, and estimate tasks efficiently.
 				</p>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-xl mx-auto">
-					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
+					<div class="feature-card p-4 rounded-lg shadow-sm text-center bg-gradient-to-br from-background to-card-bg">
 						<span class="material-symbols-outlined text-primary">
 							groups
 						</span>
 						<h3 class="font-semibold">Collaborative</h3>
 						<p class="text-sm">Real-time updates for all team members</p>
 					</div>
-					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
+					<div class="feature-card p-4 rounded-lg shadow-sm text-center bg-gradient-to-t from-card-bg to-background">
 						<svg height="32" viewBox="0 0 32 32" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" class="mx-auto mb-2 text-primary">
 							<path fill="#357DE8" d="M11.034 21.99h-2.22c-3.346 0-5.747-2.05-5.747-5.052h11.932c.619 0 1.019.44 1.019 1.062v12.007c-2.983 0-4.984-2.416-4.984-5.784zm5.893-5.967h-2.219c-3.347 0-5.748-2.013-5.748-5.015h11.933c.618 0 1.055.402 1.055 1.025V24.04c-2.983 0-5.02-2.416-5.02-5.784zm5.93-5.93h-2.219c-3.347 0-5.748-2.05-5.748-5.052h11.933c.618 0 1.018.439 1.018 1.025v12.007c-2.983 0-4.984-2.416-4.984-5.784z"></path>
 						</svg>
 						<h3 class="font-semibold">Jira Integration</h3>
 						<p class="text-sm">Import and export estimates to Jira</p>
 					</div>
-					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
+					<div class="feature-card p-4 rounded-lg shadow-sm text-center bg-gradient-to-tr from-card-bg to-background">
 						<span class="material-symbols-outlined text-primary">
 							tune
 						</span>
@@ -36,7 +36,7 @@ templ Homepage() {
 						<p class="text-sm">Create tasks manually or import from Jira</p>
 					</div>
 				</div>
-				<div class="how-it-works bg-card-bg p-4 rounded-lg shadow-sm max-w-xl mx-auto mb-8">
+				<div class="how-it-works bg-card-bg p-4 rounded-lg shadow-sm max-w-xl mx-auto mb-8 bg-gradient-to-b from-card-bg to-background">
 					<h2 class="text-xl font-semibold mb-3">How It Works</h2>
 					<ol class="text-left list-decimal list-inside space-y-2">
 						<li>Create a room and share the link with your team</li>
@@ -83,4 +83,3 @@ templ joinRoomForm() {
 		</div>
 	</form>
 }
-
