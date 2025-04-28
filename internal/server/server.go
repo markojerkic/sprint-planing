@@ -90,7 +90,6 @@ func (s *Server) cleanup(ctx context.Context) error {
 			slog.Error("Failed to delete estimates", slog.Any("error", err))
 			return err
 		}
-
 		// Delete tickets which are older than 10 days
 		if err := tx.Model(&database.Ticket{}).
 			Where("created_at < NOW() - INTERVAL '10 days'").
@@ -98,28 +97,27 @@ func (s *Server) cleanup(ctx context.Context) error {
 			slog.Error("Failed to delete tickets", slog.Any("error", err))
 			return err
 		}
-		// Delete rooms which have no tickets and are older than 10 days
+		// Delete rooms which have no non-deleted tickets and are older than 10 days
 		if err := tx.Model(&database.Room{}).
-			Where("id NOT IN (SELECT room_id FROM tickets WHERE room_id IS NOT NULL)").
+			Where("id NOT IN (SELECT room_id FROM tickets WHERE room_id IS NOT NULL AND deleted_at IS NULL)").
 			Where("created_at < NOW() - INTERVAL '10 days'").
 			Delete(&database.Room{}).Error; err != nil {
 			slog.Error("Failed to delete rooms", slog.Any("error", err))
 			return err
 		}
-
-		// Delete users which have no rooms or estimates
+		// Delete users which have no non-deleted rooms or estimates
 		if err := tx.Model(&database.User{}).
-			Where("id NOT IN (SELECT user_id FROM estimates WHERE user_id IS NOT NULL) OR id NOT IN (SELECT user_id FROM room_users WHERE user_id IS NOT NULL)").
+			Where("id NOT IN (SELECT user_id FROM estimates WHERE user_id IS NOT NULL AND deleted_at IS NULL)").
+			Where("id NOT IN (SELECT user_id FROM room_users WHERE user_id IS NOT NULL AND deleted_at IS NULL)").
 			Where("created_at < NOW() - INTERVAL '35 days'").
 			Delete(&database.User{}).Error; err != nil {
 			slog.Error("Failed to delete users", slog.Any("error", err))
 			return err
 		}
-
 		return nil
 	}); err != nil {
 		slog.Error("Failed to run cleanup transaction", slog.Any("error", err))
-		return err // Added to properly return the error
+		return err
 	}
 	return nil
 }
