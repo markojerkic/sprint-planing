@@ -37,22 +37,26 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 					</p>
 				</div>
 				<!-- Sticky actions bar -->
-				<div
-					class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap z-10"
-					id="room-actions-bar"
-				>
-					if room.IsCurrentUserOwner {
+				if room.IsCurrentUserOwner {
+					<div
+						class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap z-10"
+						id="room-actions-bar"
+					>
 						@ticket.CreateTicket(room.ID)
 						@ticket.CreateJiraTicket(room.ID)
 						@ticket.BulkImportJiraTicketsModal(room.ID)
 						@ticket.HideAllTickets(room.ID)
-					}
+					</div>
+				}
+				<!-- Ticket list -->
+				@ticket.TicketList(room.Tickets, isRoomOwner)
+				<div
+					class="sticky bottom-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap z-10"
+				>
 					<button class="btn-sm-warning p-1" onclick="toggleClosedTickets()" id="toggle-hidden-tickets">
 						Hide Closed Tickets
 					</button>
 				</div>
-				<!-- Ticket list -->
-				@ticket.TicketList(room.Tickets, isRoomOwner)
 			</div>
 		</div>
 	}
