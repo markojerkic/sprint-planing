@@ -20,6 +20,9 @@ func HomepageHandler(roomService *service.RoomService) echo.HandlerFunc {
 			return c.Redirect(302, fmt.Sprintf("/room/%s", roomId))
 		}
 
+		// Cache the homepage for 10 minutes with stale while revalidating
+		c.Response().Header().Set("Cache-Control", "max-age=600, stale-while-revalidate")
+
 		return Homepage().Render(c.Request().Context(), c.Response().Writer)
 	}
 }

@@ -49,6 +49,7 @@ templ PageLayoutWithPath(title string, currentPath string) {
 			<script src="/assets/js/htmx.min.js"></script>
 			<script src="/assets/js/htmx.ws.js"></script>
 			<script src="/assets/js/mobile-menu.js"></script>
+			<script src="/assets/js/components/progress-bar.js" type="module"></script>
 			<script src="/assets/js/components/line-clamp.js"></script>
 			<script src="/assets/js/components/modal.js"></script>
 			<script src="/assets/js/components/toast.js"></script>
@@ -56,6 +57,7 @@ templ PageLayoutWithPath(title string, currentPath string) {
 			<script src="/assets/js/components/flashing-div.js" type="module"></script>
 		</head>
 		<body>
+			<ui-progress-bar></ui-progress-bar>
 			@HeaderWithActive(currentPath)
 			<div class="flex justify-center items-center p-2 min-h-screen">
 				<div class="w-full mx-auto max-w-2xl">
