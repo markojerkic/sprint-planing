@@ -7,16 +7,39 @@ templ Header() {
 }
 
 templ HeaderWithActive(currentPath string) {
-	<header class="bg-card-bg shadow-sm mb-6">
+	<header class="bg-card-bg shadow-sm mb-6  relative group" data-open="false">
 		<div class="container mx-auto px-4 py-3">
 			<nav class="flex justify-between items-center">
 				<div class="flex items-center">
 					<a href="/" class="text-xl font-bold text-primary mr-8 flex items-center">
-						<img src="/assets/img/favicon.svg" alt="Sprint Gauge" class="h-8" />
+						<img src="/assets/img/favicon.svg" alt="Sprint Gauge" class="h-8"/>
 					</a>
 					<div class="hidden md:flex space-x-4">
 						<a href="/" class={ getNavLinkClass(currentPath, "/") }>Home</a>
 						<a href="/rooms" class={ getNavLinkClass(currentPath, "/rooms") }>My Rooms</a>
+					</div>
+					<!-- hamburger menu for smaller screens -->
+					<div class="md:hidden">
+						<button
+							class="flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+							aria-controls="mobile-menu"
+							aria-expanded="false"
+							aria-label="Toggle menu"
+						>
+							<span class="sr-only">Open main menu</span>
+							<span class="material-symbols-outlined">
+								menu
+							</span>
+						</button>
+						<div
+							id="mobile-menu"
+							class="group-data-[open=false]:hidden group-data-[open=true]:flex flex-col items-start gap-2 absolute left-0 right-0 top-full w-full bg-card-bg shadow-lg z-50 p-4"
+							role="menu"
+							aria-labelledby="mobile-menu-button"
+						>
+							<a href="/" class={ getNavLinkClass(currentPath, "/") }>Home</a>
+							<a href="/rooms" class={ getNavLinkClass(currentPath, "/rooms") }>My Rooms</a>
+						</div>
 					</div>
 				</div>
 				<div class="flex items-center space-x-4">
@@ -43,4 +66,3 @@ func getNavLinkClass(currentPath, linkPath string) string {
 	// Inactive state
 	return baseClass + " hover:text-primary"
 }
-
