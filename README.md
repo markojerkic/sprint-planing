@@ -1,4 +1,4 @@
-# Sprint belote
+# Sprint gauge
 
 A lightweight, opinionated sprint estimation tool built with Go.
 

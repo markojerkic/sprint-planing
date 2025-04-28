@@ -1,7 +1,6 @@
 package homepage
 
 import (
-	"fmt"
 	"github.com/markojerkic/spring-planing/cmd/web/components"
 )
 
@@ -16,31 +15,23 @@ templ Homepage() {
 				</p>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-xl mx-auto">
 					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-primary">
-							<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-							<circle cx="9" cy="7" r="4"></circle>
-							<path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-							<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-						</svg>
+						<span class="material-symbols-outlined text-primary">
+							groups
+						</span>
 						<h3 class="font-semibold">Collaborative</h3>
 						<p class="text-sm">Real-time updates for all team members</p>
 					</div>
 					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-primary">
-							<path d="M12 20V10"></path>
-							<path d="M18 20V4"></path>
-							<path d="M6 20v-6"></path>
+						<svg height="32" viewBox="0 0 32 32" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" class="mx-auto mb-2 text-primary">
+							<path fill="#357DE8" d="M11.034 21.99h-2.22c-3.346 0-5.747-2.05-5.747-5.052h11.932c.619 0 1.019.44 1.019 1.062v12.007c-2.983 0-4.984-2.416-4.984-5.784zm5.893-5.967h-2.219c-3.347 0-5.748-2.013-5.748-5.015h11.933c.618 0 1.055.402 1.055 1.025V24.04c-2.983 0-5.02-2.416-5.02-5.784zm5.93-5.93h-2.219c-3.347 0-5.748-2.05-5.748-5.052h11.933c.618 0 1.018.439 1.018 1.025v12.007c-2.983 0-4.984-2.416-4.984-5.784z"></path>
 						</svg>
 						<h3 class="font-semibold">Jira Integration</h3>
 						<p class="text-sm">Import and export estimates to Jira</p>
 					</div>
 					<div class="feature-card p-4 bg-card-bg rounded-lg shadow-sm text-center">
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2 text-primary">
-							<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-							<path d="M16 2v5"></path>
-							<path d="M8 2v5"></path>
-							<path d="M3 10h18"></path>
-						</svg>
+						<span class="material-symbols-outlined text-primary">
+							tune
+						</span>
 						<h3 class="font-semibold">Flexible</h3>
 						<p class="text-sm">Create tasks manually or import from Jira</p>
 					</div>
@@ -56,7 +47,7 @@ templ Homepage() {
 					</ol>
 				</div>
 				<div class="flex justify-center gap-4">
-					<a href="/room" class="btn btn-primary">Create Room</a>
+					<a href="/room" class="btn-primary">Create Room</a>
 					<ui-modal
 						buttonName="Join Existing Room"
 						modalTitle="Join Existing Room"
@@ -93,18 +84,3 @@ templ joinRoomForm() {
 	</form>
 }
 
-// Success feedback after joining a room
-templ JoinRoomSuccess(roomId string) {
-	<div class="alert alert-success">
-		Successfully joined the room!
-	</div>
-	<div class="form-actions mt-3">
-		<a href={ templ.SafeURL(fmt.Sprintf("/room/%s", roomId)) } class="btn btn-primary">Go to Room</a>
-		<button
-			type="button"
-			class="btn btn-secondary ml-2"
-			popovertarget="join-room-popover"
-			popovertargetaction="hide"
-		>Close</button>
-	</div>
-}
