@@ -5,12 +5,14 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
+	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/markojerkic/spring-planing/internal/service"
 )
 
 type WebSocketRouter struct {
-	service *service.WebSocketService
-	group   *echo.Group
+	service     *service.WebSocketService
+	roomService *service.RoomService
+	group       *echo.Group
 }
 
 var upgrader = websocket.Upgrader{
@@ -19,6 +21,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func (r *WebSocketRouter) webSocketHandler(c echo.Context) error {
+	user := c.Get("user").(database.User)
 	roomId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return c.String(400, "Invalid room roomID")
@@ -28,16 +31,21 @@ func (r *WebSocketRouter) webSocketHandler(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	r.service.Register(conn, uint(roomId))
+	isOwner := r.roomService.GetIsOwner(c.Request().Context(), uint(roomId), user.ID)
+	r.service.Register(conn, uint(roomId), isOwner)
 
 	return nil
 
 }
 
-func newWebsocketRouter(webSocketService *service.WebSocketService, group *echo.Group) *WebSocketRouter {
+func newWebsocketRouter(
+	webSocketService *service.WebSocketService,
+	roomService *service.RoomService,
+	group *echo.Group) *WebSocketRouter {
 	r := &WebSocketRouter{
-		service: webSocketService,
-		group:   group,
+		service:     webSocketService,
+		roomService: roomService,
+		group:       group,
 	}
 	e := r.group
 

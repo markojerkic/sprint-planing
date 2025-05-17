@@ -162,7 +162,7 @@ func (t *TicketService) CloseTicket(ctx context.Context, ticketID uint, userID u
 
 	ticketWithStats, err := t.GetTicket(ctx, t.db.DB, userID, nil, ticketID)
 
-	ticketProps := ticketWithStats.ToDetailProp(true)
+	ticketProps := ticketWithStats.ToDetailProp(false)
 	ticketProps.IsClosed = true
 
 	t.webSocketService.CloseTicket(ticketProps)

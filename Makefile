@@ -46,7 +46,7 @@ db:
 	@sleep 1
 
 # Live Reload
-watch:
+watch: db
 	@echo "Watching..."
 	@bun dev
 

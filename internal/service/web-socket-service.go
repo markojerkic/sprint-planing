@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"log/slog"
 	"sync"
@@ -13,8 +14,23 @@ import (
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 )
 
-var rooms = make(map[uint]map[*websocket.Conn]bool)
+var subscriptions = make(map[*websocket.Conn]Route)
 var mutex = sync.RWMutex{}
+
+func getMatchingSubscriptions(route Route) []*websocket.Conn {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	conns := make([]*websocket.Conn, 0, len(subscriptions))
+
+	for conn, subRoute := range subscriptions {
+		if subRoute.Matches(route) {
+			conns = append(conns, conn)
+		}
+	}
+
+	return conns
+}
 
 type message struct {
 	conn   *websocket.Conn
@@ -34,36 +50,28 @@ func writePump() {
 		case msg := <-buffer:
 			if err := msg.conn.WriteMessage(websocket.TextMessage, *msg.data); err != nil {
 				log.Printf("Error writing message: %v", err)
-				removeConnection(msg.conn, msg.roomID)
+				removeConnection(msg.conn)
 			}
 		}
 	}
 }
 
 // removeConnection removes a connection from a room and cleans up empty rooms
-func removeConnection(conn *websocket.Conn, roomID uint) {
+func removeConnection(conn *websocket.Conn) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// Check if the room exists
-	if conns, ok := rooms[roomID]; ok {
-		// Remove the connection
-		delete(conns, conn)
-
-		// If the room is empty, remove it
-		if len(conns) == 0 {
-			delete(rooms, roomID)
-			log.Printf("Room %d is empty and has been removed", roomID)
-		}
+	if _, ok := subscriptions[conn]; ok {
+		delete(subscriptions, conn)
 	}
 }
 
 // readPump reads from the websocket connection to detect disconnects
-func (w *WebSocketService) readPump(conn *websocket.Conn, roomID uint) {
+func (w *WebSocketService) readPump(conn *websocket.Conn, route Route) {
 	defer func() {
 		conn.Close()
-		removeConnection(conn, roomID)
-		log.Printf("Connection closed for room %d", roomID)
+		removeConnection(conn)
+		log.Printf("Connection closed for room %s", string(route))
 	}()
 
 	// Set read deadline
@@ -94,22 +102,13 @@ func (w *WebSocketService) CleanupInactiveConnections() {
 		<-ticker.C
 		mutex.Lock()
 		// Log current state
-		slog.Debug("Checking for inactive connections. Current rooms", slog.Int("rooms", len(rooms)))
+		slog.Debug("Checking for inactive connections. Current rooms", slog.Int("rooms", len(subscriptions)))
 
-		// For each room, ping each connection
-		for roomID, conns := range rooms {
-			for conn := range conns {
-				if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
-					log.Printf("Failed to ping client in room %d: %v", roomID, err)
-					delete(conns, conn)
-					conn.Close()
-				}
-			}
-
-			// If room is empty after checking connections, remove it
-			if len(conns) == 0 {
-				delete(rooms, roomID)
-				log.Printf("Room %d is now empty and has been removed", roomID)
+		for conn, topic := range subscriptions {
+			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
+				log.Printf("Failed to ping client in room %s: %v", topic, err)
+				delete(subscriptions, conn)
+				conn.Close()
 			}
 		}
 		mutex.Unlock()
@@ -127,9 +126,9 @@ func (w *WebSocketService) HideTicketsOfRoom(roomID uint, isHidden bool) {
 	}
 
 	mutex.RLock()
-	conns := rooms[roomID]
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", roomID)))
 	mutex.RUnlock()
-	for conn := range conns {
+	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
 	}
 }
@@ -146,9 +145,9 @@ func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool)
 	}
 
 	mutex.RLock()
-	conns := rooms[roomID]
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", roomID)))
 	mutex.RUnlock()
-	for conn := range conns {
+	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
 	}
 
@@ -166,9 +165,9 @@ func (w *WebSocketService) CloseTicket(tticket ticket.TicketDetailProps) {
 	bytes := renderedTicket.Bytes()
 
 	mutex.RLock()
-	conns := rooms[tticket.RoomID]
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", tticket.RoomID)))
 	mutex.RUnlock()
-	for conn := range conns {
+	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 	}
 }
@@ -188,9 +187,9 @@ func (w *WebSocketService) UpdateEstimate(ticketID uint,
 	}
 	bytes := renderedTicket.Bytes()
 	mutex.RLock()
-	conns := rooms[roomID]
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/*", roomID)))
 	mutex.RUnlock()
-	for conn := range conns {
+	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: roomID}
 	}
 }
@@ -204,14 +203,18 @@ func (w *WebSocketService) SendNewTicket(tticket ticket.TicketDetailProps) {
 	}
 	bytes := renderedTicket.Bytes()
 	mutex.RLock()
-	conns := rooms[tticket.RoomID]
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", tticket.RoomID)))
 	mutex.RUnlock()
-	for conn := range conns {
+	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 	}
 }
 
 func (w *WebSocketService) BulkImportTickets(tickets []ticket.TicketDetailProps) {
+	if len(tickets) == 0 {
+		return
+	}
+
 	aggregatedRenderedTickets := new(bytes.Buffer)
 	slog.Debug("Bulk importing tickets", slog.Any("ticket num", len(tickets)))
 	for i := len(tickets) - 1; i >= 0; i-- {
@@ -226,21 +229,27 @@ func (w *WebSocketService) BulkImportTickets(tickets []ticket.TicketDetailProps)
 		aggregatedRenderedTickets.Write(bytes)
 	}
 	mutex.RLock()
-	conns := rooms[tickets[0].RoomID]
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", tickets[0].RoomID)))
 	mutex.RUnlock()
 	bytes := aggregatedRenderedTickets.Bytes()
 
-	for conn := range conns {
+	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: tickets[0].RoomID}
 	}
 }
 
-func (w *WebSocketService) Register(conn *websocket.Conn, roomID uint) {
+func (w *WebSocketService) Register(conn *websocket.Conn, roomID uint, isOwner bool) {
 	mutex.Lock()
-	if _, ok := rooms[roomID]; !ok {
-		rooms[roomID] = make(map[*websocket.Conn]bool)
+
+	var routeSuffix string
+	if isOwner {
+		routeSuffix = "owner"
+	} else {
+		routeSuffix = "estimator"
 	}
-	rooms[roomID][conn] = true
+
+	route := Route(fmt.Sprintf("room/%d/%s", roomID, routeSuffix))
+	subscriptions[conn] = route
 	mutex.Unlock()
 
 	// Set up ping/pong to keep connection alive
@@ -251,7 +260,7 @@ func (w *WebSocketService) Register(conn *websocket.Conn, roomID uint) {
 	})
 
 	// Start a goroutine to read from the websocket to detect disconnects
-	go w.readPump(conn, roomID)
+	go w.readPump(conn, route)
 }
 
 func NewWebSocketService(ticketService *TicketService) *WebSocketService {

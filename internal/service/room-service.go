@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/markojerkic/spring-planing/internal/database"
 	"gorm.io/gorm"
@@ -10,6 +11,16 @@ import (
 type RoomService struct {
 	ticketService *TicketService
 	db            *database.Database
+}
+
+func (r *RoomService) GetIsOwner(ctx context.Context, roomID uint, userID uint) bool {
+	var room database.Room
+	if err := r.db.DB.First(&room, roomID).Error; err != nil {
+		slog.Error("Error reading room", slog.Any("err", err))
+		return false
+	}
+
+	return userID == room.CreatedBy
 }
 
 func (r *RoomService) DeleteRoom(ctx context.Context, roomID uint, userID uint) ([]database.Room, error) {
