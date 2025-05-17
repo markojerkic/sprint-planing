@@ -126,7 +126,7 @@ func (w *WebSocketService) HideTicketsOfRoom(roomID uint, isHidden bool) {
 	}
 
 	mutex.RLock()
-	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", roomID)))
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/*", roomID)))
 	mutex.RUnlock()
 	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
