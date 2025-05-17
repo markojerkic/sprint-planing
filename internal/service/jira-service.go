@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/server/auth"
+	"github.com/markojerkic/spring-planing/internal/util"
 )
 
 type JiraTicketResponse struct {
@@ -354,7 +355,7 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 		slog.Error("Error updating ticket estimation", slog.Any("error", err))
 		var errorResponse map[string]any
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
-			slog.Error("Failed to update ticket estimation", slog.Any("error", errorResponse))
+			slog.Error("Failed to connect to JIRA", slog.Any("error", errorResponse))
 		}
 
 		return err
@@ -368,6 +369,16 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 		var errorResponse map[string]any
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
 			slog.Error("Failed to update ticket estimation", slog.Any("error", errorResponse))
+			if _, hasErrors := errorResponse["errors"]; hasErrors {
+				if _, isMap := errorResponse["errors"].(map[string]any); isMap {
+					if _, hasTimetrackingError := errorResponse["errors"].(map[string]any)["timetracking"]; hasTimetrackingError {
+						util.AddToastHeader(ctx, "Failed writing time estimation. Check to make sure you're not using story points!", util.ERROR)
+					}
+				}
+			}
+
+		} else {
+			slog.Error("Error parsing jira error", slog.Any("error", err))
 		}
 
 		return fmt.Errorf("failed to update ticket estimation: status code %d", resp.StatusCode)

@@ -46,7 +46,7 @@ func (j *JiraRouter) bulkImportJiraTicketsHandler(ctx echo.Context) error {
 
 	ctx.Response().Header().Add("Hx-Trigger", `{"createdTicket": true}`)
 
-	util.AddToastHeader(ctx, "Ticket created successfully")
+	util.AddToastHeader(ctx, "Ticket created successfully", util.INFO)
 
 	return ticket.TicketList(tickets, true).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
@@ -182,7 +182,7 @@ func (j *JiraRouter) writeEstimate(ctx echo.Context) error {
 		return ctx.String(500, "Error updating ticket")
 	}
 
-	util.AddToastHeader(ctx, "Estimate successfully written to Jira!")
+	util.AddToastHeader(ctx, "Estimate successfully written to Jira!", util.INFO)
 
 	return ctx.String(200, "<div>Estimate updated!</div>")
 }

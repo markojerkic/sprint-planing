@@ -7,7 +7,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func AddToastHeader(c echo.Context, text string) error {
+type ToastLevel int
+
+const (
+	INFO ToastLevel = iota
+	ERROR
+)
+
+func AddToastHeader(c echo.Context, text string, level ToastLevel) error {
 	// Get the current HX-Trigger header, if any
 	var triggers map[string]any
 	currentTrigger := c.Response().Header().Get("HX-Trigger")
@@ -24,9 +31,18 @@ func AddToastHeader(c echo.Context, text string) error {
 		triggers = make(map[string]any)
 	}
 
+	var levelLabel string
+	switch level {
+	case INFO:
+		levelLabel = "info"
+	case ERROR:
+		levelLabel = "error"
+	}
+
 	// Add toast event to the triggers
 	triggers["toast"] = map[string]any{
 		"message": text,
+		"level":   levelLabel,
 	}
 
 	// Marshal back to JSON

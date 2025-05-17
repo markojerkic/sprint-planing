@@ -32,14 +32,19 @@ class Toast extends HTMLElement {
 	}
 
 	render() {
+		const level = this.getAttribute("level") ?? "info";
+		const bgColor = level === "info" ? "--color-card-bg" : "--color-error";
+		const borderColor =
+			level === "info" ? "--color-primary-light" : "--color-error-dark";
+
 		this.shadowRoot.innerHTML = `
             <style>
                 .toast {
                     background-color: var(--color-primary-light);
-                    background-color: var(--color-card-bg);
+                    background-color: var(${bgColor});
                     color: var(--color-text-light);
                     border-radius: 12px;
-                    border-left: 5px solid var(--color-primary-light);
+                    border-left: 5px solid var(${borderColor});
                     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
                     padding: 1rem;
                     margin-bottom: 0.5rem;
@@ -113,6 +118,7 @@ class ToastContainer extends HTMLElement {
 			(e) => {
 				const toast = document.createElement("ui-toast");
 				console.log("toast event", e);
+				toast.setAttribute("level", e.detail.level);
 				toast.textContent = e.detail.message;
 				this.appendChild(toast);
 			},
@@ -146,12 +152,14 @@ class ToastContainer extends HTMLElement {
 
 /**
  * @property {string} message
+ * @property {string} level
  * @property {ToastDetail} detail
  */
 class ToastEvent extends Event {
 	/**
 	 * @typedef {Object} ToastEventData
 	 * @property {string} message
+	 * @property {string} level
 	 */
 	/**
 	 * @param {ToastEventData} detail
@@ -159,6 +167,7 @@ class ToastEvent extends Event {
 	constructor(detail) {
 		super("toast", { bubbles: true }); // Add bubbles: true to ensure event propagation
 		this.message = detail.message;
+		this.level = detail.level;
 		this.detail = detail;
 	}
 }

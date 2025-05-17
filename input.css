@@ -2,21 +2,22 @@
 @source "**/*.templ";
 
 @theme {
-  --color-primary: oklch(0.591 0.175 311.5deg);
-  --color-primary-dark: oklch(0.482 0.166 310.5deg);
-  --color-primary-light: oklch(0.681 0.152 313.1deg);
-  --color-secondary: oklch(0.321 0.005 299.2deg);
-  --color-secondary-dark: oklch(0.252 0.004 299.2deg);
-  --color-secondary-light: oklch(0.387 0.006 299.2deg);
-  --color-text-light: oklch(0.97 0.016 299.2deg);
-  --color-text-dark: oklch(0.248 0.004 299.2deg);
-  --color-background: oklch(0.28 0.041 308.1deg);
-  --color-card-bg: oklch(0.324 0.05 306.8deg);
-  --color-input-bg: oklch(0.266 0.041 305.9deg);
-  --color-border-color: oklch(0.37 0.063 311deg);
-  --color-success: oklch(0.673 0.157 145.1deg);
-  --color-warning: oklch(0.77 0.173 63.6deg);
-  --color-error: oklch(0.643 0.215 28deg);
+    --color-primary: oklch(0.591 0.175 311.5deg);
+    --color-primary-dark: oklch(0.482 0.166 310.5deg);
+    --color-primary-light: oklch(0.681 0.152 313.1deg);
+    --color-secondary: oklch(0.321 0.005 299.2deg);
+    --color-secondary-dark: oklch(0.252 0.004 299.2deg);
+    --color-secondary-light: oklch(0.387 0.006 299.2deg);
+    --color-text-light: oklch(0.97 0.016 299.2deg);
+    --color-text-dark: oklch(0.248 0.004 299.2deg);
+    --color-background: oklch(0.28 0.041 308.1deg);
+    --color-card-bg: oklch(0.324 0.05 306.8deg);
+    --color-input-bg: oklch(0.266 0.041 305.9deg);
+    --color-border-color: oklch(0.37 0.063 311deg);
+    --color-success: oklch(0.673 0.157 145.1deg);
+    --color-warning: oklch(0.77 0.173 63.6deg);
+    --color-error: oklch(0.643 0.215 28deg);
+    --color-error-dark: oklch(0.396 0.141 25.723);
 }
 
 @layer components {
