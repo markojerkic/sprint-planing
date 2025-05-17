@@ -12,6 +12,7 @@ type RoomPageProps struct {
 	CreatedAt          time.Time
 	IsCurrentUserOwner bool
 	IsJiraUser         bool
+	TotalEstimated     string
 	Tickets            []ticket.TicketDetailProps
 }
 
@@ -51,11 +52,17 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 				<!-- Ticket list -->
 				@ticket.TicketList(room.Tickets, isRoomOwner)
 				<div
-					class="sticky bottom-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 flex-wrap z-10"
+					class="sticky bottom-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 z-10 justify-between"
 				>
 					<button class="btn-sm-warning p-1" onclick="toggleClosedTickets()" id="toggle-hidden-tickets">
 						Hide Closed Tickets
 					</button>
+					<span class="flex flex-col gap-1 text-sm text-end">
+						<span>
+							Total estimated:
+						</span>
+						<span id="total-estimated">{ room.TotalEstimated }</span>
+					</span>
 				</div>
 			</div>
 		</div>

@@ -9,8 +9,42 @@ import (
 )
 
 type RoomService struct {
-	ticketService *TicketService
-	db            *database.Database
+	db                *database.Database
+	roomTicketService *RoomTicketService
+}
+
+func (r *RoomService) GetTotalEstimateOfRoom(ctx context.Context, roomID uint) (string, error) {
+	var totalEstimatedHours int
+	if err := r.db.DB.Raw(`
+		WITH
+		  avg_estimates AS (
+			SELECT
+			  PERCENTILE_CONT(0.5) WITHIN GROUP (
+				ORDER BY
+				  estimate
+			  ) AS median_estimate,
+			  room_id
+			FROM
+			  estimates
+			  JOIN tickets ON tickets.id = estimates.ticket_id
+			  AND tickets.closed_at IS NOT NULL
+			GROUP BY
+			  ticket_id,
+			  room_id
+		  )
+		SELECT
+		  COALESCE(SUM(median_estimate), 0) AS total_avg_estimate
+		FROM
+		  avg_estimates
+		WHERE
+		  room_id = ?;
+		`, roomID).
+		First(&totalEstimatedHours).
+		Error; err != nil {
+		return "", err
+	}
+
+	return prettyPrintEstimate(totalEstimatedHours), nil
 }
 
 func (r *RoomService) GetIsOwner(ctx context.Context, roomID uint, userID uint) bool {
@@ -114,7 +148,7 @@ func (r *RoomService) GetRoom(ctx context.Context, roomID uint, userID uint) (*d
 			return err
 		}
 
-		ticketsWithStatistics, err := r.ticketService.GetTicketsOfRoom(ctx, tx, userID, room.ID)
+		ticketsWithStatistics, err := r.roomTicketService.GetTicketsOfRoom(ctx, tx, userID, room.ID)
 		if err != nil {
 			return err
 		}
@@ -145,9 +179,9 @@ func (r *RoomService) GetRoom(ctx context.Context, roomID uint, userID uint) (*d
 	return &room, nil
 }
 
-func NewRoomService(db *database.Database) *RoomService {
+func NewRoomService(db *database.Database, roomTicketService *RoomTicketService) *RoomService {
 	return &RoomService{
-		db:            db,
-		ticketService: NewTicketService(db),
+		db:                db,
+		roomTicketService: roomTicketService,
 	}
 }

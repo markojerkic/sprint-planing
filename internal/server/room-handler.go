@@ -59,12 +59,15 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		ticketDetails[i] = t.ToDetailProp(isOwner)
 	}
 
+	totalEstimated, err := r.roomService.GetTotalEstimateOfRoom(ctx.Request().Context(), uint(roomID))
+
 	_, isJiraUser := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
 	return room.RoomPage(room.RoomPageProps{
 		ID:                 roomDetails.ID,
 		Name:               roomDetails.Name,
 		CreatedAt:          roomDetails.CreatedAt,
 		IsCurrentUserOwner: isOwner,
+		TotalEstimated:     totalEstimated,
 		IsJiraUser:         isJiraUser,
 		Tickets:            ticketDetails,
 	}, isOwner).Render(ctx.Request().Context(), ctx.Response().Writer)

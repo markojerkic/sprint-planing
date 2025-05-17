@@ -39,9 +39,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
 
-	roomService := service.NewRoomService(s.db)
-	ticketService := service.NewTicketService(s.db)
-	websocketService := service.NewWebSocketService(ticketService)
+	roomTicketService := service.NewRoomTicketService(s.db)
+	roomService := service.NewRoomService(s.db, roomTicketService)
+	websocketService := service.NewWebSocketService(roomService)
+	ticketService := service.NewTicketService(s.db, roomTicketService, websocketService)
 	jiraService := service.NewJiraService(ticketService)
 
 	auth.NewOAuthRouter(e.Group("/auth/jira"))

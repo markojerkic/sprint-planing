@@ -41,7 +41,7 @@ type message struct {
 var buffer = make(chan message, 100)
 
 type WebSocketService struct {
-	TicketService *TicketService
+	roomService *RoomService
 }
 
 func writePump() {
@@ -165,11 +165,20 @@ func (w *WebSocketService) CloseTicket(tticket ticket.TicketDetailProps) {
 	bytes := renderedTicket.Bytes()
 
 	mutex.RLock()
-	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", tticket.RoomID)))
+	estimatorConns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", tticket.RoomID)))
+	allConns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/*", tticket.RoomID)))
 	mutex.RUnlock()
-	for _, conn := range conns {
+	for _, conn := range estimatorConns {
 		buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 	}
+
+	if estimate, err := w.roomService.GetTotalEstimateOfRoom(context.Background(), tticket.RoomID); err == nil {
+		bytes = fmt.Appendf(nil, `<div hx-swap-oob="innerHtml:#total-estimated">%s</div>`, estimate)
+		for _, conn := range allConns {
+			buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
+		}
+	}
+
 }
 
 func (w *WebSocketService) UpdateEstimate(ticketID uint,
@@ -185,7 +194,9 @@ func (w *WebSocketService) UpdateEstimate(ticketID uint,
 		log.Printf("Error rendering ticket thumbnail: %v", err)
 		return
 	}
+
 	bytes := renderedTicket.Bytes()
+
 	mutex.RLock()
 	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/*", roomID)))
 	mutex.RUnlock()
@@ -263,9 +274,9 @@ func (w *WebSocketService) Register(conn *websocket.Conn, roomID uint, isOwner b
 	go w.readPump(conn, route)
 }
 
-func NewWebSocketService(ticketService *TicketService) *WebSocketService {
+func NewWebSocketService(roomService *RoomService) *WebSocketService {
 	service := &WebSocketService{
-		TicketService: ticketService,
+		roomService: roomService,
 	}
 
 	for range 30 {

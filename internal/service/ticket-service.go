@@ -29,8 +29,9 @@ var ticketQuery = `
     ORDER BY t.created_at DESC;`
 
 type TicketService struct {
-	db               *database.Database
-	webSocketService *WebSocketService
+	db                *database.Database
+	webSocketService  *WebSocketService
+	roomTicketService *RoomTicketService
 }
 
 type CreateTicketForm struct {
@@ -230,16 +231,6 @@ func (t *TicketService) GetTicket(ctx context.Context, db *gorm.DB, userID uint,
 	return nil, fmt.Errorf("ticket not found")
 }
 
-func (t *TicketService) GetTicketsOfRoom(ctx context.Context, db *gorm.DB, userID uint, roomID uint) ([]database.TicketWithEstimateStatistics, error) {
-	var tickets []database.TicketWithEstimateStatistics
-	if err := db.WithContext(ctx).
-		Raw(ticketQuery, userID, roomID).
-		Scan(&tickets).Error; err != nil {
-		return nil, err
-	}
-	return tickets, nil
-}
-
 func (t *TicketService) BulkImportTickets(ctx context.Context, userID uint, roomID uint, tickets []CreateTicketForm) ([]ticket.TicketDetailProps, error) {
 	databaseTickets := make([]database.Ticket, len(tickets))
 	for i, ticket := range tickets {
@@ -272,7 +263,7 @@ func (t *TicketService) BulkImportTickets(ctx context.Context, userID uint, room
 		}
 
 		// Get all tickets in the room
-		roomTickets, err := t.GetTicketsOfRoom(ctx, tx, userID, roomID)
+		roomTickets, err := t.roomTicketService.GetTicketsOfRoom(ctx, tx, userID, roomID)
 		if err != nil {
 			return err
 		}
@@ -329,7 +320,7 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 			return err
 		}
 
-		roomTickets, err := t.GetTicketsOfRoom(ctx, tx, userID, form.RoomID)
+		roomTickets, err := t.roomTicketService.GetTicketsOfRoom(ctx, tx, userID, form.RoomID)
 		if err != nil {
 			return err
 		}
@@ -350,11 +341,12 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 	return tickets, nil
 }
 
-func NewTicketService(db *database.Database) *TicketService {
+func NewTicketService(db *database.Database, roomTicketService *RoomTicketService, webSocketService *WebSocketService) *TicketService {
 	ticketService := &TicketService{
-		db: db,
+		db:                db,
+		webSocketService:  webSocketService,
+		roomTicketService: roomTicketService,
 	}
-	ticketService.webSocketService = NewWebSocketService(ticketService)
 	return ticketService
 }
 
