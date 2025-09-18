@@ -253,18 +253,20 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 	}
 
 	if filter.IssueType != "" {
-		if filter.IssueType == "all" {
+		switch filter.IssueType {
+		case "all":
 			jqlQueries = append(jqlQueries, "type IN (story, task, subtask, bug)")
-		} else if filter.IssueType == "task" {
+		case "task":
 			jqlQueries = append(jqlQueries, "type IN (task, subtask)")
-		} else {
+		default:
 			jqlQueries = append(jqlQueries, fmt.Sprintf("type = %s", filter.IssueType))
 		}
 	}
 
-	if filter.HasEstimate == "yes" {
-		jqlQueries = append(jqlQueries, fmt.Sprintf("originalEstimate != 0"))
-	} else if filter.HasEstimate == "no" {
+	switch filter.HasEstimate {
+	case "yes":
+		jqlQueries = append(jqlQueries, "originalEstimate != 0")
+	case "no":
 		jqlQueries = append(jqlQueries, "(originalEstimate = 0 OR originalEstimate IS EMPTY)")
 	}
 
@@ -276,9 +278,10 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 		jqlQueries = append(jqlQueries, fmt.Sprintf("created >= -%sd", filter.CreatedWithinDays))
 	}
 
-	if filter.HasAssignee == "yes" {
+	switch filter.HasAssignee {
+	case "yes":
 		jqlQueries = append(jqlQueries, "assignee IS NOT EMPTY")
-	} else if filter.HasAssignee == "no" {
+	case "no":
 		jqlQueries = append(jqlQueries, "assignee IS EMPTY")
 	}
 
@@ -404,6 +407,53 @@ func (j *JiraService) UpdateTicketEstimation(ctx echo.Context, ticketKey string,
 		slog.Int("estimationSeconds", estimation))
 
 	return nil
+}
+
+func (j *JiraService) GetTicketDescription(ctx echo.Context, ticketKey string) (string, error) {
+	clientInfo, ok := ctx.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
+	if !ok || clientInfo.ResourceID == "" {
+		slog.Error("Jira client info not found in context", slog.Any("clientInfo", clientInfo), slog.Any("ok", ok))
+		return "", fmt.Errorf("jira client info not found in context")
+	}
+
+	baseUrl := os.Getenv("JIRA_BASE_URL")
+	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/issue/%s", baseUrl, clientInfo.ResourceID, ticketKey))
+	if err != nil {
+		slog.Error("Error parsing url", slog.Any("error", err))
+		return "", err
+	}
+
+	q := url.Query()
+	q.Set("fields", "description")
+	url.RawQuery = q.Encode()
+
+	slog.Debug("Getting ticket description", slog.String("url", url.String()))
+
+	resp, err := clientInfo.HttpClient(ctx).Get(url.String())
+	if err != nil {
+		slog.Error("Error getting ticket", slog.Any("error", err))
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("Failed to get ticket", slog.Any("status", resp.StatusCode))
+		if resp.Header.Get("Content-Type") == "application/json" {
+			var errorResponse map[string]any
+			if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err == nil {
+				slog.Error("Failed to get ticket", slog.Any("error", errorResponse))
+			}
+		}
+		return "", fmt.Errorf("failed to get ticket: status code %d", resp.StatusCode)
+	}
+
+	var ticket JiraTicket
+	if err := json.NewDecoder(resp.Body).Decode(&ticket); err != nil {
+		slog.Error("Failed to decode ticket", slog.Any("error", err))
+		return "", err
+	}
+
+	return ticket.Fields.Description.String(), nil
 }
 
 func NewJiraService(ticketService *TicketService) *JiraService {

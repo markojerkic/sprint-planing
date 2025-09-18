@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"gorm.io/gorm"
@@ -32,6 +33,7 @@ type TicketService struct {
 	db                *database.Database
 	webSocketService  *WebSocketService
 	roomTicketService *RoomTicketService
+	llmService        *LLMService
 }
 
 type CreateTicketForm struct {
@@ -301,10 +303,10 @@ func (t *TicketService) BulkImportTickets(ctx context.Context, userID uint, room
 	return allRoomTickets, nil
 }
 
-func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, error) {
+func (t *TicketService) CreateTicket(ctx echo.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
 
-	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := t.db.DB.WithContext(ctx.Request().Context()).Transaction(func(tx *gorm.DB) error {
 		ticket := database.Ticket{
 			Name:        form.TicketName,
 			Description: form.TicketDescription,
@@ -314,13 +316,19 @@ func (t *TicketService) CreateTicket(ctx context.Context, userID uint, form Crea
 
 		if form.JiraKey != "" {
 			ticket.JiraKey = &form.JiraKey
+
+			_, err := t.llmService.RecommendEstimate(ctx, *ticket.JiraKey)
+			if err != nil {
+				return err
+			}
+
 		}
 
 		if err := tx.Create(&ticket).Error; err != nil {
 			return err
 		}
 
-		roomTickets, err := t.roomTicketService.GetTicketsOfRoom(ctx, tx, userID, form.RoomID)
+		roomTickets, err := t.roomTicketService.GetTicketsOfRoom(ctx.Request().Context(), tx, userID, form.RoomID)
 		if err != nil {
 			return err
 		}

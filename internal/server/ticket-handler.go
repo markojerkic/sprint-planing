@@ -52,7 +52,7 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 
 	user := c.Get("user").(database.User)
 
-	allTickets, err := r.service.CreateTicket(c.Request().Context(), user.ID, form)
+	allTickets, err := r.service.CreateTicket(c, user.ID, form)
 	if err != nil {
 		c.Logger().Errorf("Error creating ticket: %v", err)
 		return c.String(500, "Error creating ticket")
