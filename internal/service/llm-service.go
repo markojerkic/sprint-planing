@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/invopop/jsonschema"
-	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
@@ -16,7 +15,12 @@ import (
 
 type LLMService struct {
 	openRouterClient *openai.Client
-	jiraService      *JiraService
+	requestChan      chan LLMRequest
+}
+
+type LLMRequest struct {
+	TicketKey   string
+	Description string
 }
 
 type RecommendedEstimate struct {
@@ -39,14 +43,15 @@ func GenerateSchema[T any]() any {
 
 var RecommendedEstimateSchema = GenerateSchema[RecommendedEstimate]()
 
-func (l *LLMService) RecommendEstimate(ctx echo.Context, ticketKey string) (RecommendedEstimate, error) {
-	description, err := l.jiraService.GetTicketDescription(ctx, ticketKey)
-	if err != nil {
-		log.Error("Error getting description of ticket", "ticket", ticketKey, "error", err)
-	}
-	log.Debug("Generated description", "ticket", ticketKey, "description", description)
+func (l *LLMService) processRequests() {
+	for req := range l.requestChan {
+		log.Debug("Processing LLM request", "ticket", req.TicketKey, "description", req.Description)
 
-	return l.generateEstimate(ctx.Request().Context(), ticketKey, description)
+		_, err := l.generateEstimate(context.Background(), req.TicketKey, req.Description)
+		if err != nil {
+			slog.Error("Error generating estimate", "ticket", req.TicketKey, "error", err)
+		}
+	}
 }
 
 func (l *LLMService) generateEstimate(ctx context.Context, ticketKey string, ticketDescription string) (RecommendedEstimate, error) {
@@ -101,6 +106,8 @@ You will be asked to estimate the work required for the ticket. Your response sh
 		return RecommendedEstimate{}, err
 	}
 
+	slog.Debug("Generated estimate recommendation", "estimate", estimateRecommendation)
+
 	return estimateRecommendation, nil
 }
 
@@ -110,8 +117,16 @@ func NewLLMService() *LLMService {
 		option.WithBaseURL(os.Getenv("OPENROUTER_API_BASE_URL")),
 	)
 
-	return &LLMService{
+	service := &LLMService{
 		openRouterClient: &client,
+		requestChan:      make(chan LLMRequest, 100),
 	}
 
+	go service.processRequests()
+
+	return service
+}
+
+func (l *LLMService) GetRequestChannel() chan<- LLMRequest {
+	return l.requestChan
 }

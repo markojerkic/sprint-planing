@@ -13,9 +13,11 @@ import (
 )
 
 type TicketRouter struct {
-	service *service.TicketService
-	db      *gorm.DB
-	group   *echo.Group
+	ticketService *service.TicketService
+	jiraService   *service.JiraService
+	llmService    *service.LLMService
+	db            *gorm.DB
+	group         *echo.Group
 }
 
 func (r *TicketRouter) estimateTicketHandler(c echo.Context) error {
@@ -29,7 +31,7 @@ func (r *TicketRouter) estimateTicketHandler(c echo.Context) error {
 	}
 	user := c.Get("user").(database.User)
 
-	estimate, err := r.service.EstimateTicket(c.Request().Context(), user.ID, form)
+	estimate, err := r.ticketService.EstimateTicket(c.Request().Context(), user.ID, form)
 	if err != nil {
 		c.Logger().Errorf("Error estimating ticket: %v", err)
 		return c.String(500, "Error estimating ticket")
@@ -52,10 +54,19 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 
 	user := c.Get("user").(database.User)
 
-	allTickets, err := r.service.CreateTicket(c, user.ID, form)
+	ticketID, allTickets, err := r.ticketService.CreateTicket(c, user.ID, form)
 	if err != nil {
 		c.Logger().Errorf("Error creating ticket: %v", err)
 		return c.String(500, "Error creating ticket")
+	}
+
+	if form.JiraKey != "" {
+		description, err := r.jiraService.GetTicketDescription(c, form.JiraKey)
+		if err != nil {
+			c.Logger().Errorf("Error getting Jira description for ticket %d: %v", ticketID, err)
+		} else {
+			r.llmService.GetRequestChannel() <- service.LLMRequest{TicketKey: form.JiraKey, Description: description}
+		}
 	}
 
 	tickets := make([]ticket.TicketDetailProps, len(allTickets))
@@ -76,7 +87,7 @@ func (r *TicketRouter) ticketEstimatesHandler(c echo.Context) error {
 	if err != nil {
 		return c.String(400, "Invalid ticket id")
 	}
-	estimates, err := r.service.GetTicketEstimates(c.Request().Context(), int32(ticketID))
+	estimates, err := r.ticketService.GetTicketEstimates(c.Request().Context(), int32(ticketID))
 	if err != nil {
 		return c.String(500, "Error getting ticket estimates")
 	}
@@ -91,11 +102,11 @@ func (r *TicketRouter) closeTicketHandler(c echo.Context) error {
 	}
 	user := c.Get("user").(database.User)
 
-	if _, err := r.service.CloseTicket(c.Request().Context(), uint(ticketID), user.ID); err != nil {
+	if _, err := r.ticketService.CloseTicket(c.Request().Context(), uint(ticketID), user.ID); err != nil {
 		return c.String(500, "Error closing ticket")
 	}
 
-	ticketDetail, err := r.service.GetTicket(c.Request().Context(), r.db, user.ID, nil, uint(ticketID))
+	ticketDetail, err := r.ticketService.GetTicket(c.Request().Context(), r.db, user.ID, nil, uint(ticketID))
 
 	if err != nil {
 		slog.Error("Error getting ticket detail", slog.Any("error", err))
@@ -114,7 +125,7 @@ func (r *TicketRouter) hideAllTicketsHandler(c echo.Context) error {
 		return c.String(400, "Invalid room id")
 	}
 
-	err = r.service.HideAllTickets(c.Request().Context(), uint(roomID))
+	err = r.ticketService.HideAllTickets(c.Request().Context(), uint(roomID))
 	if err != nil {
 		return c.String(500, "Error hiding ticket")
 	}
@@ -128,7 +139,7 @@ func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 	if err != nil {
 		return c.String(400, "Invalid ticket id")
 	}
-	updatedTicket, err := r.service.HideTicket(c.Request().Context(), uint(ticketID))
+	updatedTicket, err := r.ticketService.HideTicket(c.Request().Context(), uint(ticketID))
 	if err != nil {
 		return c.String(500, "Error hiding ticket")
 	}
@@ -142,12 +153,16 @@ func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 }
 
 func newTicketRouter(ticketService *service.TicketService,
+	jiraService *service.JiraService,
+	llmService *service.LLMService,
 	db *gorm.DB,
 	group *echo.Group) *TicketRouter {
 	r := &TicketRouter{
-		service: ticketService,
-		db:      db,
-		group:   group,
+		ticketService: ticketService,
+		jiraService:   jiraService,
+		llmService:    llmService,
+		db:            db,
+		group:         group,
 	}
 	e := r.group
 

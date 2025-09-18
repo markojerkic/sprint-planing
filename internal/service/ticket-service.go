@@ -33,7 +33,6 @@ type TicketService struct {
 	db                *database.Database
 	webSocketService  *WebSocketService
 	roomTicketService *RoomTicketService
-	llmService        *LLMService
 }
 
 type CreateTicketForm struct {
@@ -303,8 +302,9 @@ func (t *TicketService) BulkImportTickets(ctx context.Context, userID uint, room
 	return allRoomTickets, nil
 }
 
-func (t *TicketService) CreateTicket(ctx echo.Context, userID uint, form CreateTicketForm) ([]database.TicketWithEstimateStatistics, error) {
+func (t *TicketService) CreateTicket(ctx echo.Context, userID uint, form CreateTicketForm) (uint, []database.TicketWithEstimateStatistics, error) {
 	var tickets []database.TicketWithEstimateStatistics
+	var ticketID uint
 
 	err := t.db.DB.WithContext(ctx.Request().Context()).Transaction(func(tx *gorm.DB) error {
 		ticket := database.Ticket{
@@ -316,17 +316,13 @@ func (t *TicketService) CreateTicket(ctx echo.Context, userID uint, form CreateT
 
 		if form.JiraKey != "" {
 			ticket.JiraKey = &form.JiraKey
-
-			_, err := t.llmService.RecommendEstimate(ctx, *ticket.JiraKey)
-			if err != nil {
-				return err
-			}
-
 		}
 
 		if err := tx.Create(&ticket).Error; err != nil {
 			return err
 		}
+
+		ticketID = ticket.ID
 
 		roomTickets, err := t.roomTicketService.GetTicketsOfRoom(ctx.Request().Context(), tx, userID, form.RoomID)
 		if err != nil {
@@ -338,7 +334,7 @@ func (t *TicketService) CreateTicket(ctx echo.Context, userID uint, form CreateT
 	})
 	if err != nil {
 		slog.Error("Error creating ticket", slog.Any("error", err))
-		return nil, err
+		return 0, nil, err
 	}
 
 	savedTicket := tickets[0]
@@ -346,10 +342,17 @@ func (t *TicketService) CreateTicket(ctx echo.Context, userID uint, form CreateT
 
 	t.webSocketService.SendNewTicket(savedTicket.ToDetailProp(isOwner))
 
-	return tickets, nil
+	return ticketID, tickets, nil
 }
 
 func NewTicketService(db *database.Database, roomTicketService *RoomTicketService, webSocketService *WebSocketService) *TicketService {
+	if roomTicketService == nil {
+		panic("roomTicketService cannot be nil")
+	}
+	if webSocketService == nil {
+		panic("webSocketService cannot be nil")
+	}
+
 	ticketService := &TicketService{
 		db:                db,
 		webSocketService:  webSocketService,
