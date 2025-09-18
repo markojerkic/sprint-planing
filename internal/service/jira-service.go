@@ -19,6 +19,7 @@ import (
 type JiraTicketResponse struct {
 	Issues []JiraTicket `json:"issues"`
 	Total  int          `json:"total"`
+	IsLast bool         `json:"isLast"`
 }
 
 type JiraTicketParagraph struct {
@@ -218,7 +219,7 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 		return JiraTicketResponse{}, ctx.String(http.StatusInternalServerError, "Jira client info not found in context")
 	}
 	baseUrl := os.Getenv("JIRA_BASE_URL")
-	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/search?", baseUrl, clientInfo.ResourceID))
+	url, err := url.Parse(fmt.Sprintf("%s/%s/rest/api/3/search/jql?", baseUrl, clientInfo.ResourceID))
 	if err != nil {
 		slog.Error("Error parsing url", slog.Any("error", err))
 		return JiraTicketResponse{}, err
@@ -232,10 +233,16 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 
 		isKey := jiraKeyRegex.MatchString(filter.Query)
 
-		jqlQuery := fmt.Sprintf("text ~ \"%s\"", escapedQuery)
+		// Search in text and summary fields
+		jqlQuery := fmt.Sprintf("text ~ \"%s\" OR summary ~ \"%s\"", escapedQuery, escapedQuery)
 
 		if isKey {
+			// Exact key match
 			jqlQuery += fmt.Sprintf(" OR key = \"%s\"", escapedQuery)
+		} else {
+			// For partial key searches, try a broader approach
+			upperQuery := strings.ToUpper(escapedQuery)
+			jqlQuery += fmt.Sprintf(" OR key ~ \"%s\" OR summary ~ \"%s\"", upperQuery, upperQuery)
 		}
 
 		jqlQueries = append(jqlQueries, fmt.Sprintf("(%s)", jqlQuery))
@@ -275,10 +282,18 @@ func (j *JiraService) GetIssues(ctx echo.Context, filter JiraIssueFilter) (JiraT
 		jqlQueries = append(jqlQueries, "assignee IS EMPTY")
 	}
 
-	slog.Debug("JQL", slog.String("jql", strings.Join(jqlQueries, " AND ")))
-	q.Set("jql", strings.Join(jqlQueries, " AND "))
+	jqlQuery := strings.Join(jqlQueries, " AND ")
+
+	// If no filters provided, add a default condition to get recent issues
+	if jqlQuery == "" {
+		jqlQuery = "created >= -30d ORDER BY created DESC"
+	}
+
+	slog.Debug("JQL", slog.String("jql", jqlQuery))
+	q.Set("jql", jqlQuery)
 
 	q.Set("maxResults", "75")
+	q.Set("fields", "summary,description,key,id")
 
 	url.RawQuery = q.Encode()
 
