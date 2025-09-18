@@ -16,11 +16,14 @@ import (
 type LLMService struct {
 	openRouterClient *openai.Client
 	requestChan      chan LLMRequest
+	webSocketService *WebSocketService
 }
 
 type LLMRequest struct {
 	TicketKey   string
 	Description string
+	RoomID      uint
+	TicketID    uint
 }
 
 type RecommendedEstimate struct {
@@ -47,10 +50,16 @@ func (l *LLMService) processRequests() {
 	for req := range l.requestChan {
 		log.Debug("Processing LLM request", "ticket", req.TicketKey, "description", req.Description)
 
-		_, err := l.generateEstimate(context.Background(), req.TicketKey, req.Description)
+		estimate, err := l.generateEstimate(context.Background(), req.TicketKey, req.Description)
 		if err != nil {
 			slog.Error("Error generating estimate", "ticket", req.TicketKey, "error", err)
 		}
+
+		formatedEstimate := fmt.Sprintf("LLM estimate: %dw %dd %dh", estimate.WeekEstimate, estimate.DayEstimate, estimate.HourEstimate)
+
+		go func() {
+			l.webSocketService.SendLLMRecommendation(req.TicketID, &req.TicketKey, req.RoomID, formatedEstimate)
+		}()
 	}
 }
 
@@ -92,6 +101,7 @@ You will be asked to estimate the work required for the ticket. Your response sh
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: schemaParam},
 		},
+		Model: "google/gemini-2.5-flash-lite",
 	})
 
 	if err != nil {
@@ -111,15 +121,20 @@ You will be asked to estimate the work required for the ticket. Your response sh
 	return estimateRecommendation, nil
 }
 
-func NewLLMService() *LLMService {
+func NewLLMService(webSocketService *WebSocketService) *LLMService {
+	if webSocketService == nil {
+		panic("webSocketService cannot be nil")
+	}
+
 	client := openai.NewClient(
 		option.WithAPIKey(os.Getenv("OPENROUTER_API_KEY")),
-		option.WithBaseURL(os.Getenv("OPENROUTER_API_BASE_URL")),
+		option.WithBaseURL(os.Getenv("OPENROUTER_BASE_URL")),
 	)
 
 	service := &LLMService{
 		openRouterClient: &client,
 		requestChan:      make(chan LLMRequest, 100),
+		webSocketService: webSocketService,
 	}
 
 	go service.processRequests()

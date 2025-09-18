@@ -45,13 +45,10 @@ type WebSocketService struct {
 }
 
 func writePump() {
-	for {
-		select {
-		case msg := <-buffer:
-			if err := msg.conn.WriteMessage(websocket.TextMessage, *msg.data); err != nil {
-				log.Printf("Error writing message: %v", err)
-				removeConnection(msg.conn)
-			}
+	for msg := range buffer {
+		if err := msg.conn.WriteMessage(websocket.TextMessage, *msg.data); err != nil {
+			log.Printf("Error writing message: %v", err)
+			removeConnection(msg.conn)
 		}
 	}
 }
@@ -61,9 +58,7 @@ func removeConnection(conn *websocket.Conn) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	if _, ok := subscriptions[conn]; ok {
-		delete(subscriptions, conn)
-	}
+	delete(subscriptions, conn)
 }
 
 // readPump reads from the websocket connection to detect disconnects
@@ -177,6 +172,21 @@ func (w *WebSocketService) CloseTicket(tticket ticket.TicketDetailProps) {
 		for _, conn := range allConns {
 			buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 		}
+	}
+
+}
+
+func (w *WebSocketService) SendLLMRecommendation(ticketID uint, jiraKey *string, roomID uint, llmRecommendation string) {
+	delta := fmt.Sprintf(`<div hx-swap-oob="innerHtml:form[data-estimation-form='%d' ] > span.llm-recommendation">%s</div>`, ticketID, llmRecommendation)
+
+	mutex.RLock()
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/*", roomID)))
+	mutex.RUnlock()
+
+	deltaBytes := []byte(delta)
+
+	for _, conn := range conns {
+		buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
 	}
 
 }
