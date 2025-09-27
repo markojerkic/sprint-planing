@@ -23,12 +23,6 @@ type RoomRouter struct {
 	group         *echo.Group
 }
 
-type RoomTicket struct {
-	ID       uint   `json:"id"`
-	Name     string `json:"name"`
-	IsHidden bool   `json:"isHidden"`
-}
-
 func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
 	user := ctx.Get("user").(database.User)
 	name := ctx.FormValue("roomName")
@@ -44,25 +38,16 @@ func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
 }
 
 func (r *RoomRouter) roomTicketsHandler(ctx echo.Context) error {
-	tickets := make([]database.Ticket, 0)
-	if err := r.db.Model(&database.Ticket{}).
-		Select("id, name, hidden").
-		Where("room_id = ?", ctx.Param("id")).
-		Order("id desc").
-		Find(&tickets).Error; err != nil {
-		ctx.Logger().Errorf("Error getting tickets: %v", err)
-		return ctx.String(500, "Error getting tickets")
-	}
-	ticketDtos := make([]RoomTicket, len(tickets))
-	for i, t := range tickets {
-		ticketDtos[i] = RoomTicket{
-			ID:       t.ID,
-			Name:     t.Name,
-			IsHidden: t.Hidden,
-		}
+	roomId, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		return ctx.String(400, "Invalid room id")
 	}
 
-	return ctx.JSON(200, ticketDtos)
+	tickets, err := r.roomService.GetTicketList(ctx.Request().Context(), uint(roomId))
+	if err != nil {
+		return ctx.String(500, "Error getting tickets")
+	}
+	return ctx.JSON(200, tickets)
 }
 
 func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {

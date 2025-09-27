@@ -10,7 +10,7 @@
     "include": [
         "**/*.js",
         "**/*.ts"
-    ],
+, "cmd/web/assets/js/is-json-websocket-message.js"    ],
     "exclude": [
         "node_modules"
     ]

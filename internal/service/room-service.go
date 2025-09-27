@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/markojerkic/spring-planing/internal/database"
@@ -11,6 +12,12 @@ import (
 type RoomService struct {
 	db                *database.Database
 	roomTicketService *RoomTicketService
+}
+
+type RoomTicket struct {
+	ID       uint   `json:"id"`
+	Name     string `json:"name"`
+	IsHidden bool   `json:"isHidden"`
 }
 
 func (r *RoomService) GetTotalEstimateOfRoom(ctx context.Context, roomID uint) (string, error) {
@@ -46,6 +53,27 @@ func (r *RoomService) GetTotalEstimateOfRoom(ctx context.Context, roomID uint) (
 	}
 
 	return prettyPrintEstimate(totalEstimatedHours), nil
+}
+
+func (r *RoomService) GetTicketList(ctx context.Context, roomID uint) ([]RoomTicket, error) {
+	tickets := make([]database.Ticket, 0)
+	if err := r.db.DB.Model(&database.Ticket{}).
+		Select("id, name, hidden").
+		Where("room_id = ?", roomID).
+		Order("id desc").
+		Find(&tickets).Error; err != nil {
+		return nil, errors.Join(err, errors.New("Error getting tickets"))
+	}
+	ticketDtos := make([]RoomTicket, len(tickets))
+	for i, t := range tickets {
+		ticketDtos[i] = RoomTicket{
+			ID:       t.ID,
+			Name:     t.Name,
+			IsHidden: t.Hidden,
+		}
+	}
+
+	return ticketDtos, nil
 }
 
 func (r *RoomService) GetIsOwner(ctx context.Context, roomID uint, userID uint) bool {

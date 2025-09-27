@@ -1,25 +1,17 @@
-/** @param {string} str */
-function isJson(str) {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
-
 document.addEventListener(
     "htmx:wsBeforeMessage",
     /** @param {CustomEvent} e */
     function(e) {
         /** @type {string} */
         const message = e.detail.message;
-        if (!isJson(message)) {
+
+        const json = isJsonWebSocketMessage(message, "hideTicket");
+        if (!json) {
             return;
         }
-        const json = JSON.parse(message);
-        const ticketId = json["ticketID"];
-        const isHidden = json["isHidden"];
+
+        const ticketId = json.data["ticketID"];
+        const isHidden = json.data["isHidden"];
 
         if (!ticketId) {
             // Hide all tickets

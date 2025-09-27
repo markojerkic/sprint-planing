@@ -32,6 +32,11 @@ func getMatchingSubscriptions(route Route) []*websocket.Conn {
 	return conns
 }
 
+type jsonMessage[T any] struct {
+	MessageType string `json:"messageType"`
+	Data        T      `json:"data"`
+}
+
 type message struct {
 	conn   *websocket.Conn
 	data   *[]byte
@@ -110,11 +115,38 @@ func (w *WebSocketService) CleanupInactiveConnections() {
 	}
 }
 
+func (w *WebSocketService) sendRefreshedTicketList(roomId uint) {
+	tickets, err := w.roomService.GetTicketList(context.Background(), roomId)
+	if err != nil {
+		log.Printf("Error getting ticket list: %v", err)
+		return
+	}
+
+	bytes, err := json.Marshal(jsonMessage[[]RoomTicket]{
+		MessageType: "refreshTicketList",
+		Data:        tickets,
+	})
+	if err != nil {
+		log.Printf("Error marshalling dto: %v", err)
+		return
+	}
+
+	mutex.RLock()
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/*", roomId)))
+	mutex.RUnlock()
+	for _, conn := range conns {
+		buffer <- message{conn: conn, data: &bytes, roomID: roomId}
+	}
+}
+
 func (w *WebSocketService) HideTicketsOfRoom(roomID uint, isHidden bool) {
 	dto := HideTicketDto{
 		IsHidden: isHidden,
 	}
-	jsonDto, err := json.Marshal(dto)
+	jsonDto, err := json.Marshal(jsonMessage[HideTicketDto]{
+		MessageType: "hideTicket",
+		Data:        dto,
+	})
 	if err != nil {
 		log.Printf("Error marshalling dto: %v", err)
 		return
@@ -126,6 +158,7 @@ func (w *WebSocketService) HideTicketsOfRoom(roomID uint, isHidden bool) {
 	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
 	}
+	w.sendRefreshedTicketList(roomID)
 }
 
 func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool) {
@@ -133,7 +166,10 @@ func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool)
 		TicketID: ticketID,
 		IsHidden: isHidden,
 	}
-	jsonDto, err := json.Marshal(dto)
+	jsonDto, err := json.Marshal(jsonMessage[HideTicketDto]{
+		MessageType: "hideTicket",
+		Data:        dto,
+	})
 	if err != nil {
 		log.Printf("Error marshalling dto: %v", err)
 		return
@@ -145,6 +181,7 @@ func (w *WebSocketService) HideTicket(ticketID uint, roomID uint, isHidden bool)
 	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &jsonDto, roomID: roomID}
 	}
+	w.sendRefreshedTicketList(roomID)
 
 }
 
@@ -173,6 +210,7 @@ func (w *WebSocketService) CloseTicket(tticket ticket.TicketDetailProps) {
 			buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 		}
 	}
+	w.sendRefreshedTicketList(tticket.RoomID)
 
 }
 
@@ -229,6 +267,7 @@ func (w *WebSocketService) SendNewTicket(tticket ticket.TicketDetailProps) {
 	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: tticket.RoomID}
 	}
+	w.sendRefreshedTicketList(tticket.RoomID)
 }
 
 func (w *WebSocketService) BulkImportTickets(tickets []ticket.TicketDetailProps) {
@@ -257,6 +296,7 @@ func (w *WebSocketService) BulkImportTickets(tickets []ticket.TicketDetailProps)
 	for _, conn := range conns {
 		buffer <- message{conn: conn, data: &bytes, roomID: tickets[0].RoomID}
 	}
+	w.sendRefreshedTicketList(tickets[0].RoomID)
 }
 
 func (w *WebSocketService) Register(conn *websocket.Conn, roomID uint, isOwner bool) {
@@ -285,6 +325,10 @@ func (w *WebSocketService) Register(conn *websocket.Conn, roomID uint, isOwner b
 }
 
 func NewWebSocketService(roomService *RoomService) *WebSocketService {
+	if roomService == nil {
+		panic("roomService cannot be nil")
+	}
+
 	service := &WebSocketService{
 		roomService: roomService,
 	}
