@@ -55,19 +55,21 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 			@EstimationDetail(props.ID, props.JiraKey, props.AverageEstimate, props.MedianEstimate, props.StdEstimate, props.EstimatedBy)
 		}
 		<span data-answered-by={ fmt.Sprintf("%d", props.ID) }>Estimated by: { props.EstimatedBy }</span>
-		if isRoomOwner && !props.IsClosed {
-			<button
-				class="btn btn-danger mt-4"
-				name="id"
-				value={ fmt.Sprintf("%d", props.ID) }
-				hx-post="/ticket/close"
-				hx-swap="outerHTML"
-				hx-target={ fmt.Sprintf("div[data-ticket-id='%d']", props.ID) }
-			>Close</button>
-		}
-		if isRoomOwner {
-			@HideToggle(props.ID, props.IsHidden)
-		}
+		<div class="flex justify-end gap-2">
+			if isRoomOwner && !props.IsClosed {
+				<button
+					class="btn-sm-error mt-4"
+					name="id"
+					value={ fmt.Sprintf("%d", props.ID) }
+					hx-post="/ticket/close"
+					hx-swap="outerHTML"
+					hx-target={ fmt.Sprintf("div[data-ticket-id='%d']", props.ID) }
+				>Close</button>
+			}
+			if isRoomOwner {
+				@HideToggle(props.ID, props.IsHidden)
+			}
+		</div>
 	</div>
 }
 
@@ -78,7 +80,7 @@ templ HideToggle(ticketID uint, isHidden bool) {
 			hx-swap="outerHTML"
 			name="id"
 			value={ fmt.Sprintf("%d", ticketID) }
-			class="btn btn-success mt-4"
+			class="btn-sm-success mt-4"
 		>
 			Reveal
 		</button>
@@ -88,7 +90,7 @@ templ HideToggle(ticketID uint, isHidden bool) {
 			hx-swap="outerHTML"
 			name="id"
 			value={ fmt.Sprintf("%d", ticketID) }
-			class="btn btn-warn mt-4"
+			class="btn-sm-warning mt-4"
 		>
 			Hide
 		</button>
