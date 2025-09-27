@@ -1,43 +1,43 @@
 class Toast extends HTMLElement {
-	constructor() {
-		super();
-		this.attachShadow({ mode: "open" });
-	}
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+    }
 
-	connectedCallback() {
-		this.render();
+    connectedCallback() {
+        this.render();
 
-		// Set up event listener for close button
-		const closeBtn = this.shadowRoot.querySelector(".close-btn");
-		if (closeBtn) {
-			closeBtn.addEventListener("click", () => this.startExitAnimation());
-		}
+        // Set up event listener for close button
+        const closeBtn = this.shadowRoot.querySelector(".close-btn");
+        if (closeBtn) {
+            closeBtn.addEventListener("click", () => this.startExitAnimation());
+        }
 
-		// Set a timeout to start the exit animation
-		setTimeout(() => {
-			this.startExitAnimation();
-		}, 4000);
-	}
+        // Set a timeout to start the exit animation
+        setTimeout(() => {
+            this.startExitAnimation();
+        }, 4000);
+    }
 
-	startExitAnimation() {
-		const toast = this.shadowRoot.querySelector(".toast");
-		if (toast) {
-			toast.classList.add("exit");
+    startExitAnimation() {
+        const toast = this.shadowRoot.querySelector(".toast");
+        if (toast) {
+            toast.classList.add("exit");
 
-			// Remove after the animation duration
-			setTimeout(() => {
-				this.remove();
-			}, 500); // Match this with your CSS transition time
-		}
-	}
+            // Remove after the animation duration
+            setTimeout(() => {
+                this.remove();
+            }, 500); // Match this with your CSS transition time
+        }
+    }
 
-	render() {
-		const level = this.getAttribute("level") ?? "info";
-		const bgColor = level === "info" ? "--color-card-bg" : "--color-error";
-		const borderColor =
-			level === "info" ? "--color-primary-light" : "--color-error-dark";
+    render() {
+        const level = this.getAttribute("level") ?? "info";
+        const bgColor = level === "info" ? "--color-card-bg" : "--color-error";
+        const borderColor =
+            level === "info" ? "--color-primary-light" : "--color-error-dark";
 
-		this.shadowRoot.innerHTML = `
+        this.shadowRoot.innerHTML = `
             <style>
                 .toast {
                     background-color: var(--color-primary-light);
@@ -102,30 +102,30 @@ class Toast extends HTMLElement {
                 </div>
             </div>
         `;
-	}
+    }
 }
 
 class ToastContainer extends HTMLElement {
-	constructor() {
-		super();
-		this.attachShadow({ mode: "open" });
-	}
-	connectedCallback() {
-		this.render();
-		document.addEventListener(
-			"toast",
-			/** @param {ToastEvent} e */
-			(e) => {
-				const toast = document.createElement("ui-toast");
-				console.log("toast event", e);
-				toast.setAttribute("level", e.detail.level);
-				toast.textContent = e.detail.message;
-				this.appendChild(toast);
-			},
-		);
-	}
-	render() {
-		this.shadowRoot.innerHTML = `
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+    }
+    connectedCallback() {
+        this.render();
+        document.addEventListener(
+            "toast",
+            /** @param {ToastEvent} e */
+            (e) => {
+                const toast = document.createElement("ui-toast");
+                console.log("toast event", e);
+                toast.setAttribute("level", e.detail.level);
+                toast.textContent = e.detail.message;
+                this.appendChild(toast);
+            },
+        );
+    }
+    render() {
+        this.shadowRoot.innerHTML = `
             <style>
                 .toast-container {
                     position: fixed;
@@ -147,7 +147,7 @@ class ToastContainer extends HTMLElement {
                 <slot></slot>
             </div>
         `;
-	}
+    }
 }
 
 /**
@@ -156,20 +156,20 @@ class ToastContainer extends HTMLElement {
  * @property {ToastDetail} detail
  */
 class ToastEvent extends Event {
-	/**
-	 * @typedef {Object} ToastEventData
-	 * @property {string} message
-	 * @property {string} level
-	 */
-	/**
-	 * @param {ToastEventData} detail
-	 */
-	constructor(detail) {
-		super("toast", { bubbles: true }); // Add bubbles: true to ensure event propagation
-		this.message = detail.message;
-		this.level = detail.level;
-		this.detail = detail;
-	}
+    /**
+     * @typedef {Object} ToastEventData
+     * @property {string} message
+     * @property {string} level
+     */
+    /**
+     * @param {ToastEventData} detail
+     */
+    constructor(detail) {
+        super("toast", { bubbles: true }); // Add bubbles: true to ensure event propagation
+        this.message = detail.message;
+        this.level = detail.level;
+        this.detail = detail;
+    }
 }
 
 customElements.define("ui-toast", Toast);

@@ -1,7 +1,7 @@
 let wsHasConnectedBefore = false;
 let isRefetching = false;
 
-htmx.on("htmx:wsOpen", async function() {
+htmx.on("htmx:wsOpen", async function () {
     if (!wsHasConnectedBefore) {
         wsHasConnectedBefore = true;
         return;
@@ -11,19 +11,19 @@ htmx.on("htmx:wsOpen", async function() {
     }
 
     while (hasFocusedInput()) {
-        console.log('Waiting for input to be unfocused...');
-        await new Promise(resolve => setTimeout(resolve, 3_000));
+        console.log("Waiting for input to be unfocused...");
+        await new Promise((resolve) => setTimeout(resolve, 3_000));
     }
 
-    console.log('Reconnecting...');
-    htmx.ajax('get', window.location.pathname, {
-        target: '#ticket-list',
-        select: '#ticket-list',
-    }).then(function() {
+    console.log("Reconnecting...");
+    htmx.ajax("get", window.location.pathname, {
+        target: "#ticket-list",
+        select: "#ticket-list",
+    }).then(function () {
         isRefetching = false;
     });
-})
+});
 
 function hasFocusedInput() {
-    return document.activeElement.tagName === 'INPUT';
+    return document.activeElement.tagName === "INPUT";
 }

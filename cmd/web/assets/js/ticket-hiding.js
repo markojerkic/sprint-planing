@@ -1,7 +1,7 @@
 document.addEventListener(
     "htmx:wsBeforeMessage",
     /** @param {CustomEvent} e */
-    function(e) {
+    function (e) {
         /** @type {string} */
         const message = e.detail.message;
 
@@ -18,7 +18,8 @@ document.addEventListener(
             document.querySelectorAll("ui-flashing-div").forEach(
                 /** @param {HTMLElement} element */
                 (element) => {
-                    const isOwner = element.getAttribute("data-is-owner") === "true";
+                    const isOwner =
+                        element.getAttribute("data-is-owner") === "true";
                     if (isHidden && !isOwner) {
                         element.setAttribute("data-is-hidden", "true");
                     } else {
@@ -34,14 +35,16 @@ document.addEventListener(
             if (isOwner) {
                 // Find all buttons with hx-post="/ticket/hide", switch classs btn-warn to btn-success
                 // and change text to "Reveal"
-                document.querySelectorAll("button[hx-post='/ticket/hide']").forEach(
-                    /** @param {HTMLButtonElement} element */
-                    (element) => {
-                        element.classList.remove("btn-sm-warn");
-                        element.classList.add("btn-sm-success");
-                        element.innerText = "Reveal";
-                    },
-                );
+                document
+                    .querySelectorAll("button[hx-post='/ticket/hide']")
+                    .forEach(
+                        /** @param {HTMLButtonElement} element */
+                        (element) => {
+                            element.classList.remove("btn-sm-warn");
+                            element.classList.add("btn-sm-success");
+                            element.innerText = "Reveal";
+                        },
+                    );
             }
 
             return;
@@ -66,7 +69,7 @@ document.addEventListener(
 document.addEventListener(
     "htmx:oobAfterSwap",
     /** @param {CustomEvent} event */
-    function(event) {
+    function (event) {
         /* @type {HTMLElement} */
         const target = event.detail.target.children[0];
 

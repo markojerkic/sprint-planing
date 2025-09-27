@@ -1,86 +1,87 @@
 class ModalElement extends HTMLElement {
-	constructor() {
-		super();
-		this.attachShadow({ mode: "open" });
-	}
-	connectedCallback() {
-		this.render();
-		this.setupEventListeners();
-	}
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+    }
+    connectedCallback() {
+        this.render();
+        this.setupEventListeners();
+    }
 
-	setupEventListeners() {
-		/** @type {HTMLButtonElement} */
-		const popover = this.shadowRoot.querySelector("[popover]");
+    setupEventListeners() {
+        /** @type {HTMLButtonElement} */
+        const popover = this.shadowRoot.querySelector("[popover]");
 
-		popover?.addEventListener(
-			"beforetoggle",
-			/** @param {ToggleEvent} event */
-			(event) => {
-				if (event.newState === "open") {
-					this.showBackdrop();
-					setTimeout(() => {
-						const slottedElements = this.shadowRoot
-							.querySelector("slot")
-							.assignedNodes({ flatten: true });
-						const focusableSelector =
-							'button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
-						const firstFocusable =
-							[...slottedElements]
-								// @ts-ignore
-								.find(
-									/** @param {HTMLElement} node */
-									(node) => node.querySelector?.(focusableSelector),
-								)
-								?.querySelector(focusableSelector) ||
-							this.shadowRoot.querySelector("input");
-						firstFocusable?.focus();
-					}, 50);
-				} else {
-					this.hideBackdrop();
-				}
-			},
-		);
+        popover?.addEventListener(
+            "beforetoggle",
+            /** @param {ToggleEvent} event */
+            (event) => {
+                if (event.newState === "open") {
+                    this.showBackdrop();
+                    setTimeout(() => {
+                        const slottedElements = this.shadowRoot
+                            .querySelector("slot")
+                            .assignedNodes({ flatten: true });
+                        const focusableSelector =
+                            'button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+                        const firstFocusable =
+                            [...slottedElements]
+                                // @ts-ignore
+                                .find(
+                                    /** @param {HTMLElement} node */
+                                    (node) =>
+                                        node.querySelector?.(focusableSelector),
+                                )
+                                ?.querySelector(focusableSelector) ||
+                            this.shadowRoot.querySelector("input");
+                        firstFocusable?.focus();
+                    }, 50);
+                } else {
+                    this.hideBackdrop();
+                }
+            },
+        );
 
-		// Escape key to close the modal
-		popover?.addEventListener("keydown", (event) => {
-			if (event.key === "Escape") {
-				popover?.hidePopover();
-			}
-		});
+        // Escape key to close the modal
+        popover?.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                popover?.hidePopover();
+            }
+        });
 
-		// Add event listener for closing the modal
-		document.addEventListener("closemodal", () => {
-			popover?.hidePopover();
-		});
-	}
+        // Add event listener for closing the modal
+        document.addEventListener("closemodal", () => {
+            popover?.hidePopover();
+        });
+    }
 
-	showBackdrop() {
-		/** @type {HTMLDivElement} */
-		let backdrop = document.querySelector(".modal-backdrop");
-		if (!backdrop) {
-			backdrop = document.createElement("div");
-			backdrop.className = "modal-backdrop";
-			document.body.appendChild(backdrop);
-		}
-		backdrop.style.display = "block";
-	}
+    showBackdrop() {
+        /** @type {HTMLDivElement} */
+        let backdrop = document.querySelector(".modal-backdrop");
+        if (!backdrop) {
+            backdrop = document.createElement("div");
+            backdrop.className = "modal-backdrop";
+            document.body.appendChild(backdrop);
+        }
+        backdrop.style.display = "block";
+    }
 
-	hideBackdrop() {
-		/** @type {HTMLDivElement} */
-		const backdrop = document.querySelector(".modal-backdrop");
-		if (backdrop) {
-			backdrop.style.display = "none";
-		}
-	}
+    hideBackdrop() {
+        /** @type {HTMLDivElement} */
+        const backdrop = document.querySelector(".modal-backdrop");
+        if (backdrop) {
+            backdrop.style.display = "none";
+        }
+    }
 
-	render() {
-		const buttonName = this.getAttribute("buttonName");
-		const modalTitle = this.getAttribute("modalTitle") ?? buttonName;
-		const isSmall = this.getAttribute("small") !== null;
-		const buttonColor =
-			this.getAttribute("buttonColor") ?? "var(--color-primary)";
-		this._randomId = `modal-${Math.random().toString(36).substring(7)}`;
-		this.shadowRoot.innerHTML = `
+    render() {
+        const buttonName = this.getAttribute("buttonName");
+        const modalTitle = this.getAttribute("modalTitle") ?? buttonName;
+        const isSmall = this.getAttribute("small") !== null;
+        const buttonColor =
+            this.getAttribute("buttonColor") ?? "var(--color-primary)";
+        this._randomId = `modal-${Math.random().toString(36).substring(7)}`;
+        this.shadowRoot.innerHTML = `
         ${this.createStyles(buttonColor, isSmall).outerHTML}
         <button type="button"
             class="btn"
@@ -106,16 +107,16 @@ class ModalElement extends HTMLElement {
             </div>
         </div>
         `;
-	}
+    }
 
-	/**
-	 * @param {string} buttonColor
-	 * @param {boolean} isSmall
-	 *
-	 * */
-	createStyles(buttonColor, isSmall) {
-		const style = document.createElement("style");
-		style.textContent = `
+    /**
+     * @param {string} buttonColor
+     * @param {boolean} isSmall
+     *
+     * */
+    createStyles(buttonColor, isSmall) {
+        const style = document.createElement("style");
+        style.textContent = `
             /* Global styles for backdrop */
             :host {
                 --backdrop-color: rgba(0, 0, 0, 0.5);
@@ -227,14 +228,14 @@ class ModalElement extends HTMLElement {
                 color: var(--color-primary, ${buttonColor});
             }
         `;
-		return style;
-	}
+        return style;
+    }
 }
 
 class CloseModalEvent extends Event {
-	constructor() {
-		super("closemodal", { bubbles: true, composed: true });
-	}
+    constructor() {
+        super("closemodal", { bubbles: true, composed: true });
+    }
 }
 
 customElements.define("ui-modal", ModalElement);
