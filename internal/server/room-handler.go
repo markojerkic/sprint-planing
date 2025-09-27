@@ -23,6 +23,12 @@ type RoomRouter struct {
 	group         *echo.Group
 }
 
+type RoomTicket struct {
+	ID       uint   `json:"id"`
+	Name     string `json:"name"`
+	IsClosed bool   `json:"isClosed"`
+}
+
 func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
 	user := ctx.Get("user").(database.User)
 	name := ctx.FormValue("roomName")
@@ -35,6 +41,28 @@ func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
 	}
 
 	return ctx.Redirect(302, fmt.Sprintf("/room/%d", createdRoom.ID))
+}
+
+func (r *RoomRouter) roomTicketsHandler(ctx echo.Context) error {
+	tickets := make([]database.Ticket, 0)
+	if err := r.db.Model(&database.Ticket{}).
+		Select("id, name, closed_at").
+		Where("room_id = ?", ctx.Param("id")).
+		Order("id desc").
+		Find(&tickets).Error; err != nil {
+		ctx.Logger().Errorf("Error getting tickets: %v", err)
+		return ctx.String(500, "Error getting tickets")
+	}
+	ticketDtos := make([]RoomTicket, len(tickets))
+	for i, t := range tickets {
+		ticketDtos[i] = RoomTicket{
+			ID:       t.ID,
+			Name:     t.Name,
+			IsClosed: t.ClosedAt != nil,
+		}
+	}
+
+	return ctx.JSON(200, ticketDtos)
 }
 
 func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
@@ -152,7 +180,13 @@ func newRoomRouter(roomService *service.RoomService,
 		return room.CreateRoom(isJiraUser).Render(c.Request().Context(), c.Response().Writer)
 	})
 	e.POST("", r.createRoomHandler)
-	e.GET("/:id", r.roomDetailsHandler)
+	e.GET("/:id", func(c echo.Context) error {
+		if c.Request().Header.Get("Accept") == "application/json" {
+			return r.roomTicketsHandler(c)
+		}
+
+		return r.roomDetailsHandler(c)
+	})
 	e.DELETE("/:id", r.deleteRoomHandler)
 	e.POST("/allow-llm-estimation", r.allowLlmEstimationHandler)
 

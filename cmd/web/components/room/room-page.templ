@@ -19,6 +19,7 @@ type RoomPageProps struct {
 
 templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 	@components.PageLayoutWithPath(fmt.Sprintf("Room: %s", room.Name), "/room") {
+		<ui-ticket-list></ui-ticket-list>
 		<div class="bg-card-bg rounded-lg shadow-lg p-8 relative">
 			<!-- Scripts and styles -->
 			<script src="/assets/js/ticket-hiding.js" type="module"></script>

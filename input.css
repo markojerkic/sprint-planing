@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @source "**/*.templ";
+@source "**/*.js";
 
 @theme {
     --color-primary: oklch(0.591 0.175 311.5deg);
@@ -706,4 +707,10 @@ form.estimation {
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   display: none;
+}
+
+.scrollbar {
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary-dark) var(--color-card-bg);
 }
