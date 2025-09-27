@@ -2,7 +2,7 @@ package ticket
 
 import "fmt"
 
-templ estimationForm(ticketID uint, roomID uint) {
+templ estimationForm(ticketID uint, roomID uint, llmEstimate *string) {
 	<form
 		class="estimation"
 		hx-post="/ticket/estimate"
@@ -45,7 +45,11 @@ templ estimationForm(ticketID uint, roomID uint) {
 				/>
 			</div>
 		</div>
-		<span class="llm-recommendation"></span>
+		<span class="llm-recommendation">
+			if llmEstimate != nil {
+				LLM estimate: { *llmEstimate }
+			}
+		</span>
 		<button
 			type="submit"
 			class="btn-primary"

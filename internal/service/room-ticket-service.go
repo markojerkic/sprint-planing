@@ -18,6 +18,15 @@ func (r *RoomTicketService) GetTicketsOfRoom(ctx context.Context, db *gorm.DB, u
 		Scan(&tickets).Error; err != nil {
 		return nil, err
 	}
+
+	for i := range tickets {
+		if err := db.WithContext(ctx).
+			Preload("LlmEstimate").
+			First(&tickets[i].Ticket, tickets[i].ID).Error; err != nil {
+			continue
+		}
+	}
+
 	return tickets, nil
 }
 

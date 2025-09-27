@@ -12,6 +12,7 @@ type TicketDetailProps struct {
 	IsClosed        bool
 	IsHidden        bool
 	UserEstimate    string
+	LlmEstimate     *string
 	AnsweredBy      string
 	AverageEstimate string
 	MedianEstimate  string
@@ -47,7 +48,7 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 			if props.HasEstimate {
 				{ props.UserEstimate }
 			} else if !props.IsClosed {
-				@estimationForm(props.ID, props.RoomID)
+				@estimationForm(props.ID, props.RoomID, props.LlmEstimate)
 			}
 		</div>
 		if props.HasEstimate || props.IsClosed {

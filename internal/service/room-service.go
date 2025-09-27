@@ -28,6 +28,7 @@ func (r *RoomService) GetTotalEstimateOfRoom(ctx context.Context, roomID uint) (
 			  estimates
 			  JOIN tickets ON tickets.id = estimates.ticket_id
 			  AND tickets.closed_at IS NOT NULL
+			WHERE estimates.user_id IS NOT NULL
 			GROUP BY
 			  ticket_id,
 			  room_id

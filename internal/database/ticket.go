@@ -49,6 +49,11 @@ func (t *TicketWithEstimateStatistics) ToDetailProp(isOwner bool) ticket.TicketD
 		HasEstimate:     t.UsersEstimate != nil,
 	}
 
+	if t.LlmEstimate != nil {
+		prettyLlmEstimate := prettyPrintEstimate(float64(t.LlmEstimate.Estimate))
+		ticket.LlmEstimate = &prettyLlmEstimate
+	}
+
 	if !isOwner {
 		ticket.JiraKey = nil
 	}
