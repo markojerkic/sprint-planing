@@ -26,7 +26,7 @@ type RoomRouter struct {
 type RoomTicket struct {
 	ID       uint   `json:"id"`
 	Name     string `json:"name"`
-	IsClosed bool   `json:"isClosed"`
+	IsHidden bool   `json:"isHidden"`
 }
 
 func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
@@ -46,7 +46,7 @@ func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
 func (r *RoomRouter) roomTicketsHandler(ctx echo.Context) error {
 	tickets := make([]database.Ticket, 0)
 	if err := r.db.Model(&database.Ticket{}).
-		Select("id, name, closed_at").
+		Select("id, name, hidden").
 		Where("room_id = ?", ctx.Param("id")).
 		Order("id desc").
 		Find(&tickets).Error; err != nil {
@@ -58,7 +58,7 @@ func (r *RoomRouter) roomTicketsHandler(ctx echo.Context) error {
 		ticketDtos[i] = RoomTicket{
 			ID:       t.ID,
 			Name:     t.Name,
-			IsClosed: t.ClosedAt != nil,
+			IsHidden: t.Hidden,
 		}
 	}
 
