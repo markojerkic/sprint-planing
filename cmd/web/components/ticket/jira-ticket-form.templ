@@ -63,6 +63,7 @@ templ JiraTicketList(tickets JiraTicketListProps) {
 					<input type="hidden" name="jiraKey" value={ ticket.Key }/>
 					<input type="hidden" name="ticketName" value={ ticket.Key }/>
 					<input type="hidden" name="ticketDescription" value={ ticket.Summary }/>
+					<input type="hidden" name="ticketFullDescription" value={ ticket.Description }/>
 					<button type="submit" class="btn-blue-500 btn-sm">Create Ticket</button>
 				</form>
 			</div>

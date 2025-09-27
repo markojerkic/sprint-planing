@@ -23,6 +23,6 @@ type Room struct {
 type Estimate struct {
 	gorm.Model
 	TicketID uint
-	UserID   uint
+	UserID   *uint
 	Estimate int
 }

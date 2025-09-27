@@ -10,15 +10,17 @@ import (
 
 type Ticket struct {
 	gorm.Model
-	Name        string
-	Description string
-	JiraKey     *string
-	ClosedAt    *time.Time
-	Hidden      bool `gorm:"default:false"`
-	RoomID      uint
-	Room        Room `gorm:"foreignKey:RoomID"`
-	CreatedBy   uint
-	Estimates   []Estimate
+	Name          string
+	Description   string
+	JiraKey       *string
+	ClosedAt      *time.Time
+	Hidden        bool `gorm:"default:false"`
+	RoomID        uint
+	Room          Room `gorm:"foreignKey:RoomID"`
+	CreatedBy     uint
+	Estimates     []Estimate
+	LlmEstimateID *uint
+	LlmEstimate   *Estimate `gorm:"foreignKey:LlmEstimateID"`
 }
 
 type TicketWithEstimateStatistics struct {

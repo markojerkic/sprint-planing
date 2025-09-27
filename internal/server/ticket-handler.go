@@ -60,17 +60,12 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 		return c.String(500, "Error creating ticket")
 	}
 
-	if form.JiraKey != "" {
-		description, err := r.jiraService.GetTicketDescription(c, form.JiraKey)
-		if err != nil {
-			c.Logger().Errorf("Error getting Jira description for ticket %d: %v", ticketID, err)
-		} else {
-			r.llmService.GetRequestChannel() <- service.LLMRequest{
-				TicketKey:   form.JiraKey,
-				Description: description,
-				RoomID:      form.RoomID,
-				TicketID:    ticketID,
-			}
+	if form.JiraKey != "" && form.TicketFullDescription != "" {
+		r.llmService.GetRequestChannel() <- service.LLMRequest{
+			TicketKey:   form.JiraKey,
+			Description: form.TicketDescription,
+			RoomID:      form.RoomID,
+			TicketID:    ticketID,
 		}
 	}
 

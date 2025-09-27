@@ -21,7 +21,7 @@ var ticketQuery = `
            COUNT(DISTINCT room_users.user_id)                      AS user_count,
            users_estimate.estimate                                 AS users_estimate
     FROM tickets t
-             LEFT JOIN estimates e ON t.id = e.ticket_id
+             LEFT JOIN estimates e ON t.id = e.ticket_id AND e.user_id IS NOT NULL
              LEFT JOIN estimates users_estimate ON t.id = users_estimate.ticket_id AND users_estimate.user_id = ?
              LEFT JOIN room_users ON t.room_id = room_users.room_id
     WHERE t.room_id = ?
@@ -36,10 +36,11 @@ type TicketService struct {
 }
 
 type CreateTicketForm struct {
-	TicketName        string `json:"ticketName" form:"ticketName" validate:"required"`
-	TicketDescription string `json:"ticketDescription" form:"ticketDescription" validate:"required"`
-	RoomID            uint   `json:"roomID" form:"roomID" validate:"required"`
-	JiraKey           string `json:"jiraKey" form:"jiraKey"`
+	TicketName            string `json:"ticketName" form:"ticketName" validate:"required"`
+	TicketDescription     string `json:"ticketDescription" form:"ticketDescription" validate:"required"`
+	TicketFullDescription string `json:"ticketFullDescription" form:"ticketFullDescription"`
+	RoomID                uint   `json:"roomID" form:"roomID" validate:"required"`
+	JiraKey               string `json:"jiraKey" form:"jiraKey"`
 }
 
 type EstimateTicketForm struct {
@@ -101,7 +102,7 @@ func (t *TicketService) EstimateTicket(ctx context.Context, userID uint, form Es
 		estimate := database.Estimate{
 			TicketID: uint(form.TicketID),
 			Estimate: int(form.WeekEstimate*5*8 + form.DayEstimate*8 + form.HourEstimate),
-			UserID:   uint(userID),
+			UserID:   &userID,
 		}
 
 		if err := tx.Create(&estimate).Error; err != nil {
@@ -177,7 +178,7 @@ func (t *TicketService) GetTicketEstimates(ctx context.Context, ticketID int32) 
 
 	err := t.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var dbEstimates []database.Estimate
-		if err := tx.Where("ticket_id = ?", ticketID).Order("estimate ASC").Find(&dbEstimates).Error; err != nil {
+		if err := tx.Where("ticket_id = ? AND user_id IS NOT NULL", ticketID).Order("estimate ASC").Find(&dbEstimates).Error; err != nil {
 			return err
 		}
 

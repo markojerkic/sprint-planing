@@ -6,16 +6,20 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/invopop/jsonschema"
 	"github.com/labstack/gommon/log"
+	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
+	"gorm.io/gorm"
 )
 
 type LLMService struct {
 	openRouterClient *openai.Client
 	requestChan      chan LLMRequest
+	db               *database.Database
 	webSocketService *WebSocketService
 }
 
@@ -53,6 +57,31 @@ func (l *LLMService) processRequests() {
 		estimate, err := l.generateEstimate(context.Background(), req.TicketKey, req.Description)
 		if err != nil {
 			slog.Error("Error generating estimate", "ticket", req.TicketKey, "error", err)
+		}
+
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err = l.db.DB.WithContext(timeoutCtx).Transaction(func(tx *gorm.DB) error {
+
+			estimate := database.Estimate{
+				TicketID: req.TicketID,
+				Estimate: int(estimate.WeekEstimate*5*8 + estimate.DayEstimate*8 + estimate.HourEstimate),
+			}
+			if err := tx.Create(&estimate).Error; err != nil {
+				return err
+			}
+			slog.Debug("Estimate saved", "estimate", estimate.ID)
+
+			if err := tx.Model(&database.Ticket{}).
+				Where("id = ?", req.TicketID).
+				Update("llm_estimate_id", estimate.ID).Error; err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			slog.Error("Error saving estimate", "error", err)
 		}
 
 		formatedEstimate := fmt.Sprintf("LLM estimate: %dw %dd %dh", estimate.WeekEstimate, estimate.DayEstimate, estimate.HourEstimate)
@@ -121,9 +150,12 @@ You will be asked to estimate the work required for the ticket. Your response sh
 	return estimateRecommendation, nil
 }
 
-func NewLLMService(webSocketService *WebSocketService) *LLMService {
+func NewLLMService(webSocketService *WebSocketService, db *database.Database) *LLMService {
 	if webSocketService == nil {
 		panic("webSocketService cannot be nil")
+	}
+	if db == nil {
+		panic("db cannot be nil")
 	}
 
 	client := openai.NewClient(
@@ -135,6 +167,7 @@ func NewLLMService(webSocketService *WebSocketService) *LLMService {
 		openRouterClient: &client,
 		requestChan:      make(chan LLMRequest, 100),
 		webSocketService: webSocketService,
+		db:               db,
 	}
 
 	go service.processRequests()
