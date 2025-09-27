@@ -29,8 +29,6 @@ class TicketListElement extends HTMLElement {
         const cursorPosition = searchInput?.selectionStart || 0;
 
         const amIOwner = document.querySelector("[hx-post='/ticket/hide-all']") !== null;
-        console.log("am i owner", amIOwner);
-        console.log("tickets", this.#tickets.filter((ticket) => amIOwner || !ticket.isHidden));
 
         this.innerHTML = `
         <div class="fixed bottom-0 top-0 left-0 my-auto max-h-[80vh] max-w-28 bg-input-bg z-10 hover:max-w-fit ease-in-out transition-all duration-300 hidden lg:block">
@@ -56,6 +54,8 @@ class TicketListElement extends HTMLElement {
             newInput.focus();
             newInput.setSelectionRange(cursorPosition, cursorPosition);
         }
+
+
     }
 
     #registerRefreshTickets() {
@@ -77,12 +77,12 @@ class TicketListElement extends HTMLElement {
 
 
     #registerTicketListSearch() {
-        const search = document.getElementById("ticket-list-search");
-        if (!search) {
-            console.error("Ticket list search not found");
-            return;
-        }
-        search.addEventListener("input", (event) => this.#onFilter(event));
+        this.addEventListener("input", (event) => {
+            const target = /** @type {HTMLElement} */ (event.target);
+            if (target.id === "ticket-list-search") {
+                this.#onFilter(event);
+            }
+        });
     }
 
     #applyFilter(filterText = "") {
@@ -95,14 +95,12 @@ class TicketListElement extends HTMLElement {
     /** @param {Event} event */
     #onFilter(event) {
         const target = /** @type {HTMLInputElement} */ (event.target);
-        console.log("filter", target.value);
         if (this.#debounceTimer) {
             clearTimeout(this.#debounceTimer);
         }
 
         this.#debounceTimer = setTimeout(() => {
             const filter = target.value;
-            console.log("filter", filter);
             this.#applyFilter(filter);
             this.render();
             this.#debounceTimer = null;
@@ -123,7 +121,6 @@ class TicketListElement extends HTMLElement {
         });
 
         this.#applyFilter();
-        console.log("tickets", this.#tickets);
         this.render();
     }
 }
