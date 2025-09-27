@@ -72,7 +72,10 @@ func (l *LLMService) processRequests() {
 
 		slog.Debug("Processing LLM request", "ticket", req.TicketKey, "description", req.Description)
 
-		estimate, err := l.generateEstimate(context.Background(), req.TicketKey, req.Description)
+		llmCtx, cancelLlm := context.WithTimeout(context.Background(), 4*time.Second)
+		defer cancelLlm()
+
+		estimate, err := l.generateEstimate(llmCtx, req.TicketKey, req.Description)
 		if err != nil {
 			slog.Error("Error generating estimate", "ticket", req.TicketKey, "error", err)
 			if req.RetryCount < 3 {
@@ -201,7 +204,9 @@ func NewLLMService(webSocketService *WebSocketService, db *database.Database) *L
 		db:               db,
 	}
 
-	go service.processRequests()
+	for range 5 {
+		go service.processRequests()
+	}
 
 	return service
 }

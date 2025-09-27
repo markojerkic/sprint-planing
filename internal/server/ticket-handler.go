@@ -61,12 +61,14 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 	}
 
 	if form.JiraKey != "" && form.TicketFullDescription != "" {
-		r.llmService.GetRequestChannel() <- service.LLMRequest{
-			TicketKey:   form.JiraKey,
-			Description: form.TicketDescription,
-			RoomID:      form.RoomID,
-			TicketID:    ticketID,
-		}
+		go func() {
+			r.llmService.GetRequestChannel() <- service.LLMRequest{
+				TicketKey:   form.JiraKey,
+				Description: form.TicketDescription,
+				RoomID:      form.RoomID,
+				TicketID:    ticketID,
+			}
+		}()
 	}
 
 	tickets := make([]ticket.TicketDetailProps, len(allTickets))
