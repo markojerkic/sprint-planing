@@ -26,6 +26,7 @@ func (j *JiraClientInfo) HttpClient(c echo.Context) *http.Client {
 
 	ctx := c.Request().Context()
 	// Create a token source with the original token
+	oauthConf := getOAuthConfig()
 	tokenSource := oauthConf.TokenSource(ctx, originalToken)
 
 	// Wrap it with a custom token source that can update the session

@@ -25,15 +25,17 @@ const (
 	JiraClientInfoKey       = "jira_client_info"
 )
 
-var oauthConf = oauth2.Config{
-	ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
-	ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-	RedirectURL:  os.Getenv("OAUTH_REDIRECT_URL"),
-	Endpoint: oauth2.Endpoint{
-		AuthURL:  "https://auth.atlassian.com/authorize",
-		TokenURL: "https://auth.atlassian.com/oauth/token",
-	},
-	Scopes: []string{"read:jira-work", "write:jira-work", "offline_access"},
+func getOAuthConfig() oauth2.Config {
+	return oauth2.Config{
+		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
+		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
+		RedirectURL:  os.Getenv("OAUTH_REDIRECT_URL"),
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://auth.atlassian.com/authorize",
+			TokenURL: "https://auth.atlassian.com/oauth/token",
+		},
+		Scopes: []string{"read:jira-work", "write:jira-work", "offline_access"},
+	}
 }
 
 type JiraClientInfo struct {
@@ -172,6 +174,7 @@ func (c *OAuthRouter) ExchangeCodeForToken(ctx context.Context, code string) (*o
 }
 
 func NewOAuthRouter(group *echo.Group) *OAuthRouter {
+	oauthConf := getOAuthConfig()
 	router := OAuthRouter{
 		Config: oauthConf,
 	}

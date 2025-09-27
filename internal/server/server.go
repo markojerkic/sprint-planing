@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/gorm"
 
+	"github.com/joho/godotenv"
 	"github.com/markojerkic/spring-planing/internal/database"
 	"github.com/robfig/cron/v3"
 )
@@ -24,6 +24,16 @@ type Server struct {
 }
 
 func NewServer() *http.Server {
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatalf("No .env file found or error loading: %v", err)
+	}
+	if os.Getenv("APP_ENV") == "local" {
+		slog.Info("Loading .env.local")
+		if err := godotenv.Overload(".env.local"); err != nil {
+			log.Fatalf("No .env.local file found or error loading: %v", err)
+		}
+	}
+
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
 		port: port,

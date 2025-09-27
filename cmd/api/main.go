@@ -13,7 +13,7 @@ import (
 func main() {
 
 	// Set slog level to debug if env "ENV" is not set to "production"
-	if os.Getenv("ENV") != "production" {
+	if os.Getenv("APP_ENV") != "production" {
 		logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: slog.LevelDebug,
 		}))

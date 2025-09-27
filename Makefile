@@ -42,12 +42,12 @@ dev-run:
 	@go run cmd/api/main.go
 
 db:
-	@docker compose up -d db
+	@docker compose --env-file .env.local up -d db
 	@sleep 1
 
 # Live Reload
 watch: db
 	@echo "Watching..."
-	@bun dev
+	@APP_ENV=local bun dev
 
 .PHONY: all build run test clean watch templ-install
