@@ -25,7 +25,7 @@ type Server struct {
 
 func NewServer() *http.Server {
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("No .env file found or error loading: %v", err)
+		slog.Warn("No .env file found or error loading: %v", err)
 	}
 	if os.Getenv("APP_ENV") == "local" {
 		slog.Info("Loading .env.local")
