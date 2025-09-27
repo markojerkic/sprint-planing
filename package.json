@@ -6,6 +6,7 @@
 		"dev:tailwind": "tailwindcss -w -i ./input.css -o ./cmd/web/assets/css/output.css",
 		"dev:templ": "templ generate -watch",
 		"dev:go": "bash ./run-go.sh",
+        "format": "bun x prettier --write {cmd,internal}/**/*.{js}",
 		"dev": "run-p -c --print-label dev:*"
 	},
 	"devDependencies": {
