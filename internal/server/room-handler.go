@@ -25,8 +25,9 @@ type RoomRouter struct {
 func (r *RoomRouter) createRoomHandler(ctx echo.Context) error {
 	user := ctx.Get("user").(database.User)
 	name := ctx.FormValue("roomName")
+	allowLLM := ctx.FormValue("allowLLM") == "on"
 
-	createdRoom, err := r.roomService.CreateRoom(ctx.Request().Context(), user.ID, name)
+	createdRoom, err := r.roomService.CreateRoom(ctx.Request().Context(), user.ID, name, allowLLM)
 	if err != nil {
 		ctx.Logger().Errorf("Error creating room: %v", err)
 		return ctx.String(500, "Error creating room")

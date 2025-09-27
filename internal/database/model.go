@@ -15,6 +15,7 @@ type Room struct {
 	gorm.Model
 	CreatedBy             uint
 	Name                  string
+	AllowLLMEstimation    bool `gorm:"default:false"`
 	Tickets               []Ticket
 	TicketsWithStatistics []TicketWithEstimateStatistics `gorm:"-"`
 	Users                 []User                         `gorm:"many2many:room_users;"`

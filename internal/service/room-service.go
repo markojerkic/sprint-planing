@@ -109,7 +109,7 @@ func (r *RoomService) GetUsersRooms(ctx context.Context, userID int32) ([]databa
 	return rooms, nil
 }
 
-func (r *RoomService) CreateRoom(ctx context.Context, userID uint, roomName string) (*database.Room, error) {
+func (r *RoomService) CreateRoom(ctx context.Context, userID uint, roomName string, allowLLM bool) (*database.Room, error) {
 	var room database.Room
 	err := r.db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var user database.User
@@ -118,9 +118,10 @@ func (r *RoomService) CreateRoom(ctx context.Context, userID uint, roomName stri
 		}
 
 		room = database.Room{
-			CreatedBy: userID,
-			Name:      roomName,
-			Users:     []database.User{user},
+			CreatedBy:          userID,
+			AllowLLMEstimation: allowLLM,
+			Name:               roomName,
+			Users:              []database.User{user},
 		}
 
 		if err := tx.Create(&room).Error; err != nil {

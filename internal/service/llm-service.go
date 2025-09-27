@@ -28,6 +28,7 @@ type LLMRequest struct {
 	Description string
 	RoomID      uint
 	TicketID    uint
+	RetryCount  uint
 }
 
 type RecommendedEstimate struct {
@@ -54,9 +55,39 @@ func (l *LLMService) processRequests() {
 	for req := range l.requestChan {
 		log.Debug("Processing LLM request", "ticket", req.TicketKey, "description", req.Description)
 
+		var isLLMEnabled bool
+		if err := l.db.DB.WithContext(context.Background()).
+			Model(&database.Room{}).
+			Select("allow_llm_estimation").
+			Where("id = ?", req.RoomID).
+			Scan(&isLLMEnabled).Error; err != nil {
+			slog.Error("Error reading room", "error", err)
+			return
+		}
+
+		if !isLLMEnabled {
+			slog.Debug("LLM estimation is disabled for room", "room", req.RoomID)
+			return
+		}
+
+		slog.Debug("Processing LLM request", "ticket", req.TicketKey, "description", req.Description)
+
 		estimate, err := l.generateEstimate(context.Background(), req.TicketKey, req.Description)
 		if err != nil {
 			slog.Error("Error generating estimate", "ticket", req.TicketKey, "error", err)
+			if req.RetryCount < 3 {
+				slog.Debug("Retrying LLM request", "ticket", req.TicketKey, "description", req.Description, "retryCount", req.RetryCount)
+				go func() {
+					l.requestChan <- LLMRequest{
+						TicketKey:   req.TicketKey,
+						Description: req.Description,
+						RoomID:      req.RoomID,
+						TicketID:    req.TicketID,
+						RetryCount:  req.RetryCount + 1,
+					}
+				}()
+			}
+			return
 		}
 
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
