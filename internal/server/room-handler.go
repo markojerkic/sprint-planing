@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/markojerkic/spring-planing/cmd/web/components/room"
 	"github.com/markojerkic/spring-planing/cmd/web/components/ticket"
@@ -99,7 +98,10 @@ func newRoomRouter(roomService *service.RoomService,
 		group:         group,
 	}
 	e := r.group
-	e.GET("", echo.WrapHandler(templ.Handler(room.CreateRoom())))
+	e.GET("", func(c echo.Context) error {
+		_, isJiraUser := c.Get(auth.JiraClientInfoKey).(*auth.JiraClientInfo)
+		return room.CreateRoom(isJiraUser).Render(c.Request().Context(), c.Response().Writer)
+	})
 	e.POST("", r.createRoomHandler)
 	e.GET("/:id", r.roomDetailsHandler)
 	e.DELETE("/:id", r.deleteRoomHandler)
