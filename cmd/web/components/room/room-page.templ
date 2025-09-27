@@ -52,7 +52,7 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 					</div>
 					if room.IsJiraUser {
 						<form
-							class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 z-10 justify-start items-center"
+							class="bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 z-10 justify-start items-center"
 							id="allow-llm-estimation-form"
 							hx-post="/room/allow-llm-estimation"
 							hx-trigger="change"
