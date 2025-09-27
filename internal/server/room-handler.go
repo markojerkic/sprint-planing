@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -69,6 +70,7 @@ func (r *RoomRouter) roomDetailsHandler(ctx echo.Context) error {
 		IsCurrentUserOwner: isOwner,
 		TotalEstimated:     totalEstimated,
 		IsJiraUser:         isJiraUser,
+		IsLlmEnabled:       roomDetails.AllowLLMEstimation,
 		Tickets:            ticketDetails,
 	}, isOwner).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
@@ -86,6 +88,52 @@ func (r *RoomRouter) deleteRoomHandler(ctx echo.Context) error {
 	}
 
 	return homepage.RoomsPage(rooms, user.ID).Render(ctx.Request().Context(), ctx.Response().Writer)
+}
+
+func (r *RoomRouter) allowLlmEstimationHandler(ctx echo.Context) error {
+	user := ctx.Get("user").(database.User)
+	roomID, err := strconv.Atoi(ctx.FormValue("roomId"))
+	if err != nil {
+		return ctx.String(400, "Invalid room id")
+	}
+	allowLlmEstimation := ctx.FormValue("allowLLM") == "on"
+	slog.Debug("Allow LLM estimation", "roomId", roomID, "allowLlmEstimation", allowLlmEstimation)
+
+	if err := r.db.WithContext(ctx.Request().Context()).
+		Transaction(func(tx *gorm.DB) error {
+			var room database.Room
+			if err := tx.First(&room, uint(roomID)).Error; err != nil {
+				return err
+			}
+
+			if room.CreatedBy != user.ID {
+				return gorm.ErrRecordNotFound
+			}
+
+			if err := tx.Model(&database.Room{}).
+				Where("id = ?", roomID).
+				Update("allow_llm_estimation", allowLlmEstimation).Error; err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
+		slog.Error("Error updating room", "error", err)
+		return ctx.String(500, "Error updating room")
+	}
+
+	var toastMessage string
+	if allowLlmEstimation {
+		toastMessage = "Successfully enabled LLM estimation"
+	} else {
+		toastMessage = "Disabled LLM estimation"
+	}
+	if err = util.AddToastHeader(ctx, toastMessage, util.INFO); err != nil {
+		slog.Error("Error adding toast header", "error", err)
+		return ctx.String(500, "Error adding toast header")
+	}
+
+	return room.AllowLlmEstimationForm(allowLlmEstimation).Render(ctx.Request().Context(), ctx.Response().Writer)
 }
 
 func newRoomRouter(roomService *service.RoomService,
@@ -106,6 +154,7 @@ func newRoomRouter(roomService *service.RoomService,
 	e.POST("", r.createRoomHandler)
 	e.GET("/:id", r.roomDetailsHandler)
 	e.DELETE("/:id", r.deleteRoomHandler)
+	e.POST("/allow-llm-estimation", r.allowLlmEstimationHandler)
 
 	return r
 }

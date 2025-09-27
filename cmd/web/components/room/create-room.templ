@@ -24,14 +24,7 @@ templ CreateRoom(isJiraUser bool) {
 					</div>
 					if isJiraUser {
 						<div class="flex gap-2 items-center">
-							<input type="checkbox" name="allowLLM" id="allowLLM" class="form-checkbox" aria-describedby="llm-help"/>
-							<label for="allowLLM" class="form-label mb-0">Allow LLM estimation</label>
-							<span
-								class="material-symbols-outlined text-sm opacity-70 hover:opacity-100 transition-opacity cursor-default"
-								title="Send description of Jira ticket to Google Gemini 2.5 flash for estimate recommendation. Can turn on and off later. Check Github for implementation."
-							>
-								info
-							</span>
+							@AllowLlmEstimationForm(false)
 						</div>
 					}
 					<button type="submit" class="btn-sm-primary mt-2">Create room</button>

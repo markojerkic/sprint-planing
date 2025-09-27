@@ -12,6 +12,7 @@ type RoomPageProps struct {
 	CreatedAt          time.Time
 	IsCurrentUserOwner bool
 	IsJiraUser         bool
+	IsLlmEnabled       bool
 	TotalEstimated     string
 	Tickets            []ticket.TicketDetailProps
 }
@@ -49,6 +50,20 @@ templ RoomPage(room RoomPageProps, isRoomOwner bool) {
 						@ticket.BulkImportJiraTicketsModal(room.ID)
 						@ticket.HideAllTickets(room.ID)
 					</div>
+					if room.IsJiraUser {
+						<form
+							class="sticky top-0 bg-z-10 py-3 bg-card-bg border-b border-border-color flex gap-2 z-10 justify-start items-center"
+							id="allow-llm-estimation-form"
+							hx-post="/room/allow-llm-estimation"
+							hx-trigger="change"
+							hx-target="#allowLLM"
+							hx-select="#allowLLM"
+							hx-swap="outerHTML"
+						>
+							<input type="hidden" name="roomId" value={ fmt.Sprintf("%d", room.ID) }/>
+							@AllowLlmEstimationForm(room.IsLlmEnabled)
+						</form>
+					}
 				}
 				<!-- Ticket list -->
 				@ticket.TicketList(room.Tickets, isRoomOwner)

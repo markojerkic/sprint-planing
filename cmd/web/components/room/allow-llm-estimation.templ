@@ -1,0 +1,21 @@
+package room
+
+templ AllowLlmEstimationForm(checked bool) {
+	<input
+		type="checkbox"
+		name="allowLLM"
+		id="allowLLM"
+		class="form-checkbox"
+		aria-describedby="llm-help"
+		if checked {
+			checked
+		}
+	/>
+	<label for="allowLLM" class="form-label mb-0">Allow LLM estimation</label>
+	<span
+		class="material-symbols-outlined text-sm opacity-70 hover:opacity-100 transition-opacity cursor-default"
+		title="Send description of Jira ticket to Google Gemini 2.5 flash for estimate recommendation. Can turn on and off later. Check Github for implementation."
+	>
+		info
+	</span>
+}
