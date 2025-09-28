@@ -101,6 +101,17 @@ func (s *Server) cleanup(ctx context.Context) error {
 			return err
 		}
 		// Delete tickets which are older than 10 days
+		redactedKey := "-----"
+		if err := tx.Model(&database.Ticket{}).
+			Where("created_at < NOW() - INTERVAL '10 days'").
+			Updates(database.Ticket{
+				JiraKey:     &redactedKey,
+				Name:        "-----",
+				Description: "-----",
+			}).Error; err != nil {
+			slog.Error("Failed to redact tickets", slog.Any("error", err))
+			return err
+		}
 		if err := tx.Model(&database.Ticket{}).
 			Where("created_at < NOW() - INTERVAL '10 days'").
 			Delete(&database.Ticket{}).Error; err != nil {
