@@ -18,6 +18,7 @@ type RoomTicket struct {
 	ID       uint   `json:"id"`
 	Name     string `json:"name"`
 	IsHidden bool   `json:"isHidden"`
+	IsClosed bool   `json:"isClosed"`
 }
 
 func (r *RoomService) GetTotalEstimateOfRoom(ctx context.Context, roomID uint) (string, error) {
@@ -58,7 +59,7 @@ func (r *RoomService) GetTotalEstimateOfRoom(ctx context.Context, roomID uint) (
 func (r *RoomService) GetTicketList(ctx context.Context, roomID uint) ([]RoomTicket, error) {
 	tickets := make([]database.Ticket, 0)
 	if err := r.db.DB.Model(&database.Ticket{}).
-		Select("id, name, hidden").
+		Select("id, name, hidden, closed_at").
 		Where("room_id = ?", roomID).
 		Order("id desc").
 		Find(&tickets).Error; err != nil {
@@ -70,6 +71,7 @@ func (r *RoomService) GetTicketList(ctx context.Context, roomID uint) ([]RoomTic
 			ID:       t.ID,
 			Name:     t.Name,
 			IsHidden: t.Hidden,
+			IsClosed: t.ClosedAt != nil,
 		}
 	}
 

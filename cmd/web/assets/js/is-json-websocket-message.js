@@ -8,6 +8,14 @@
  * @returns {Message|null}
  */
 function isJsonWebSocketMessage(rawJson, type) {
+    if (typeof rawJson !== "string") {
+        return null;
+    }
+
+    if (!rawJson.startsWith("{") && !rawJson.startsWith("[")) {
+        return null;
+    }
+
     try {
         const json = JSON.parse(rawJson);
         if (json.messageType === type) {

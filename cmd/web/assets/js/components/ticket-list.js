@@ -3,6 +3,7 @@
  * @property {number} id
  * @property {string} name
  * @property {boolean} isHidden
+ * @property {boolean} isClosed
  */
 class TicketListElement extends HTMLElement {
     /** @type {Ticket[]} */
@@ -29,11 +30,8 @@ class TicketListElement extends HTMLElement {
         const hadFocus = searchInput === document.activeElement;
         const cursorPosition = searchInput?.selectionStart || 0;
 
-        const amIOwner =
-            document.querySelector("[hx-post='/ticket/hide-all']") !== null;
-
         this.innerHTML = `
-        <div class="fixed bottom-0 top-0 left-0 my-auto max-h-[80vh] max-w-28 bg-input-bg z-10 hover:max-w-fit ease-in-out transition-all duration-300 hidden lg:block">
+        <div class="fixed bottom-0 top-0 left-0 my-auto max-h-[80vh] max-w-28 bg-input-bg z-10 hover:max-w-fit ease-in-out transition-all duration-300 hidden lg:flex lg:flex-col">
 
             <input
                 class="max-w-28 px-2 border border-gray-300"
@@ -43,16 +41,16 @@ class TicketListElement extends HTMLElement {
                 value="${currentValue}"
             />
 
-            <div class="scrollbar flex flex-col h-fit max-h-[80vh] gap-2 text-sm p-2 overflow-y-auto text-right"
+            <div class="scrollbar flex flex-col h-fit max-h-[80vh] gap-2 text-sm p-2 overflow-y-auto text-right flex-grow"
                 style="direction: rtl;"
             >
-                ${this.#filteredTickets
-                    .map(
-                        (ticket) =>
-                            `<span class="cursor-pointer hover:underline p-1 rounded" data-ticket-id="${ticket.id}" onclick="document.querySelector('[data-ticket-id=&quot;${ticket.id}&quot;]:not(:hover)')?.scrollIntoView({behavior:'smooth',block:'center'})">${ticket.name}</span>`,
-                    )
-                    .join("")}
+                ${this.#filteredTickets.map((ticket) => `<ui-ticket-list-item data-ticket='${JSON.stringify(ticket)}'></ui-ticket-list-item>`).join("")}
             </div>
+            <ul class="gap-2 list-disc pl-6 sticky mt-auto bottom-0 left-0 right-0 bg-input-bg z-10 p-2">
+                <li class="text-green-300">Revealed</li>
+                <li class="text-gray-400">Hidden</li>
+                <li class="text-red-300">Closed</li>
+            </ul>
         </div>
     `;
         if (hadFocus) {
@@ -134,4 +132,36 @@ class TicketListElement extends HTMLElement {
         this.render();
     }
 }
+
+class TicketListItemElement extends HTMLElement {
+    /** @type {Ticket} */
+    ticket;
+
+    connectedCallback() {
+        const ticketData = this.getAttribute("data-ticket");
+        this.ticket = ticketData ? JSON.parse(ticketData) : null;
+
+        if (!this.ticket) return;
+
+        this.innerHTML = `
+                <span class="cursor-pointer hover:underline p-1 rounded ${this.#getItemTextColor(this.ticket)}" data-ticket-id="${this.ticket.id}" onclick="document.querySelector('[data-ticket-id=&quot;${this.ticket.id}&quot;]:not(:hover)')?.scrollIntoView({behavior:'smooth',block:'center'})">${this.ticket.name}</span>
+        `;
+    }
+
+    /**
+     * @param {Ticket} ticket
+     * @returns {string}
+     */
+    #getItemTextColor(ticket) {
+        if (ticket.isClosed) {
+            return "text-red-300";
+        }
+        if (ticket.isHidden) {
+            return "text-gray-400";
+        }
+        return "text-green-300";
+    }
+}
+
 customElements.define("ui-ticket-list", TicketListElement);
+customElements.define("ui-ticket-list-item", TicketListItemElement);
