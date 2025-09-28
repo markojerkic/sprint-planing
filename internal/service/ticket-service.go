@@ -27,12 +27,13 @@ var ticketQuery = `
     WHERE t.room_id = ?
       AND t.deleted_at IS NULL
     GROUP BY t.id, t.created_at, users_estimate.estimate
-    ORDER BY t.created_at DESC;`
+    ORDER BY t.id DESC;`
 
 type TicketService struct {
 	db                *database.Database
 	webSocketService  *WebSocketService
 	roomTicketService *RoomTicketService
+	llmService        *LLMService
 }
 
 type CreateTicketForm struct {
@@ -256,7 +257,29 @@ func (t *TicketService) BulkImportTickets(ctx context.Context, userID uint, room
 			return err
 		}
 
-		// Now databaseTickets have their IDs set by GORM
+		slog.Debug("Created tickets", slog.Any("tickets", databaseTickets))
+		go func() {
+			for _, ticket := range databaseTickets {
+				var jiraTicket CreateTicketForm
+				for _, t := range tickets {
+					if t.JiraKey == *ticket.JiraKey {
+						jiraTicket = t
+						break
+					}
+				}
+				if jiraTicket.JiraKey == "" {
+					slog.Error("Jira ticket not found", slog.Any("ticket", ticket))
+					continue
+				}
+
+				t.llmService.GetRequestChannel() <- LLMRequest{
+					TicketKey:   *ticket.JiraKey,
+					Description: jiraTicket.TicketDescription,
+					RoomID:      roomID,
+					TicketID:    ticket.ID,
+				}
+			}
+		}()
 
 		// Create a map of the newly imported ticket IDs
 		databaseTicketsMap := make(map[uint]bool)
@@ -343,21 +366,30 @@ func (t *TicketService) CreateTicket(ctx echo.Context, userID uint, form CreateT
 
 	t.webSocketService.SendNewTicket(savedTicket.ToDetailProp(isOwner))
 
+	if form.JiraKey != "" && form.TicketFullDescription != "" {
+		go func() {
+			t.llmService.GetRequestChannel() <- LLMRequest{
+				TicketKey:   form.JiraKey,
+				Description: form.TicketDescription,
+				RoomID:      form.RoomID,
+				TicketID:    ticketID,
+			}
+		}()
+	}
+
 	return ticketID, tickets, nil
 }
 
-func NewTicketService(db *database.Database, roomTicketService *RoomTicketService, webSocketService *WebSocketService) *TicketService {
-	if roomTicketService == nil {
-		panic("roomTicketService cannot be nil")
-	}
-	if webSocketService == nil {
-		panic("webSocketService cannot be nil")
-	}
+func NewTicketService(db *database.Database,
+	roomTicketService *RoomTicketService,
+	llmService *LLMService,
+	webSocketService *WebSocketService) *TicketService {
 
 	ticketService := &TicketService{
 		db:                db,
 		webSocketService:  webSocketService,
 		roomTicketService: roomTicketService,
+		llmService:        llmService,
 	}
 	return ticketService
 }

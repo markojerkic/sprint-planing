@@ -15,7 +15,6 @@ import (
 type TicketRouter struct {
 	ticketService *service.TicketService
 	jiraService   *service.JiraService
-	llmService    *service.LLMService
 	db            *gorm.DB
 	group         *echo.Group
 }
@@ -54,21 +53,10 @@ func (r *TicketRouter) createTicketHandler(c echo.Context) error {
 
 	user := c.Get("user").(database.User)
 
-	ticketID, allTickets, err := r.ticketService.CreateTicket(c, user.ID, form)
+	_, allTickets, err := r.ticketService.CreateTicket(c, user.ID, form)
 	if err != nil {
 		c.Logger().Errorf("Error creating ticket: %v", err)
 		return c.String(500, "Error creating ticket")
-	}
-
-	if form.JiraKey != "" && form.TicketFullDescription != "" {
-		go func() {
-			r.llmService.GetRequestChannel() <- service.LLMRequest{
-				TicketKey:   form.JiraKey,
-				Description: form.TicketDescription,
-				RoomID:      form.RoomID,
-				TicketID:    ticketID,
-			}
-		}()
 	}
 
 	tickets := make([]ticket.TicketDetailProps, len(allTickets))
@@ -156,13 +144,11 @@ func (r *TicketRouter) hideTicketHandler(c echo.Context) error {
 
 func newTicketRouter(ticketService *service.TicketService,
 	jiraService *service.JiraService,
-	llmService *service.LLMService,
 	db *gorm.DB,
 	group *echo.Group) *TicketRouter {
 	r := &TicketRouter{
 		ticketService: ticketService,
 		jiraService:   jiraService,
-		llmService:    llmService,
 		db:            db,
 		group:         group,
 	}

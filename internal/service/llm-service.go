@@ -204,7 +204,7 @@ func NewLLMService(webSocketService *WebSocketService, db *database.Database) *L
 		db:               db,
 	}
 
-	for range 5 {
+	for range 10 {
 		go service.processRequests()
 	}
 
