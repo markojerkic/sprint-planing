@@ -48,7 +48,7 @@ templ TicketDetail(props TicketDetailProps, isRoomOwner bool) {
 			if props.HasEstimate {
 				{ props.UserEstimate }
 			} else if !props.IsClosed {
-				@estimationForm(props.ID, props.RoomID, props.LlmEstimate)
+				@estimationForm(props.ID, props.RoomID, isRoomOwner, props.LlmEstimate)
 			}
 		</div>
 		if props.HasEstimate || props.IsClosed {

@@ -1,0 +1,49 @@
+package ticket
+
+var fillEstimationFormOnce = templ.NewOnceHandle()
+
+templ LlmEstimate(llmEstimate string, isOwner bool) {
+	@fillEstimationFormOnce.Once() {
+		<script>
+function fillEstimateForm(button) {
+    const estimate = button.getAttribute("data-estimation");
+    if (!estimate) {
+        console.error("No estimation found");
+        return;
+    }
+    console.log("this", button);
+    const parentForm = button.closest("form.estimation");
+    console.log("parentForm", parentForm, estimate);
+    const weeks = /(\d+)w/.exec(estimate)[1];
+    const days = /(\d)+d/.exec(estimate)[1];
+    const hours = /(\d+)h/.exec(estimate)[1];
+    console.log("weeks", weeks, "days", days, "hours", hours);
+
+    parentForm.querySelector("input[name='weekEstimate']").value = weeks;
+    parentForm.querySelector("input[name='dayEstimate']").value = days;
+    parentForm.querySelector("input[name='hourEstimate']").value = hours;
+
+}
+</script>
+	}
+	@LlmEstimateWrapper() {
+		LLM estimate: { llmEstimate }
+		if isOwner {
+			<button
+				class="btn-icon-primary material-symbols-outlined"
+				type="button"
+				data-estimation={ llmEstimate }
+				title="Fill estimate form"
+				onclick="fillEstimateForm(this)"
+			>
+				ink_pen
+			</button>
+		}
+	}
+}
+
+templ LlmEstimateWrapper() {
+	<span class="llm-recommendation">
+		{ children... }
+	</span>
+}

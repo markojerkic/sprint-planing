@@ -70,7 +70,7 @@ func (l *LLMService) processRequests() {
 			return
 		}
 
-		slog.Debug("Processing LLM request", "ticket", req.TicketKey, "description", req.Description)
+		slog.Info("Processing LLM request", "ticket", req.TicketID)
 
 		llmCtx, cancelLlm := context.WithTimeout(context.Background(), 4*time.Second)
 		defer cancelLlm()

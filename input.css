@@ -326,6 +326,28 @@
     width: 100%;
 }
 
+@utility btn-icon-* {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background-color: transparent;
+    border: 1px solid color-mix(in srgb, --value(--color-*) 60%, transparent);
+    color: var(--color-text-light);
+    font-size: 1.5rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background-color: color-mix(
+            in srgb,
+            --value(--color-*) 20%,
+            transparent
+        );
+    }
+}
+
 @utility btn-warn {
     background-color: var(--color-warning);
 }

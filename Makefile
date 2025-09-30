@@ -45,9 +45,17 @@ db:
 	@docker compose --env-file .env.local up -d db
 	@sleep 1
 
+watch/templ:
+	@templ generate --watch --proxy="http://localhost:8080" --open-browser=false -v
+watch/tailwind:
+	@bun x tailwindcss -w -i ./input.css -o ./cmd/web/assets/css/output.css
+watch/go:
+	@watchexec  -r -d 200 -- APP_ENV=local go run cmd/api/main.go
+
 # Live Reload
 watch: db
 	@echo "Watching..."
-	@APP_ENV=local bun dev
+	make -j watch/templ watch/tailwind watch/go
+
 
 .PHONY: all build run test clean watch templ-install
