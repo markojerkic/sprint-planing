@@ -219,42 +219,21 @@ func llmRecomendationDeltaRender(ticketID uint, content *bytes.Buffer) string {
 }
 
 func (w *WebSocketService) SendLLMRecommendation(ticketID uint, jiraKey *string, roomID uint, llmRecommendation string) {
-
-	ownerLLmEstimate := new(bytes.Buffer)
-	if err := ticket.LlmEstimate(llmRecommendation, true).Render(context.Background(), ownerLLmEstimate); err != nil {
+	llmEstimate := new(bytes.Buffer)
+	if err := ticket.LlmEstimate(llmRecommendation).Render(context.Background(), llmEstimate); err != nil {
 		slog.Error("Error rendering llm estimate", "error", err)
 		return
 	}
 
-	userLLmEstimate := new(bytes.Buffer)
-	if err := ticket.LlmEstimate(llmRecommendation, false).Render(context.Background(), userLLmEstimate); err != nil {
-		slog.Error("Error rendering llm estimate", "error", err)
-		return
+	mutex.RLock()
+	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/*", roomID)))
+	mutex.RUnlock()
+
+	deltaBytes := []byte(llmRecomendationDeltaRender(ticketID, llmEstimate))
+
+	for _, conn := range conns {
+		buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
 	}
-
-	go func() {
-		mutex.RLock()
-		conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", roomID)))
-		mutex.RUnlock()
-
-		deltaBytes := []byte(llmRecomendationDeltaRender(ticketID, userLLmEstimate))
-
-		for _, conn := range conns {
-			buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
-		}
-	}()
-
-	go func() {
-		mutex.RLock()
-		conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/owner", roomID)))
-		mutex.RUnlock()
-
-		deltaBytes := []byte(llmRecomendationDeltaRender(ticketID, ownerLLmEstimate))
-
-		for _, conn := range conns {
-			buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
-		}
-	}()
 
 }
 

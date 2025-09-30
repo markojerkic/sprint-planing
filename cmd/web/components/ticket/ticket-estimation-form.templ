@@ -47,7 +47,7 @@ templ estimationForm(ticketID uint, roomID uint, isOwner bool, llmEstimate *stri
 		</div>
 		@LlmEstimateWrapper() {
 			if llmEstimate != nil {
-				@LlmEstimate(*llmEstimate, isOwner)
+				@LlmEstimate(*llmEstimate)
 			}
 		}
 		<button

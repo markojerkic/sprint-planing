@@ -2,7 +2,7 @@ package ticket
 
 var fillEstimationFormOnce = templ.NewOnceHandle()
 
-templ LlmEstimate(llmEstimate string, isOwner bool) {
+templ LlmEstimate(llmEstimate string) {
 	@fillEstimationFormOnce.Once() {
 		<script>
 function fillEstimateForm(button) {
@@ -28,17 +28,15 @@ function fillEstimateForm(button) {
 	}
 	@LlmEstimateWrapper() {
 		LLM estimate: { llmEstimate }
-		if isOwner {
-			<button
-				class="btn-icon-primary material-symbols-outlined"
-				type="button"
-				data-estimation={ llmEstimate }
-				title="Fill estimate form"
-				onclick="fillEstimateForm(this)"
-			>
-				ink_pen
-			</button>
-		}
+		<button
+			class="btn-icon-primary material-symbols-outlined"
+			type="button"
+			data-estimation={ llmEstimate }
+			title="Fill estimate form"
+			onclick="fillEstimateForm(this)"
+		>
+			ink_pen
+		</button>
 	}
 }
 
