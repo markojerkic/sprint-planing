@@ -118,7 +118,7 @@ func (l *LLMService) processRequests() {
 			slog.Error("Error saving estimate", "error", err)
 		}
 
-		formatedEstimate := fmt.Sprintf("LLM estimate: %dw %dd %dh", estimate.WeekEstimate, estimate.DayEstimate, estimate.HourEstimate)
+		formatedEstimate := fmt.Sprintf("%dw %dd %dh", estimate.WeekEstimate, estimate.DayEstimate, estimate.HourEstimate)
 
 		go func() {
 			l.webSocketService.SendLLMRecommendation(req.TicketID, &req.TicketKey, req.RoomID, formatedEstimate)

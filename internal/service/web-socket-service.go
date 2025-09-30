@@ -232,25 +232,29 @@ func (w *WebSocketService) SendLLMRecommendation(ticketID uint, jiraKey *string,
 		return
 	}
 
-	mutex.RLock()
-	conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", roomID)))
-	mutex.RUnlock()
+	go func() {
+		mutex.RLock()
+		conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/estimator", roomID)))
+		mutex.RUnlock()
 
-	deltaBytes := []byte(llmRecomendationDeltaRender(ticketID, userLLmEstimate))
+		deltaBytes := []byte(llmRecomendationDeltaRender(ticketID, userLLmEstimate))
 
-	for _, conn := range conns {
-		buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
-	}
+		for _, conn := range conns {
+			buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
+		}
+	}()
 
-	mutex.RLock()
-	conns = getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/owner", roomID)))
-	mutex.RUnlock()
+	go func() {
+		mutex.RLock()
+		conns := getMatchingSubscriptions(Route(fmt.Sprintf("room/%d/owner", roomID)))
+		mutex.RUnlock()
 
-	deltaBytes = []byte(llmRecomendationDeltaRender(ticketID, ownerLLmEstimate))
+		deltaBytes := []byte(llmRecomendationDeltaRender(ticketID, ownerLLmEstimate))
 
-	for _, conn := range conns {
-		buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
-	}
+		for _, conn := range conns {
+			buffer <- message{conn: conn, data: &deltaBytes, roomID: roomID}
+		}
+	}()
 
 }
 
