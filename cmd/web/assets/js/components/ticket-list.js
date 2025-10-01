@@ -144,7 +144,7 @@ class TicketListItemElement extends HTMLElement {
         if (!this.ticket) return;
 
         this.innerHTML = `
-                <span class="cursor-pointer hover:underline p-1 rounded ${this.#getItemTextColor(this.ticket)}" data-ticket-id="${this.ticket.id}" onclick="document.querySelector('[data-ticket-id=&quot;${this.ticket.id}&quot;]:not(:hover)')?.scrollIntoView({behavior:'smooth',block:'center'})">${this.ticket.name}</span>
+                <span class="cursor-pointer hover:underline p-1 rounded ${this.#getItemTextColor(this.ticket)}" data-ticket-id="${this.ticket.id}" onclick="document.querySelector('ui-flashing-div[data-ticket-id=&quot;${this.ticket.id}&quot;]')?.flash()">${this.ticket.name}</span>
         `;
     }
 
